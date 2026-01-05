@@ -9,30 +9,30 @@ export const cleanInput = (text: string): string => {
     );
 };
 
-export const validateEmail = (email: string): string => {
+export const validateEmail = (email: string): boolean => {
   const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
   if (email.trim() === "") {
-    return "";
+    return false;
   }
 
   if (!regex.test(email)) {
-    return "Please enter a valid email address.";
+    return false;
   }
 
-  return "";
+  return true;
 };
 
-export const validatePassword = (password: string): string => {
+export const validatePassword = (password: string): boolean => {
   if (password.trim() === "") {
-    return "";
+    return false;
   }
- 
+  
   if (password.length < 6) {
-    return "Password must be at least 6 characters.";
+    return false;
   }
 
-  return "";
+  return true;
 };
 
 export const isStrongPassword = (password: string): boolean => {

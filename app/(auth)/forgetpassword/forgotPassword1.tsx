@@ -1,4 +1,5 @@
-import { useAuth } from '@/contexts/AuthContext';
+import useFetch from '@/hooks/useFetch';
+import { cleanInput, validateEmail } from '@/utils/validation';
 import { useFocusEffect } from "@react-navigation/native";
 import { router } from "expo-router";
 import * as SecureStore from "expo-secure-store";
@@ -16,36 +17,139 @@ const ForgotPassword1 = () => {
   const [isEmailValid, setIsEmailValid] = useState(false);
   const [loading, setLoading] = useState(false);
   const [emailError, setEmailError] = useState("");
-  const [email, setEmail] = React.useState("");
-  const { fetchSignInMethods } = useAuth();
-
-  const LOCAL_IP = process.env.EXPO_PUBLIC_LOCAL_IP_ADDRESS;
-  const PORT = process.env.EXPO_PUBLIC_PORT;
-
+  const [email, setEmail] = useState("");
   const [isFirstMount, setIsFirstMount] = useState(true);
+  const [validationErrors, setValidationErrors] = useState<string[]>([]);
+
+  const isNextButtonEnabled = email.length > 0 && isEmailValid;
+
+  const {
+    refetch: checkEmailExists
+  } = useFetch('/api/users', {
+    method: 'GET',
+    autoFetch: false,
+    withAuth: false
+  });
+
+  const {
+    refetch: checkSignInMethods
+  } = useFetch('/api/auth/providers', {
+    method: 'GET',
+    autoFetch: false,
+    withAuth: false
+  });
+
+  const isEmailAlreadyRegistered = async (email: string): Promise<boolean> => {
+    try {
+      const response = await checkEmailExists({
+        params: { email }
+      });
+
+      if (!response || response.error) {
+        console.error("Error checking email existence:", response?.error);
+        setEmailError("Unable to verify email. Please try again.");
+        return false;
+      }
+
+      return response?.data?.available === false;
+    } catch (error) {
+      console.error("Error checking email existence:", error);
+      setEmailError("Unable to verify email. Please try again.");
+      return false;
+    }
+  };
+
+  const emailProvider = async (email: string): Promise<string[]> => {
+    try {
+      const response = await checkSignInMethods({
+        params: { email }
+      });
+
+      if (!response || response.error) {
+        console.error("Error checking sign-in methods:", response?.error);
+        return [];
+      }
+
+      return response?.data?.providers || [];
+    } catch (error) {
+      console.error("Error checking sign-in methods:", error);
+      return [];
+    }
+  };
+
+  const validateEmailFormat = (email: string): string[] => {
+    const errors: string[] = [];
+    
+    if (!email) {
+      errors.push("Email is required");
+      return errors;
+    }
+
+    if (!validateEmail(email)) {
+      errors.push("Please enter a valid email address");
+    }
+
+    if (email.length > 254) {
+      errors.push("Email address is too long");
+    }
+
+    const [localPart, domain] = email.split('@');
+    if (localPart?.length > 64) {
+      errors.push("Email local part is too long");
+    }
+
+    return errors;
+  };
+
+  const handleEmailChange = (value: string) => {
+    const cleanValue = cleanInput(value);
+    setEmail(cleanValue);
+    setEmailError("");
+    setValidationErrors([]);
+    
+    const errors = validateEmailFormat(cleanValue);
+    setValidationErrors(errors);
+    
+    if (errors.length === 0) {
+      setIsEmailValid(true);
+    } else {
+      setIsEmailValid(false);
+    }
+  };
 
   useEffect(() => {
-    const clearStorageOnFirstEntry = async () => {
+    const clearStorageOnFirstMount = async () => {
       if (isFirstMount) {
-        await SecureStore.deleteItemAsync("forgot_password_email");
-        await SecureStore.deleteItemAsync("forgot_password_verified_email");
-        await SecureStore.deleteItemAsync("forgot_password_new_password");
-        await SecureStore.deleteItemAsync("forgot_password_confirm_password");
+        console.log('Clearing storage on first mount');
+        try {
+          await SecureStore.deleteItemAsync("forgot_password_email");
+          await SecureStore.deleteItemAsync("forgot_password_verified_email");
+          await SecureStore.deleteItemAsync("forgot_password_new_password");
+          await SecureStore.deleteItemAsync("forgot_password_confirm_password");
+        } catch (error) {
+          console.error('Error clearing storage:', error);
+        }
         setIsFirstMount(false);
       }
     };
 
-    clearStorageOnFirstEntry();
-  }, []);
+    clearStorageOnFirstMount();
+  }, [isFirstMount]);
 
   useEffect(() => {
     const loadSavedEmail = async () => {
-      const savedEmail = await SecureStore.getItemAsync(
-        "forgot_password_email"
-      );
-      if (savedEmail) {
-        setEmail(savedEmail);
-        validateEmail(savedEmail);
+      try {
+        const savedEmail = await SecureStore.getItemAsync("forgot_password_email");
+        if (savedEmail) {
+          console.log('Loading saved email:', savedEmail);
+          setEmail(savedEmail);
+          const errors = validateEmailFormat(savedEmail);
+          if (errors.length === 0) {
+            setIsEmailValid(true);
+          }
+        }
+      } catch (error) {
+        console.error('Error loading saved email:', error);
       }
     };
     loadSavedEmail();
@@ -54,202 +158,109 @@ const ForgotPassword1 = () => {
   useFocusEffect(
     useCallback(() => {
       const backAction = () => {
-        Alert.alert("Go back?", "Your process will be deleted and cleared.", [
-          { text: "Cancel", style: "cancel" },
-          {
-            text: "Yes",
-            style: "destructive",
-            onPress: async () => {
-              await SecureStore.deleteItemAsync("forgot_password_email");
-              await SecureStore.deleteItemAsync(
-                "forgot_password_verified_email"
-              );
-              await SecureStore.deleteItemAsync("forgot_password_new_password");
-              await SecureStore.deleteItemAsync(
-                "forgot_password_confirm_password"
-              );
-              router.back();
+        Alert.alert(
+          "Go back?", 
+          "Your process will be deleted and cleared.", 
+          [
+            { text: "Cancel", style: "cancel" },
+            {
+              text: "Yes",
+              style: "destructive",
+              onPress: async () => {
+                console.log('User confirmed going back');
+                try {
+                  await SecureStore.deleteItemAsync("forgot_password_email");
+                  await SecureStore.deleteItemAsync("forgot_password_verified_email");
+                  await SecureStore.deleteItemAsync("forgot_password_new_password");
+                  await SecureStore.deleteItemAsync("forgot_password_confirm_password");
+                } catch (error) {
+                  console.error('Error clearing storage on back:', error);
+                }
+                router.back();
+              },
             },
-          },
-        ]);
-        return true; // prevent default back action
+          ]
+        );
+
+        return true;
       };
 
-      const backHandler = BackHandler.addEventListener(
-        "hardwareBackPress",
-        backAction
-      );
+      const backHandler = BackHandler.addEventListener("hardwareBackPress", backAction);
 
       return () => backHandler.remove();
     }, [])
   );
 
-  const cleanInput = (text: string) => {
-    return text
-      .replace(/\s/g, "") // remove spaces
-      .replace(
-        /([\u2700-\u27BF]|[\uE000-\uF8FF]|[\uD83C-\uDBFF\uDC00-\uDFFF])+?/g,
-        ""
-      ); // remove emojis
-  };
-
-  const isNextButtonEnabled = email.length > 0 && isEmailValid;
-
-  const handleEmailChange = (value: string) => {
-    const cleanValue = cleanInput(value);
-    setEmail(cleanValue);
-    validateEmail(cleanValue);
-  };
-
-  const validateEmail = (value: string) => {
-    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!regex.test(value)) {
-      setEmailError("Please enter a valid email address.");
-      setIsEmailValid(false);
-    } else {
-      setEmailError("");
-      setIsEmailValid(true);
-    }
-  };
-
-  const isEmailAlreadyRegistered = async (email: string) => {
-    try {
-      const response = await fetch(
-        `http://${LOCAL_IP}:${PORT}/users/check-email`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email }),
-        }
-      );
-
-      if (response.status === 409) {
-        return true; // Email taken
-      }
-
-      return false; // Email available
-    } catch (error) {
-      throw error;
-    }
-  };
-
   const handleNextPress = async () => {
     if (!isNextButtonEnabled) return;
+
     setLoading(true);
+    setEmailError("");
+    console.log(`Starting forgot password process for: ${email}`);
 
     try {
-      const savedEmail = await SecureStore.getItemAsync(
-        "forgot_password_email"
-      );
-      const verifiedEmail = await SecureStore.getItemAsync(
-        "forgot_password_verified_email"
-      );
-      
-      
-      if (savedEmail && savedEmail !== email) {
-        console.log("Email changed, clearing previous data");
-        await SecureStore.deleteItemAsync("forgot_password_verified_email");
-        await SecureStore.deleteItemAsync("forgot_password_new_password");
-        await SecureStore.deleteItemAsync("forgot_password_confirm_password");
-      }
-      
-      await SecureStore.setItemAsync("forgot_password_email", email);
-      
-      if (!email){
-        setLoading(false);
-        return Alert.alert("Error", "No email found or saved.");
-      }
-
-      const response = await fetch(
-        `http://${LOCAL_IP}:${PORT}/users/check-signIn-methods`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email }),
-        }
-      );
-
-      const result = await response.json();
-
-      if (result.providers.length > 0){
-        
-        if (result.providers.includes("google.com")) {
-          setLoading(false);
-          return Alert.alert("Error", "Reset password is not available for Google SSO users.");
-        }
-      }
-
-      // Skip OTP if already verified
-      if (verifiedEmail === email) {
-        console.log("Email already verified, skipping OTP");
-        router.push({
-          pathname: "/(auth)/forgetpassword/forgotPassword3",
-          params: { email },
-        });
-        setLoading(false);
+      const formatErrors = validateEmailFormat(email);
+      if (formatErrors.length > 0) {
+        setEmailError(formatErrors[0]);
         return;
       }
 
-      const emailTaken = await isEmailAlreadyRegistered(email);
-
-      if (!emailTaken) {
-        setLoading(false);
-        return Alert.alert("Error", "Email is not registered!");
+      console.log('Checking if email exists');
+      const emailExists = await isEmailAlreadyRegistered(email);
+      
+      if (!emailExists) {
+        setEmailError("We couldn't find an account with this email address.");
+        return;
       }
-    } catch (error) {
-      console.error("Error checking email:", error);
-      setLoading(false);
-      return Alert.alert("Error", "An error occured when verifying the email.");
-    }
 
-    try {
-      const otp = Math.floor(10000 + Math.random() * 90000);
-      const currentTime = new Date();
-      const expireTime = new Date(currentTime.getTime() + 15 * 60000);
-      const formattedTime = expireTime.toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-      });
+      console.log('Email exists, proceeding to check providers');
 
-      const response = await fetch(
-        `http://${LOCAL_IP}:${PORT}/email-service/forgot-password-otp`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            email,
-            code: otp,
-            time: formattedTime,
-          }),
-        }
-      );
+      const providers = await emailProvider(email);
+      console.log('Available providers:', providers);
 
-      const result = await response.json();
+      console.log('Saving email to secure storage');
+      await SecureStore.setItemAsync("forgot_password_email", email);
 
-      if (response.ok) {
-        console.log("Email sent successfully:", result);
-        Alert.alert("Success", "OTP has been sent to your email.");
-        setLoading(false);
+      if (providers.includes('google') && providers.length === 1) {
+        Alert.alert(
+          "Google Account", 
+          "This email is associated with a Google account. Please reset your password using Google instead.",
+          [
+            { text: "OK", style: "default" },
+            { 
+              text: "Use Google", 
+              onPress: () => {
+                router.push('/(auth)/login');
+              }
+            }
+          ]
+        );
+        return;
+      }
 
-        router.push({
+      console.log('All checks passed, navigating to next step');
+      router.push({
           pathname: "/(auth)/forgetpassword/forgotPassword2",
           params: { email },
         });
-      } else {
-        setLoading(false);
-        console.error("Error sending OTP:", result.message);
-        Alert.alert("Error", "Failed to send OTP.");
-      }
+
     } catch (error) {
-      setLoading(false);
-      console.error("Error sending OTP:", error);
-      Alert.alert("Error", "Unable to send OTP. Please try again later.");
+      console.error('Unexpected error:', error);
+      
+      if (error instanceof Error) {
+        if (error.message.includes('Network')) {
+          setEmailError("Network error. Please check your connection and try again.");
+        } 
+        
+      } else {
+        setEmailError("An unexpected error occurred. Please try again.");
+      }
     } finally {
       setLoading(false);
     }
   };
 
-  return (
+    return (
     <View className="flex-1 bg-white px-[16px] pb-[34px] w-screen justify-between h-screen">
       <View className="mt-[34px] flex-1 items-start">
         <Text className="text-black font-bold text-3xl mb-[20px] pl-2">
