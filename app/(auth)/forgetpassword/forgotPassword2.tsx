@@ -1,6 +1,7 @@
+/* eslint-disable react/no-unescaped-entities */
 import { router, useLocalSearchParams } from "expo-router";
 import * as SecureStore from "expo-secure-store";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import {
   Alert,
   NativeSyntheticEvent,
@@ -10,79 +11,71 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import useFetch from '@/hooks/useFetch';
 
 const ForgotPassword2 = () => {
-  const LOCAL_IP = process.env.EXPO_PUBLIC_LOCAL_IP_ADDRESS;
-  const PORT = process.env.EXPO_PUBLIC_PORT;
-
-  const [otp, setOtp] = useState(["", "", "", "", ""]);
-  const inputs = useRef<Array<TextInput | null>>([]);
   const { email } = useLocalSearchParams();
-
+  
+  const [otp, setOtp] = useState<string[]>(["", "", "", "", ""]);
   const [loading, setLoading] = useState(false);
+  const [isOtpInvalid, setIsOtpInvalid] = useState(false);
+  const [timer, setTimer] = useState(60);
 
-  const [isOtpInvalid, setIsOtpInvalid] = useState(false); // for styling if otp is invalid hihiz
+  const inputs = useRef<Array<TextInput | null>>([]);
 
-  // input function, para auto next once mag type ng number
+  const allFilled = otp.every((digit) => digit !== "");
+
+  const { 
+    refetch: sendOtp 
+  } = useFetch('/api/auth/otp/forgot-password', {
+    method: 'POST',
+    autoFetch: false,
+    withAuth: false
+  });
+
+  const { 
+    refetch: verifyOtp 
+  } = useFetch('/api/auth/otp/verify', {
+    method: 'POST',
+    autoFetch: false,
+    withAuth: false
+  });
+
+  const handleSendOtp = useCallback(async (isResend = false) => {
+    if (!email) return;
+
+    setLoading(true);
+    try {
+      const response = await sendOtp({ body: { email } });
+
+      if (response.error) {
+        Alert.alert("Error", response.error.message || "Failed to send OTP.");
+      } else {
+        if (isResend) {
+          Alert.alert("Success", "OTP has been resent to your email.");
+          setTimer(60); 
+        }
+      }
+    } catch (err: any) {
+        Alert.alert("Error", err.message || "An unexpected error occurred.");
+    } finally {
+      setLoading(false);
+    }
+  }, [email, sendOtp]);
+
   const handleChange = (text: string, index: number) => {
-    if (/^\d*$/.test(text)) {
+    if (/^\d$/.test(text) || text === "") {
       const newOtp = [...otp];
       newOtp[index] = text;
       setOtp(newOtp);
+      setIsOtpInvalid(false); 
+
       if (text && index < 4) {
         inputs.current[index + 1]?.focus();
       }
     }
   };
 
-  // checker if all inputs ay filled
-  const allFilled = otp.every((v) => v !== "");
-
-  // pag clinick next, andito yung nextpage and pangkuha ng tinype ni user na OTP
-  const handleNextPress = async () => {
-    const code = otp.join("");
-    setLoading(true);
-
-    try {
-      const response = await fetch(
-        `http://${LOCAL_IP}:${PORT}/email-service/verify-otp`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, code, purpose: "forgot-password" }),
-        }
-      );
-
-      const result = await response.json();
-
-      if (response.ok) {
-        console.log("OTP Verified", result);
-
-        // Mark email as verified
-        await SecureStore.setItemAsync(
-          "forgot_password_verified_email",
-          email as string
-        );
- 
-        router.replace({
-          pathname: "/(auth)/forgetpassword/forgotPassword3",
-          params: { email },
-        });
-      } else {
-        setLoading(false);
-        console.error("Error verifying OTP:", result.message);
-        setIsOtpInvalid(true);
-      }
-    } catch (error) {
-      setLoading(false);
-      console.error("Error verifying OTP:", error);
-      Alert.alert("Error", "Unable to verify OTP. Please try again.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // para mag backspace sa input
   const handleKeyPress = (
     e: NativeSyntheticEvent<TextInputKeyPressEventData>,
     index: number
@@ -97,15 +90,52 @@ const ForgotPassword2 = () => {
     }
   };
 
-  // para mag focus sa first empty input
-  const handleFocus = () => {
-    const firstEmpty = otp.findIndex((v) => v === "");
-    if (firstEmpty !== -1) {
-      inputs.current[firstEmpty]?.focus();
+  const handleFocus = (index: number) => {
+    const firstEmptyIndex = otp.findIndex((v) => v === "");
+    
+    if (firstEmptyIndex !== -1 && index > firstEmptyIndex) {
+      inputs.current[firstEmptyIndex]?.focus();
     }
   };
 
-  const [timer, setTimer] = useState(0); // in seconds
+  const handleResendPress = () => {
+    if (timer > 0 || loading) return;
+    handleSendOtp(true);
+  };
+
+  const handleNextPress = async () => {
+    const userCode = otp.join("");
+    setLoading(true);
+    setIsOtpInvalid(false);
+
+    try {
+      console.log("Verifying OTP for:", email, "Code:", userCode);
+      
+      const response = await verifyOtp({
+        body: { email, code: userCode, purpose: "forgot-password" }
+      });
+
+      if (response.error) {
+        setIsOtpInvalid(true);
+        Alert.alert("Invalid OTP", response.error.message || "The OTP is incorrect.");
+        setLoading(false); 
+        return;
+      }
+
+      console.log("OTP verified successfully. Navigating...");
+      await SecureStore.setItemAsync("forgot_password_verified_email", email as string);
+      
+      router.replace({
+        pathname: "/(auth)/forgetpassword/forgotPassword3",
+        params: { email },
+      });
+
+    } catch (error) {
+      console.error("Error verifying OTP:", error);
+      Alert.alert("Error", "Failed to verify OTP. Please try again.");
+      setLoading(false); 
+    }
+  };
 
   useEffect(() => {
     let interval: ReturnType<typeof setInterval> | undefined;
@@ -114,55 +144,15 @@ const ForgotPassword2 = () => {
         setTimer((prev) => prev - 1);
       }, 1000);
     }
-
     return () => {
       if (interval) clearInterval(interval);
     };
   }, [timer]);
 
-  // pwede dito ipasok yung mangyayari once nag click ng resend
-  const handleResendPress = async () => {
-    if (timer === 0) {
-      console.log("Resend clicked");
-      setTimer(30); // start 30s cooldown
 
-      try {
-        const otp = Math.floor(10000 + Math.random() * 90000);
-        const currentTime = new Date();
-        const expireTime = new Date(currentTime.getTime() + 15 * 60000);
-        const formattedTime = expireTime.toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        });
-
-        const response = await fetch(
-          `http://${LOCAL_IP}:${PORT}/email-service/forgot-password-otp`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              email,
-              code: otp,
-              time: formattedTime,
-            }),
-          }
-        );
-
-        const result = await response.json();
-
-        if (response.ok) {
-          Alert.alert("Success", "OTP has been resent to your email.");
-          console.log("OTP resent", result);
-        } else {
-          Alert.alert("Error", result.message || "Failed to resend OTP.");
-          console.error(result.error);
-        }
-      } catch (error) {
-        console.error("Error sending OTP:", error);
-        Alert.alert("Error", "Unable to send OTP. Please try again later.");
-      }
-    }
-  };
+  useEffect(() => {
+    handleSendOtp(false);
+  }, []); 
 
   return (
     <View className="flex-1 bg-white px-[16px] pb-[34px] w-screen justify-between h-screen">
@@ -186,9 +176,10 @@ const ForgotPassword2 = () => {
               value={value}
               onChangeText={(text) => handleChange(text, index)}
               onKeyPress={(e) => handleKeyPress(e, index)}
-              onFocus={handleFocus}
+              onFocus={() => handleFocus(index)}
               keyboardType="number-pad"
               maxLength={1}
+              editable={!loading} 
               className={`h-[60px] w-[60px] border-[2px] rounded-[12px] text-black text-center text-xl font-bold ${
                 isOtpInvalid ? "border-[#E65656]" : "border-grayText"
               }`}
@@ -196,6 +187,7 @@ const ForgotPassword2 = () => {
             />
           ))}
         </View>
+        
         {isOtpInvalid && (
           <Text className="text-[#E65656] text-base mb-[26px] pl-2">
             Invalid OTP. Please try again.
@@ -206,13 +198,16 @@ const ForgotPassword2 = () => {
           <Text className="text-base text-gray-700 leading-normal">
             Didn't receive the code?{" "}
           </Text>
-          <TouchableOpacity onPress={handleResendPress} disabled={timer > 0}>
+          <TouchableOpacity 
+            onPress={handleResendPress} 
+            disabled={timer > 0 || loading}
+          >
             <Text
               className={`text-base font-semibold underline ${
-                timer > 0 ? "text-gray-400" : "text-primary"
+                timer > 0 || loading ? "text-gray-400" : "text-primary"
               }`}
             >
-              Resend code
+              {loading && timer === 0 ? "Sending..." : "Resend code"}
             </Text>
           </TouchableOpacity>
 
@@ -226,9 +221,9 @@ const ForgotPassword2 = () => {
         <TouchableOpacity
           onPress={handleNextPress}
           className={`w-full p-6 rounded-[12px] mt-2 flex items-center ${
-            allFilled ? "bg-primary" : "bg-[#919191]"
+            allFilled && !loading ? "bg-primary" : "bg-[#919191]"
           }`}
-          disabled={!allFilled}
+          disabled={!allFilled || loading}
         >
           <Text className="text-white text-xl font-bold">
             {loading ? "Loading..." : "Next"}
