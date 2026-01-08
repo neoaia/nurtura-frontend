@@ -230,7 +230,7 @@ const ForgotPassword1 = () => {
             { 
               text: "Use Google", 
               onPress: () => {
-                router.push('/(auth)/login');
+                router.replace('/(auth)/login');
               }
             }
           ]

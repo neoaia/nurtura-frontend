@@ -1,23 +1,105 @@
 import { PasswordInput } from "@/components/auth/passwordInput";
 import { PrimaryButton } from "@/components/shared/primaryButton";
-import { useCreatePassword } from "@/hooks/auth/useCreatePassword";
-import { Text, View } from "react-native";
+import { Text, View, Alert } from "react-native";
+import { useState, useEffect } from "react";
+import useFetch from "@/hooks/useFetch";
+import * as SecureStore from "expo-secure-store";
+import { router, useLocalSearchParams } from "expo-router";
+import { isStrongPassword, validatePassword } from "@/utils/validation";
+
 
 const CreatePassword = () => {
-  const {
-    isPasswordVisible,
-    password,
-    confirmPassword,
-    isPasswordValid,
-    isConfirmPasswordValid,
-    passwordsMatch,
-    loading,
-    isNextButtonEnabled,
-    togglePasswordVisibility,
-    handlePasswordChange,
-    handleConfirmPasswordChange,
-    handleNextPress,
-  } = useCreatePassword();
+  // const {
+  //   isPasswordVisible,
+  //   password,
+  //   confirmPassword,
+  //   isPasswordValid,
+  //   isConfirmPasswordValid,
+  //   passwordsMatch,
+  //   loading,
+  //   isNextButtonEnabled,
+  //   togglePasswordVisibility,
+  //   handlePasswordChange,
+  //   handleConfirmPasswordChange,
+  //   handleNextPress,
+  // } = useCreatePassword();
+
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const isPasswordValid = isStrongPassword(password);
+  const isConfirmPasswordValid = isStrongPassword(confirmPassword);
+  const passwordsMatch = password === confirmPassword;
+
+  const { email } = useLocalSearchParams();
+
+  const isNextButtonEnabled =
+    password.length > 0 &&
+    confirmPassword.length > 0 &&
+    validatePassword(password) &&
+    validatePassword(confirmPassword) &&
+    password === confirmPassword;
+
+  const togglePasswordVisibility = () => {
+    setIsPasswordVisible((prev) => !prev);
+  }
+
+  const handlePasswordChange = (text: string) => {
+    setPassword(text.replace(/\s/g, ""));
+  }
+
+  const handleConfirmPasswordChange = (text: string) => {
+    setConfirmPassword(text.replace(/\s/g, ""));
+  }
+
+  const handleNextPress = async () => {
+    console.log("Next button pressed!");
+    setLoading(true);
+
+    if (passwordsMatch && isPasswordValid && isConfirmPasswordValid) {
+      try {
+        console.log("Password set successfully.");
+        router.push({
+          pathname: "/(auth)/signup/createUserInfo",
+          params: { email }
+        });
+      } catch (error: any) {
+        console.error("Error resetting password:", error);
+        Alert.alert("Error", "Unable to reset password. Please try again.");
+      } finally {
+        setLoading(false);
+      }
+    } else {
+      Alert.alert("Invalid Password", "Please check your inputs again.");
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    const loadPasswords = async () => {
+      const savedPassword = await SecureStore.getItemAsync("signup_password");
+      const savedConfirm = await SecureStore.getItemAsync(
+        "signup_confirm_password"
+      );
+
+      if (savedPassword) setPassword(savedPassword);
+      if (savedConfirm) setConfirmPassword(savedConfirm);
+    };
+    loadPasswords();
+  }, []);
+
+  useEffect(() => {
+    const savePasswords = async () => {
+      await SecureStore.setItemAsync("signup_password", password);
+      await SecureStore.setItemAsync(
+        "signup_confirm_password",
+        confirmPassword
+      );
+    };
+    savePasswords();
+  }, [password, confirmPassword]);
 
   return (
     <View className="flex-1 bg-white px-[16px] pb-[34px] w-screen justify-between h-screen">

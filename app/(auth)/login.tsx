@@ -5,35 +5,16 @@ import { GoogleSignInButton } from "@/components/auth/googleSignInButton";
 import { PasswordInput } from "@/components/auth/passwordInput";
 import { Divider } from "@/components/shared/divider";
 import { PrimaryButton } from "@/components/shared/primaryButton";
-import { useLogin } from "@/hooks/auth/useLogin";
+import { useAuth } from '@/contexts/AuthContext';
+import useFetch from "@/hooks/useFetch";
+import { cleanInput, validateEmail } from '@/utils/validation';
 import { router, useNavigation } from "expo-router";
-import { Image, Text, TouchableOpacity, View, Alert } from "react-native";
+import * as SecureStore from "expo-secure-store";
+import { useState } from "react";
+import { Alert, Image, Text, TouchableOpacity, View } from "react-native";
 import "../globals.css";
-import { useEffect, useState } from "react";
-import { useAuth } from '@/contexts/AuthContext'
-import { cleanInput, validateEmail } from '@/utils/validation'
 
 export default function LoginScreen() {
-  // const {
-  //   email,
-  //   password,
-  //   loading,
-  //   isPasswordVisible,
-  //   isLoginInvalid,
-  //   emailError,
-  //   handleEmailChange,
-  //   handlePasswordChange,
-  //   togglePasswordVisibility,
-  //   handleLogin,
-  //   handleGoogleSignIn,
-  // } = useLogin();
-
-  // const navigation = useNavigation();
-
-  // const handleForgotPassword = () => {
-  //   router.push("/(auth)/forgetpassword/forgotPassword1");
-  // };
-
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -41,16 +22,30 @@ export default function LoginScreen() {
   const [isLoginInvalid, setIsLoginInvalid] = useState(false);
   const [emailError, setEmailError] = useState<string>("");
 
-  const { signIn, googleSignIn } = useAuth();
+  const { signIn, googleSignInAndVerify } = useAuth();
   const navigation = useNavigation();
 
+  const {
+    refetch: checkNeedsOnboarding,
+  } = useFetch('/api/auth/onboarding-status', {
+    method: 'GET',
+    autoFetch: false,
+    withAuth: false,
+  });
+
   const handleEmailChange = (value: string) => {
-    const cleanedEmail = cleanInput(value);
-    setEmail(cleanedEmail );
-    
-    if (cleanedEmail.trim() === "") {
+    setEmail(value);
+
+    const trimmedEmail = value.trim();
+
+    if (trimmedEmail === "") {
       setEmailError("");
       setIsLoginInvalid(false);
+      return;
+    } 
+
+    if (validateEmail(trimmedEmail)) {
+      setEmailError("");
       return;
     }
 
@@ -70,7 +65,9 @@ export default function LoginScreen() {
   };
 
   const handleLogin = async () => {
-    if (!email || !password) {
+    const trimmedEmail = email.trim();
+
+    if (!trimmedEmail || !password) {
       Alert.alert("Error", "Please fill in all fields");
       return;
     }
@@ -79,7 +76,7 @@ export default function LoginScreen() {
     setIsLoginInvalid(false);
 
     try {
-      await signIn(email, password);
+      await signIn(trimmedEmail, password);
       router.replace("/(tabs)/(home)");
     } catch (error) {
       setIsLoginInvalid(true);
@@ -95,21 +92,55 @@ export default function LoginScreen() {
     setLoading(true);
 
     try {
-      const success = await googleSignIn();
+      const { userData  } = await googleSignInAndVerify();
 
-      if (success) {
-        router.replace("/(tabs)/(home)");
+      if (!userData?.email) {
+        Alert.alert("Google Sign-In Failed", "Unable to retrieve your email from Google.");
+        return;
+      }
+
+      const email = userData.email.trim().toLowerCase();
+
+      const response = await checkNeedsOnboarding({
+        params: { email },
+      });
+
+      if (!response || response.error) {
+        console.error("Error checking onboarding status:", response?.error);
+        Alert.alert("Google Sign-In Failed", "Unable to verify your account status. Please try again.");
+        return;
+      }
+
+      const needsOnboarding = response?.data?.needsOnboarding;
+
+      if (needsOnboarding) {
+        const userInfoFromGoogle = {
+          email: userData.email ?? "",
+          firstName: userData.firstName ?? "",
+          lastName: userData.lastName ?? "",
+          token: userData.token ?? "",
+        };
+
+        await SecureStore.setItemAsync(
+          "sso_temp_user_info",
+          JSON.stringify(userInfoFromGoogle)
+        );
+
+        await SecureStore.setItemAsync("fromGoogle", "true");
+
+        router.push({
+          pathname: "/(auth)/signup/createUserInfo",
+          params: { email },
+        });
       } else {
-        setIsLoginInvalid(true);
-        Alert.alert("Google Sign-In Failed", "Unable to sign in with Google. Please try again.");
+        router.replace("/(tabs)/(home)");
       }
     } catch (error) {
-      setIsLoginInvalid(true);
       Alert.alert("Google Sign-In Failed", "Unable to sign in with Google. Please try again.");
       console.log("Google Sign-In error:", error);
     } finally {
       setLoading(false);
-    };
+    }
   }
 
   const handleForgotPassword = () => {

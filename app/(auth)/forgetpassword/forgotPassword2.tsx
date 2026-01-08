@@ -1,7 +1,8 @@
 /* eslint-disable react/no-unescaped-entities */
+import useFetch from '@/hooks/useFetch';
 import { router, useLocalSearchParams } from "expo-router";
 import * as SecureStore from "expo-secure-store";
-import React, { useEffect, useRef, useState, useCallback } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   Alert,
   NativeSyntheticEvent,
@@ -11,7 +12,6 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import useFetch from '@/hooks/useFetch';
 
 const ForgotPassword2 = () => {
   const { email } = useLocalSearchParams();
@@ -21,7 +21,7 @@ const ForgotPassword2 = () => {
   const [isOtpInvalid, setIsOtpInvalid] = useState(false);
   const [timer, setTimer] = useState(60);
 
-  const inputs = useRef<Array<TextInput | null>>([]);
+  const inputs = useRef<(TextInput | null)[]>([]);
 
   const allFilled = otp.every((digit) => digit !== "");
 
@@ -63,16 +63,25 @@ const ForgotPassword2 = () => {
     }
   }, [email, sendOtp]);
 
-  const handleChange = (text: string, index: number) => {
-    if (/^\d$/.test(text) || text === "") {
-      const newOtp = [...otp];
-      newOtp[index] = text;
-      setOtp(newOtp);
-      setIsOtpInvalid(false); 
+  const handleChange = (text: string, index: number) => { 
+    if (!/^\d*$/.test(text)) return;
 
-      if (text && index < 4) {
-        inputs.current[index + 1]?.focus();
-      }
+    const newOtp = [...otp];
+    newOtp[index] = text;
+    setOtp(newOtp);
+
+    if (isOtpInvalid) {
+      setIsOtpInvalid(false);
+    }
+
+    if (text && index < 4) {
+      inputs.current[index + 1]?.focus();
+    }
+    
+    const filled = newOtp.every((digit) => digit !== "");
+    if (filled) {
+      const userCode = newOtp.join("");
+      submitOtp(userCode);
     }
   };
 
@@ -98,13 +107,7 @@ const ForgotPassword2 = () => {
     }
   };
 
-  const handleResendPress = () => {
-    if (timer > 0 || loading) return;
-    handleSendOtp(true);
-  };
-
-  const handleNextPress = async () => {
-    const userCode = otp.join("");
+  const submitOtp = async (userCode: string) => {
     setLoading(true);
     setIsOtpInvalid(false);
 
@@ -125,7 +128,7 @@ const ForgotPassword2 = () => {
       console.log("OTP verified successfully. Navigating...");
       await SecureStore.setItemAsync("forgot_password_verified_email", email as string);
       
-      router.replace({
+      router.push({
         pathname: "/(auth)/forgetpassword/forgotPassword3",
         params: { email },
       });
@@ -135,6 +138,16 @@ const ForgotPassword2 = () => {
       Alert.alert("Error", "Failed to verify OTP. Please try again.");
       setLoading(false); 
     }
+  };
+
+  const handleResendPress = () => {
+    if (timer > 0 || loading) return;
+    handleSendOtp(true);
+  };
+
+  const handleNextPress = () => {
+    const userCode = otp.join("");
+    submitOtp(userCode);
   };
 
   useEffect(() => {

@@ -85,6 +85,8 @@ const ForgotPassword3 = () => {
       Alert.alert("Error", "Failed to reset password. Please try again.");
       setLoading(false);
       return;
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -100,15 +102,16 @@ const ForgotPassword3 = () => {
       if (savedPassword) setPassword(savedPassword);
       if (savedConfirmPassword) setConfirmPassword(savedConfirmPassword);
     }
+    loadPasswords();
   }, []);
 
   useEffect(() => {
-    const savePasswwords = () => {
-      if (password) {
-
-      }
+    const savePasswords = () => {
+      if (password) SecureStore.setItemAsync("forgot_password_new_password", password);
+      if (confirmPassword) SecureStore.setItemAsync("forgot_password_confirm_password", confirmPassword);
     }
-  })
+    savePasswords();
+  }, [password, confirmPassword]);
 
 
   
