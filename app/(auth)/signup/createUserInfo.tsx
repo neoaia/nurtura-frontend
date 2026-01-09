@@ -1,31 +1,246 @@
 import { PrimaryButton } from "@/components/shared/primaryButton";
 import { TextInputField } from "@/components/shared/textInputField";
-import { useCreateUserInfo } from "@/hooks/auth/useCreateUserInfo";
-import { ScrollView, Text, View } from "react-native";
+import { useAuth } from "@/contexts/AuthContext";
+import { auth } from "@/firebase";
+import useFetch from "@/hooks/useFetch";
+import { cleanAlphaInput, cleanAlphanumericInput, cleanNameInput } from "@/utils/validation";
+import { useRouter } from "expo-router";
+import * as SecureStore from "expo-secure-store";
+import { useEffect, useState } from "react";
+import { Alert, ScrollView, Text, View } from "react-native";
+
+const USER_INFO_STORAGE_KEY = "temp_user_info";
+const SSO_INFO_STORAGE_KEY = "sso_temp_user_info";
+
+const CLEAR_STORAGE_KEYS = [
+  USER_INFO_STORAGE_KEY,
+  SSO_INFO_STORAGE_KEY,
+  "signup_email",
+  "verified_email",
+  "signup_password",
+  "signup_confirm_password",
+  "firebaseToken",
+  "fromGoogle",
+];
+
+const clearAllSecureStore = async () => {
+  await Promise.all(
+    CLEAR_STORAGE_KEYS.map((key) => SecureStore.deleteItemAsync(key))
+  );
+};
 
 const CreateUserInfo = () => {
+  const [firstName, setFirstName] = useState("");
+  const [middleName, setMiddleName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [suffix, setSuffix] = useState("");
+  const [block, setBlock] = useState("");
+  const [street, setStreet] = useState("");
+  const [barangay, setBarangay] = useState("");
+  const [city, setCity] = useState("");
+  const [fromGoogle, setFromGoogle] = useState("");
+  const [firebaseToken, setFirebaseToken] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const { signUp } = useAuth();
+
+  const router = useRouter();
+
+  const checkIfFirstNameHasValue = firstName.trim().length > 0;
+  const checkIfLastNameHasValue = lastName.trim().length > 0;
+  const checkIfAddressHasValue =
+    block.trim().length > 0 &&
+    street.trim().length > 0 &&
+    barangay.trim().length > 0 &&
+    city.trim().length > 0;
+
+  const areAllFieldsFilled =
+    checkIfFirstNameHasValue &&
+    checkIfLastNameHasValue &&
+    checkIfAddressHasValue;
+
   const {
-    firstName,
-    middleName,
-    lastName,
-    suffix,
-    block,
-    street,
-    barangay,
-    city,
-    fromGoogle,
-    loading,
-    areAllFieldsFilled,
-    handleFirstNameChange,
-    handleMiddleNameChange,
-    handleLastNameChange,
-    handleSuffixChange,
-    handleBlockChange,
-    handleStreetChange,
-    handleBarangayChange,
-    handleCityChange,
-    handleSubmitUserInfo,
-  } = useCreateUserInfo();
+    refetch: createAccount
+  } = useFetch('/api/users', {
+    method: 'POST',
+    autoFetch: false,
+    withAuth: false
+  });
+
+  const handleSubmitUserInfo = async () => {
+    setLoading(true);
+    try {
+      const savedData = await SecureStore.getItemAsync(USER_INFO_STORAGE_KEY);
+      if (savedData) {
+        const parsed = JSON.parse(savedData);
+        setFirstName(parsed.firstName || "");
+        setMiddleName(parsed.middleName || "");
+        setLastName(parsed.lastName || "");
+        setSuffix(parsed.suffix || "");
+        setBlock(parsed.block || "");
+        setStreet(parsed.street || "");
+        setBarangay(parsed.barangay || "");
+        setCity(parsed.city || "");
+      }
+
+      let tokenToUse = firebaseToken;
+
+      if (fromGoogle === "false") {
+        const verifiedEmail = await SecureStore.getItemAsync("verified_email");
+        const verifiedPassword = await SecureStore.getItemAsync(
+          "signup_confirm_password"
+        );
+
+        if (!verifiedEmail || !verifiedPassword) {
+          Alert.alert("Error", "Missing credentials");
+          setLoading(false);
+          return;
+        }
+
+        const { token } = await signUp(verifiedEmail, verifiedPassword);
+        tokenToUse = token;
+      } else {
+        const currentUser = auth.currentUser;
+        if (!currentUser) {
+          Alert.alert("Error", "Not signed in with Google.");
+          setLoading(false);
+          return;
+        }
+        tokenToUse = await currentUser.getIdToken(true);
+      }
+
+      setFirebaseToken(tokenToUse);
+
+      const userDetails = {
+        firstName,
+        middleName,
+        lastName,
+        suffix,
+        block,
+        street,
+        barangay,
+        city,
+      };
+
+      console.log("Creating account with details:", userDetails);
+
+      const response = await createAccount({
+        body: {
+          ...userDetails
+        },
+        headers: {
+          Authorization: `Bearer ${tokenToUse}`,
+        },
+      });
+
+      if (response.error) {
+        console.error("Error creating account:", response.error);
+        Alert.alert("Error", "Failed to create account.");
+        setLoading(false);
+        return;
+      }
+
+      console.log("User info submitted successfully.");
+      await clearAllSecureStore();
+      router.replace("/(tabs)/(home)");
+      
+    } catch (error) {
+      console.error("Error submitting user info:", error);
+      Alert.alert("Error", "Failed to submit user info.");
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  const handleFirstNameChange = (text: string) => {
+    setFirstName(cleanNameInput(text));
+  };
+  
+  const handleMiddleNameChange = (text: string) => {
+    setMiddleName(cleanNameInput(text));
+  };
+
+  const handleLastNameChange = (text: string) => {
+    setLastName(cleanNameInput(text).replace(/\./g, ""));
+  };
+
+  const handleSuffixChange = (text: string) => {
+    setSuffix(cleanAlphaInput(text));
+  };
+
+  const handleBlockChange = (text: string) => {
+    setBlock(cleanAlphanumericInput(text));
+  };
+  
+  const handleStreetChange = (text: string) => {
+    setStreet(cleanAlphanumericInput(text));
+  };
+  
+  const handleBarangayChange = (text: string) => {
+    setBarangay(cleanAlphanumericInput(text));
+  };
+  
+  const handleCityChange = (text: string) => {
+    setCity(cleanAlphanumericInput(text));
+  };
+  
+  useEffect(() => {
+    (async () => {
+      try {
+        const fromGoogleFlag = await SecureStore.getItemAsync("fromGoogle");
+        const isFromGoogle = fromGoogleFlag === "true";
+
+        setFromGoogle(isFromGoogle ? "true" : "false");
+
+        const storageKey = isFromGoogle ? SSO_INFO_STORAGE_KEY : USER_INFO_STORAGE_KEY;
+        const savedData = await SecureStore.getItemAsync(storageKey);
+
+        if (savedData) {
+          const parsed = JSON.parse(savedData);
+          if (isFromGoogle) {
+            setFirstName(parsed.firstName || "");
+            setLastName(parsed.lastName || "");
+            setFirebaseToken(parsed.token || "");
+          } else {
+            setFirstName(parsed.firstName || "");
+            setMiddleName(parsed.middleName || "");
+            setLastName(parsed.lastName || "");
+            setSuffix(parsed.suffix || "");
+            setBlock(parsed.block || "");
+            setStreet(parsed.street || "");
+            setBarangay(parsed.barangay || "");
+            setCity(parsed.city || "");
+          }
+        }
+      } catch (err) {
+        console.error("Error loading saved user info:", err);
+      }
+    })();
+  }, []);
+
+  useEffect(() => {
+    const saveUserInfo = async () => {
+      try {
+        const dataToSave = {
+          firstName,
+          middleName,
+          lastName,
+          suffix,
+          block,
+          street,
+          barangay,
+          city,
+        };
+        await SecureStore.setItemAsync(
+          USER_INFO_STORAGE_KEY,
+          JSON.stringify(dataToSave)
+        );
+      } catch (err) {
+        console.error("Error saving user info:", err);
+      }
+    };
+    saveUserInfo();
+  }, [firstName, middleName, lastName, suffix, block, street, barangay, city]);
 
   return (
     <View className="flex-1 bg-white">

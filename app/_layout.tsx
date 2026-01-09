@@ -1,8 +1,8 @@
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import * as SecureStore from "expo-secure-store";
-import { ActivityIndicator, View } from 'react-native';
 import { useEffect, useState } from 'react';
+import { ActivityIndicator, View } from 'react-native';
 import './globals.css';
 
 const GOOGLE_SIGNUP_FLAG_KEY = "fromGoogle"; 
@@ -37,18 +37,36 @@ function RootLayoutNav() {
   useEffect(() => {
     if (!isReady) return;
 
-    const inAuthGroup = segments[0] === '(auth)';
+    const runGuard = async () => {
+      const inAuthGroup = segments[0] === '(auth)';
+      const inSignupFlow = inAuthGroup && segments[1] === 'signup';
+      const inLoginScreen = inAuthGroup && segments[1] === 'login';
+      const flag = await SecureStore.getItemAsync(GOOGLE_SIGNUP_FLAG_KEY);
+      const isSigningUpFlag = flag === 'true';
 
-    if (!user && !inAuthGroup) {
-      router.replace('/(auth)/login');
-    } 
-    else if (user && inAuthGroup && !isSigningUp) { 
-      router.replace('/(tabs)'); 
-    }
+      if (!user && !inAuthGroup) {
+        router.replace('/(auth)/login');
+      } 
+      else if (user && inAuthGroup && !inSignupFlow && !inLoginScreen && !isSigningUpFlag) { 
+        router.replace('/(tabs)/(home)'); 
+      }
+    };
+
+    runGuard();
     
-  }, [user, isReady, isSigningUp, router, segments]);
+  }, [user, isReady, router, segments]);
 
   if (!isReady) {
+    return (
+      <View className="flex-1 items-center justify-center bg-white">
+        <ActivityIndicator size="large" color="#3b82f6" />
+      </View>
+    );
+  }
+
+  //this is where the animation should load so that the dashboard wont pop up in the first mount of the app
+  const inAuthGroupForRender = segments[0] === '(auth)';
+  if (!user && !inAuthGroupForRender) {
     return (
       <View className="flex-1 items-center justify-center bg-white">
         <ActivityIndicator size="large" color="#3b82f6" />

@@ -12,6 +12,7 @@ import {
   User
 } from 'firebase/auth';
 
+import useFetch from '@/hooks/useFetch';
 import React, { createContext, useContext, useEffect, useState } from 'react';
 
 export interface UserInfo {
@@ -32,7 +33,7 @@ interface AuthContextType {
   googleSignIn: () => Promise<{ userData: any }>;
   googleSignUp: () => Promise<{ userData: any }>;
   logout: () => Promise<void>;
-  googleSignInAndVerify: (localIp: string, port: string) => Promise<boolean>;
+  googleSignInAndVerify: () => Promise<{ userData: any }>;
 }
 
 const AuthContext = createContext<AuthContextType>({} as AuthContextType);
@@ -44,6 +45,22 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const [email, setEmail] = useState<string | null>("");
   const [googleLoggedIn, setGoogleLoggedIn] = useState(true);
+
+  const {
+    refetch: checkProviders
+  } = useFetch('/api/auth/providers', {
+    method: 'GET',
+    autoFetch: false,
+    withAuth: false,
+  });
+
+  const {
+    refetch: checkEmail
+  } = useFetch('/api/users', {
+    method: 'GET',
+    autoFetch: false,
+    withAuth: false,
+  });
 
   useEffect(() => {
     GoogleSignin.configure({
@@ -81,78 +98,79 @@ useEffect(() => {
   }
 }, []);
 
-  const googleSignInAndVerify = async (localIp: string, port: string) => {
+  const googleSignInAndVerify = async () => {
     try {
-        // Get Google info without touching Firebase
-        await GoogleSignin.hasPlayServices();
-        const result = await GoogleSignin.signIn();
-        const googleEmail = result.data?.user?.email;
+      // Get Google info without touching Firebase
+      await GoogleSignin.hasPlayServices();
+      const result = await GoogleSignin.signIn();
+      const rawGoogleEmail = result.data?.user?.email;
 
-        if (!googleEmail) {
-            throw new Error("No email found from Google account.");
-        }
+      if (!rawGoogleEmail) {
+        throw new Error("No email found from Google account.");
+      }
 
-        const response = await fetch(`http://${localIp}:${port}/users/SSO-isNewUser`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email: googleEmail }),
+      const googleEmail = rawGoogleEmail.trim().toLowerCase();
+
+      const emailResponse = await checkEmail({ params: { email: googleEmail } });
+
+      if (!emailResponse || emailResponse.error) {
+        throw new Error(emailResponse?.error?.message || "Error checking email.");
+      }
+
+      const emailAvailable = emailResponse?.data?.available;
+
+      if (!emailAvailable) {
+        const providersResponse = await checkProviders({
+          params: { email: googleEmail },
         });
 
-        const apiResult = await response.json();
-
-        // Check if user doesn't exist in database
-        if (response.status === 404 || apiResult.isNewUser) {
-            await GoogleSignin.signOut(); 
-            throw new Error(response.status === 404 ?
-                "Account not found. Please sign up." : 
-                "This account is not registered. Please use Sign Up instead."
-            );
+        if (!providersResponse || providersResponse.error) {
+          throw new Error(providersResponse?.error?.message || "Error checking providers.");
         }
 
-        // Check if user registered with Google
-        const providers = apiResult.providers || [];
+        const providers = providersResponse?.data?.providers || [];
         const hasGoogleProvider = providers.includes('google.com');
-        
+
         console.log("Providers for this email:", providers);
-        
+
         if (!hasGoogleProvider) {
-            await GoogleSignin.signOut();
-            throw new Error(
-                "This email is registered with a password. Please sign in using email and password instead."
-            );
+          await GoogleSignin.signOut();
+          throw new Error(
+            "This email is registered with a password. Please sign in using email and password instead."
+          );
         }
+      }
 
-        // If everything is good, proceed with Firebase sign-in
-        const idToken = result.data?.idToken;
-        if (!idToken) throw new Error('No ID token returned from Google');
+      const idToken = result.data?.idToken;
+      if (!idToken) throw new Error('No ID token returned from Google');
 
-        const credential = GoogleAuthProvider.credential(idToken);
-        const userCredential = await signInWithCredential(auth, credential);
+      const credential = GoogleAuthProvider.credential(idToken);
+      const userCredential = await signInWithCredential(auth, credential);
 
-        const firebaseUser = userCredential.user;
-        const firebaseToken = await firebaseUser.getIdToken();
-        await SecureStore.setItemAsync("firebaseToken", firebaseToken);
+      const firebaseUser = userCredential.user;
+      const firebaseToken = await firebaseUser.getIdToken();
+      await SecureStore.setItemAsync("firebaseToken", firebaseToken);
 
-        const googleUser = result.data?.user;
+      const googleUser = result.data?.user;
 
-        const userData: UserInfo = {
-          uid: firebaseUser.uid,
-          email: firebaseUser.email,
-          firstName: googleUser?.givenName || null,
-          lastName: googleUser?.familyName || null,
-          token: firebaseToken
-        };
+      const userData: UserInfo = {
+        uid: firebaseUser.uid,
+        email: firebaseUser.email,
+        firstName: googleUser?.givenName || null,
+        lastName: googleUser?.familyName || null,
+        token: firebaseToken
+      };
 
-        setUser(userData);
-        setGoogleLoggedIn(true);
-        return true;
+      setUser(userData);
+      setGoogleLoggedIn(true);
+      return { userData };
 
     } catch (error: any) {
-        console.error("Verification Error:", error.message);
-        await GoogleSignin.signOut();
-        setUser(null);
-        setGoogleLoggedIn(false);
-        return false;
+      console.error("Verification Error:", error.message);
+      await GoogleSignin.signOut();
+      setUser(null);
+      setGoogleLoggedIn(false);
+      return { userData: null };
     }
   };
 
@@ -162,24 +180,23 @@ useEffect(() => {
   };
 
   const signUp = async (email: string, password: string) => {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
 
-      const token = await userCredential.user.getIdToken();
+    const token = await userCredential.user.getIdToken();
 
-      setEmail(email);
+    setEmail(email);
 
-      return{
-        user: userCredential.user,
-        token
-      }
+    return {
+      user: userCredential.user,
+      token,
     };
+  };
 
   const signIn = async (email: string, password: string) => {
-      setEmail(email);
-      
-      await signInWithEmailAndPassword(auth, email, password);
+    setEmail(email);
 
-    };
+    await signInWithEmailAndPassword(auth, email, password);
+  };
 
   const googleSignIn = async (): Promise<{ userData: UserInfo }> => {
     try {
@@ -256,6 +273,21 @@ useEffect(() => {
   const logout = async () => {
     try {
       setUser(null);
+
+      // Clear all auth-related SecureStore keys on logout
+      const keysToClear = [
+        "temp_user_info",
+        "sso_temp_user_info",
+        "signup_email",
+        "verified_email",
+        "signup_password",
+        "signup_confirm_password",
+        "firebaseToken",
+        "fromGoogle",
+      ];
+
+      await Promise.all(keysToClear.map((key) => SecureStore.deleteItemAsync(key)));
+
       await GoogleSignin.signOut();
       await signOut(auth);
     } catch (error: any) {

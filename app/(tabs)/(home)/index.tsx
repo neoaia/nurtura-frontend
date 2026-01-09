@@ -14,39 +14,43 @@ interface FetchUserResponse {
 }
 
 export default function NurturaWelcome() {
-  const { logout } = useAuth();
-  const currentUser = auth.currentUser;
-  const emailToSend = currentUser?.email?.trim().toLowerCase() || "";
+  // const { logout } = useAuth();
+  // const currentUser = auth.currentUser;
+  // const emailToSend = currentUser?.email?.trim().toLowerCase() || "";
 
-  const { data, error, loading, refetch } = useFetch<FetchUserResponse>(
-    `http://${LOCAL_IP}:${PORT}/users/fetch-userinfo`,
-    {
-      method: 'POST',
-      body: { email: emailToSend },
-      autoFetch: !!emailToSend,
-    }
-  );
+  // const { data, error, loading, refetch } = useFetch<FetchUserResponse>(
+  //   `http://${LOCAL_IP}:${PORT}/users/fetch-userinfo`,
+  //   {
+  //     method: 'POST',
+  //     body: { email: emailToSend },
+  //     autoFetch: !!emailToSend,
+  //   }
+  // );
 
-  useEffect(() => {
-    if (error) {
-      console.error("Fetch user info failed:", error);
-      Alert.alert("Error", "Unable to fetch profile data.");
-    }
-  }, [error]);
+  // useEffect(() => {
+  //   if (error) {
+  //     console.error("Fetch user info failed:", error);
+  //     Alert.alert("Error", "Unable to fetch profile data.");
+  //   }
+  // }, [error]);
 
-  useEffect(() => {
-    if (data) {
-      console.log("User info fetched:", data.userInfo);
-    }
-  }, [data]);
+  // useEffect(() => {
+  //   if (data) {
+  //     console.log("User info fetched:", data.userInfo);
+  //   }
+  // }, [data]);
 
-  const userInfo = data?.userInfo;
+  // const userInfo = data?.userInfo;
   
 
-  const fullName = `${userInfo?.first_name || "—"} ${userInfo?.last_name || ""}`;
-  // const age = userInfo?.birthdate
-  //   ? Math.floor((new Date().getTime() - new Date(userInfo.birthdate).getTime()) / (1000 * 60 * 60 * 24 * 365))
-  //   : "—";
+  // const fullName = `${userInfo?.first_name || "—"} ${userInfo?.last_name || ""}`;
+  // // const age = userInfo?.birthdate
+  // //   ? Math.floor((new Date().getTime() - new Date(userInfo.birthdate).getTime()) / (1000 * 60 * 60 * 24 * 365))
+  // //   : "—";
+
+    const { logout } = useAuth();
+    const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
+    const [error, setError] = useState<any>(null);
 
   const handleLogout = async () => {
       Alert.alert(
@@ -76,7 +80,7 @@ export default function NurturaWelcome() {
       <View style={styles.header}>
         <View>
           <Text style={styles.welcome}>Welcome,</Text>
-          <Text style={styles.username}>{fullName}</Text>
+          <Text style={styles.username}>{userInfo ? `${userInfo.first_name || "—"} ${userInfo.last_name || ""}` : "—"}</Text>
         </View>
 
         {/* <Image

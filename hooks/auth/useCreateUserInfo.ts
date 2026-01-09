@@ -28,6 +28,7 @@ export const useCreateUserInfo = () => {
   const [fromGoogle, setFromGoogle] = useState("");
   const [firebaseToken, setFirebaseToken] = useState("");
   const [loading, setLoading] = useState(false);
+  const [savedData, setSavedData] = useState("");
 
   const { email, signUp } = useAuth();
 
@@ -37,6 +38,7 @@ export const useCreateUserInfo = () => {
         const savedData = await SecureStore.getItemAsync(USER_INFO_STORAGE_KEY);
         const fromGoogle = await SecureStore.getItemAsync("fromGoogle");
         setFromGoogle(fromGoogle ? fromGoogle : "false");
+        setSavedData(savedData ? savedData : "");
 
         if (fromGoogle === "true") {
           if (savedData) {
@@ -211,8 +213,7 @@ export const useCreateUserInfo = () => {
         console.log("createUserInfo" + email);
 
         router.replace({
-          pathname: "/(tabs)/(home)",
-          params: { email: result.email },
+          pathname: "/(tabs)/(home)"
         });
       } else {
         console.error("Error:", result.message);

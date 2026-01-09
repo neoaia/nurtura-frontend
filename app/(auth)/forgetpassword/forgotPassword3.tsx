@@ -10,169 +10,111 @@ import {
   TouchableWithoutFeedback,
   View,
 } from "react-native";
+import useFetch from '@/hooks/useFetch';
+import { validatePassword, cleanInput, isStrongPassword } from "@/utils/validation";
 
 const ForgotPassword3 = () => {
-  const LOCAL_IP = process.env.EXPO_PUBLIC_LOCAL_IP_ADDRESS;
-  const PORT = process.env.EXPO_PUBLIC_PORT;
-
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-
-  useEffect(() => {
-    const loadPasswords = async () => {
-      const savedPassword = await SecureStore.getItemAsync(
-        "forgot_password_new_password"
-      );
-      const savedConfirm = await SecureStore.getItemAsync(
-        "forgot_password_confirm_password"
-      );
-
-      if (savedPassword) setPassword(savedPassword);
-      if (savedConfirm) setConfirmPassword(savedConfirm);
-    };
-    loadPasswords();
-  }, []);
-
-  useEffect(() => {
-    const savePasswords = async () => {
-      if (password)
-        await SecureStore.setItemAsync(
-          "forgot_password_new_password",
-          password
-        );
-      if (confirmPassword)
-        await SecureStore.setItemAsync(
-          "forgot_password_confirm_password",
-          confirmPassword
-        );
-    };
-    savePasswords();
-  }, [password, confirmPassword]);
-
-  const cleanInput = (text: string) => {
-    return text
-      .replace(/\s/g, "") // remove spaces
-      .replace(
-        /([\u2700-\u27BF]|[\uE000-\uF8FF]|[\uD83C-\uDBFF\uDC00-\uDFFF])+?/g,
-        ""
-      ); // remove emojis
-  };
-
-  // para sa show/hide password
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
-
-  // para sa password inputs
-  
-
-  // password validation
-  const [isPasswordValid, setIsPasswordValid] = useState(false);
-  const [isConfirmPasswordValid, setIsConfirmPasswordValid] = useState(false);
-  const [passwordsMatch, setPasswordsMatch] = useState(false);
-
   const [loading, setLoading] = useState(false);
 
   const { email } = useLocalSearchParams();
 
-  // pang-enable lang sa Next button
   const isNextButtonEnabled =
-    isPasswordValid && isConfirmPasswordValid && passwordsMatch;
+    password.length > 0 &&
+    confirmPassword.length > 0 &&
+    validatePassword(password) &&
+    validatePassword(confirmPassword) &&
+    password === confirmPassword;
 
-  console.log("Next button enabled:", isNextButtonEnabled);
+  const isPasswordValid = isStrongPassword(password);
+  const isConfirmPasswordValid = isStrongPassword(confirmPassword);
+  const passwordsMatch = password === confirmPassword;
 
-  useEffect(() => {
-    console.log("isNextButtonEnabled:", isNextButtonEnabled);
-  }, [isNextButtonEnabled]);
+  const {
+    refetch: resetPassword
+  } = useFetch('/api/auth/reset-password', {
+    method: 'POST',
+    autoFetch: false,
+    withAuth: false
+  });
 
-  useEffect(() => {
-    console.log("CreatePassword component mounted");
-  }, []);
+  const resetPasswordSuccess = async (email: string): Promise<any> => {
+    try {
+      const response = await resetPassword({
+        body: { email, newPassword: password }
+      });
 
-  // regex para sa password
-  const isStrongPassword = (password: string) => {
-    const hasUpperCase = /[A-Z]/.test(password);
-    const hasSymbol = /[^A-Za-z0-9]/.test(password);
-    const hasDigit = /[0-9]/.test(password);
-    const isLongEnough = password.length >= 8;
-    return hasUpperCase && hasSymbol && hasDigit && isLongEnough;
-  };
+      if (response.error) {
+        return { data: null, success: false };
+      }
 
-  // real-time validation
-  useEffect(() => {
-    if (password.length > 0) {
-      const valid = isStrongPassword(password);
-      setIsPasswordValid(valid);
-      console.log(
-        valid ? "Set password is valid." : "Set password is not valid."
-      );
+      return { data: response.data, success: true };
+    } catch(error) {
+      return { data: null, success: false };
     }
+  }
 
-    if (confirmPassword.length > 0) {
-      const valid = isStrongPassword(confirmPassword);
-      setIsConfirmPasswordValid(valid);
-      console.log(
-        valid ? "Confirm password is valid." : "Confirm password is not valid."
-      );
-    }
-
-    if (password && confirmPassword) {
-      const match = password === confirmPassword;
-      setPasswordsMatch(match);
-      console.log(match ? "Passwords match." : "Passwords do not match.");
-    }
-  }, [password, confirmPassword]);
-
-  // sa next press lang
   const handleNextPress = async () => {
+    if (!email) {
+      Alert.alert("Error", "Email is missing. Please restart the password reset process.");
+      return;
+    }
+
     setLoading(true);
 
-    if (passwordsMatch && isPasswordValid && isConfirmPasswordValid) {
-      try {
-        const response = await fetch(
-          `http://${LOCAL_IP}:${PORT}/users/reset-password`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email, newPassword: password }),
-          }
-        );
+    if (!passwordsMatch) return Alert.alert("Error", "Passwords do not match.");
 
-        const result = await response.json();
+    try {
+      const { success } = await resetPasswordSuccess(email as string);
 
-        if (response.ok) {
-          console.log("Password changed successfully:", result);
-
-          // Clear all forgot password data
-          await SecureStore.deleteItemAsync("forgot_password_email");
-          await SecureStore.deleteItemAsync("forgot_password_verified_email");
-          await SecureStore.deleteItemAsync("forgot_password_new_password");
-          await SecureStore.deleteItemAsync("forgot_password_confirm_password");
-
-          Alert.alert("Success", "Password has been reset.");
-          router.replace("/(auth)/login");
-        } else {
-          console.error("Error:", result.message);
-          return Alert.alert(
-            "Error",
-            "An error occured when resetting the password."
-          );
-        }
-      } catch (error) {
-        console.error("Error resetting password:", error);
-        Alert.alert("Error", "Unable to reset password. Please try again.");
-      } finally {
+      if (!success) {
+        Alert.alert("Error", "Failed to reset password. Please try again.");
         setLoading(false);
+        return;
       }
-    }
-  };
 
-  // togge lang
-  const togglePasswordVisibility = () => {
-    if (isPasswordVisible) {
-      setIsPasswordVisible(false);
-    } else {
-      setIsPasswordVisible(true);
+      Alert.alert("Success", "Your password has been reset successfully.", [
+        {
+          text: "OK",
+          onPress: () => router.replace("/(auth)/login"),
+        },
+      ]);
+    } catch (error) {
+      Alert.alert("Error", "Failed to reset password. Please try again.");
+      setLoading(false);
+      return;
+    } finally {
+      setLoading(false);
     }
-  };
+  }
+
+  const togglePasswordVisibility = () => {
+    setIsPasswordVisible(!isPasswordVisible);
+  }
+
+  useEffect(() => {
+    const loadPasswords = async () => {
+      const savedPassword = await SecureStore.getItemAsync("forgot_password_new_password");
+      const savedConfirmPassword = await SecureStore.getItemAsync("forgot_password_confirm_password");
+
+      if (savedPassword) setPassword(savedPassword);
+      if (savedConfirmPassword) setConfirmPassword(savedConfirmPassword);
+    }
+    loadPasswords();
+  }, []);
+
+  useEffect(() => {
+    const savePasswords = () => {
+      if (password) SecureStore.setItemAsync("forgot_password_new_password", password);
+      if (confirmPassword) SecureStore.setItemAsync("forgot_password_confirm_password", confirmPassword);
+    }
+    savePasswords();
+  }, [password, confirmPassword]);
+
+
+  
 
   return (
     <View className="flex-1 bg-white px-[16px] pb-[34px] w-screen justify-between h-screen">

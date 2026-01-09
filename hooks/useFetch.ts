@@ -1,65 +1,75 @@
-import { useState, useEffect, useCallback } from 'react';
+import { getFirebaseIdToken } from '@/lib/firebaseAuth';
+import axios, { AxiosRequestConfig } from 'axios';
+import { useCallback, useEffect, useState } from 'react';
 import { UseFetchOptions, UseFetchResult } from '../types/interface';
 
 function useFetch<T = any>(url: string, options: UseFetchOptions = {}): UseFetchResult<T> {
-    const { method = 'GET', body = null, headers = {},autoFetch = true } = options;
+    const { 
+        method = 'GET', 
+        body = null, 
+        headers = {}, 
+        autoFetch = true, 
+        withAuth = false,
+        params = {}
+    } = options;
 
     const [data, setData] = useState<T | null>(null);
-    const [error, setError] = useState<Error | null>(null);
+    const [error, setError] = useState<any>(null);
     const [loading, setLoading] = useState<boolean>(false);
 
-    const bodyString = JSON.stringify(body);
-    const headersString = JSON.stringify(headers);
-
+    const apiUrl = process.env.EXPO_PUBLIC_API_URL || '';
+    const fullUrl = `${apiUrl}${url}`;
 
     const fetchData = useCallback(
         async (overrideOptions?: UseFetchOptions) => {
-            const fetchMethod = overrideOptions?.method || method;
-            const fetchBody = overrideOptions?.body || body;
-            const fetchHeaders = { ...headers, ...overrideOptions?.headers };
-
-            
             setLoading(true);
             setError(null);
 
             try {
-                const config: RequestInit = {
-                    method: fetchMethod,
+                const token = withAuth ? await getFirebaseIdToken() : null;
+                const resolvedMethod = overrideOptions?.method || method;
+                const finalParams = overrideOptions?.params !== undefined ? overrideOptions.params : params;
+                const finalBody = overrideOptions?.body !== undefined ? overrideOptions.body : body;
+
+                const config: AxiosRequestConfig = {
+                    url: fullUrl,
+                    method: resolvedMethod,
                     headers: {
                         'Content-Type': 'application/json',
-                        ...fetchHeaders,
+                        ...headers,
+                        ...overrideOptions?.headers,
+                        ...(token && { Authorization: `Bearer ${token}` }),
                     },
+                    // Apply params for GET requests ONLY
+                    ...(resolvedMethod === "GET" && { params: finalParams }),
+                    // Apply data for POST/PUT/PATCH requests
+                    ...(resolvedMethod !== "GET" && { data: finalBody })
                 };
 
-                if (fetchMethod === 'POST' && fetchBody) {
-                    config.body = JSON.stringify(fetchBody);
-                }
-
-                const response = await fetch(url, config);
-
-                if (!response.ok) {
-                    throw new Error(`Error: ${response.status} ${response.statusText}`);
-                }
-
-                const result = await response.json();
-                setData(result);
-            } 
-            
-            catch (err) {
-                setError(err as Error);
+                const response = await axios(config);
+                setData(response.data);
+                
+                return { data: response.data, error: null };
+            } catch (err: any) {
+                const errorObj = {
+                    message: err.response?.data?.message || err.message || 'Request failed',
+                    status: err.response?.status,
+                    data: err.response?.data
+                };
+                setError(errorObj);
                 setData(null);
-            } 
-            
-            finally {
+                
+                return { data: null, error: errorObj };
+            } finally {
                 setLoading(false);
             }
-        }, [url, method, bodyString, headersString]
+        }, [method, body, headers, withAuth, params, fullUrl]
     );
 
     useEffect(() => {
-       if (autoFetch) {
-        fetchData();
-       }
+        if (autoFetch) {
+            fetchData();
+        }
     }, [fetchData, autoFetch]);
 
     return { data, error, loading, refetch: fetchData };
