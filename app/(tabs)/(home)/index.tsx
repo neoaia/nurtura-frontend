@@ -1,252 +1,216 @@
-import { useAuth } from "@/contexts/AuthContext";
-import { auth } from '@/firebase';
-import React, { useEffect, useState } from "react";
-import { Alert, Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import useFetch from "@/hooks/useFetch";
-import { UserInfo } from "@/types/interface";
-import { router } from "expo-router";
+import React, { useEffect, useState } from 'react';
+import { Image, ScrollView, StatusBar, Text, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import NotificationIcon from '../../../assets/images/notificationIcon.png'; // replace with your actual image
+import { Highlight } from '../../../components/auth/highlight';
+import { RecentActivityBar } from '../../../components/auth/recentActivityBar';
+import { SummaryCard } from '../../../components/auth/summaryCard';
 
-const LOCAL_IP = process.env.EXPO_PUBLIC_LOCAL_IP_ADDRESS;
-const PORT = process.env.EXPO_PUBLIC_PORT;
-
-interface FetchUserResponse {
-  userInfo: UserInfo;
+interface DashboardDTO {
+  user: {
+    name: string;
+    hasNotifications: boolean;
+  };
+  summary: {
+    id: string;
+    type: string;
+    value: number | null;
+  }[];
+  highlight: {
+    title: string;
+    description: string;
+    buttonText: string;
+  };
+  recentActivity: {
+    id: string;
+    type: 'water' | 'light';
+    action: string;
+    plant: string;
+    timestamp: string;
+    amount?: string;
+    duration?: string;
+  }[];
 }
 
-export default function NurturaWelcome() {
-  // const { logout } = useAuth();
-  // const currentUser = auth.currentUser;
-  // const emailToSend = currentUser?.email?.trim().toLowerCase() || "";
+// Mock data
+const mockApiResponse: DashboardDTO = {
+  user: {
+    name: 'Juan',
+    hasNotifications: true
+  },
+  summary: [
+    {
+      id: 'racks',
+      type: 'racks',
+      value: 2,
+    },
+    {
+      id: 'plants',
+      type: 'plants',
+      value: 2,
+    }
+  ],
+  highlight: {
+    title: 'Farm Efficiently',
+    description: 'Start growing your plant with Nurtura Racks.',
+    buttonText: 'Add a Rack'
+  },
+  recentActivity: [
+    {
+      id: '1',
+      type: 'water',
+      action: 'Watered the',
+      plant: 'Cherry Tomato',
+      timestamp: '9:18 AM',
+      amount: '76 mL',
+    },
+    {
+      id: '2',
+      type: 'light',
+      action: 'Gave light to',
+      plant: 'Cherry Tomato',
+      timestamp: '9:28 AM',
+      duration: '2 mins',
+    },
+    {
+      id: '3',
+      type: 'light',
+      action: 'Gave light to',
+      plant: 'Cherry Tomato',
+      timestamp: '9:18 AM',
+      duration: '2 mins',
+    }
+  ]
+};
 
-  // const { data, error, loading, refetch } = useFetch<FetchUserResponse>(
-  //   `http://${LOCAL_IP}:${PORT}/users/fetch-userinfo`,
-  //   {
-  //     method: 'POST',
-  //     body: { email: emailToSend },
-  //     autoFetch: !!emailToSend,
-  //   }
-  // );
+// API
+const apiService = {
+  fetchDashboard: async (): Promise<DashboardDTO> => {
+    try {
+      return new Promise((resolve) => {
+        setTimeout(() => resolve(mockApiResponse), 500);
+      });
+    } catch (error) {
+      console.error('Error fetching dashboard:', error);
+      throw error;
+    }
+  },
 
-  // useEffect(() => {
-  //   if (error) {
-  //     console.error("Fetch user info failed:", error);
-  //     Alert.alert("Error", "Unable to fetch profile data.");
-  //   }
-  // }, [error]);
+  addRack: async (rackData: any) => {
+    try {
+      console.log('Adding rack:', rackData);
+      return { success: true };
+    } catch (error) {
+      console.error('Error adding rack:', error);
+      throw error;
+    }
+  },
 
-  // useEffect(() => {
-  //   if (data) {
-  //     console.log("User info fetched:", data.userInfo);
-  //   }
-  // }, [data]);
+  getNotifications: async () => {
+    try {
+      return { notifications: [] };
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
+      throw error;
+    }
+  }
+};
 
-  // const userInfo = data?.userInfo;
-  
+export default function HomeScreen() {
+  const [data, setData] = useState<DashboardDTO>(mockApiResponse);
+  const [loading, setLoading] = useState(false);
 
-  // const fullName = `${userInfo?.first_name || "—"} ${userInfo?.last_name || ""}`;
-  // // const age = userInfo?.birthdate
-  // //   ? Math.floor((new Date().getTime() - new Date(userInfo.birthdate).getTime()) / (1000 * 60 * 60 * 24 * 365))
-  // //   : "—";
+  useEffect(() => {
+    loadDashboard();
+  }, []);
 
-    const { logout } = useAuth();
-    const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
-    const [error, setError] = useState<any>(null);
+  const loadDashboard = async () => {
+    setLoading(true);
+    try {
+      const dashboardData = await apiService.fetchDashboard();
+      setData(dashboardData);
+    } catch (error) {
+      console.error('Failed to load dashboard:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  const handleLogout = async () => {
-      Alert.alert(
-        'Logout',
-        'Are you sure you want to logout?',
-        [
-          { text: 'Cancel', style: 'cancel' },
-          {
-            text: 'Logout',
-            style: 'destructive',
-            onPress: async () => {
-              try {
-                await logout();
-                router.replace('/(auth)/login');
-              } catch (error: any) {
-                Alert.alert('Error', error.message);
-              }
-            },
-          },
-        ]
-      );
-    };
+  const handleNotificationPress = async () => {
+    console.log('Notification pressed');
+    const notifications = await apiService.getNotifications();
+  };
+
+  const handleCardPress = (cardType: string) => {
+    console.log('Card pressed:', cardType);
+  };
+
+  const handleAddRack = async () => {
+    try {
+      await apiService.addRack({ name: 'New Rack' });
+      loadDashboard();
+    } catch (error) {
+      console.error('Failed to add rack:', error);
+    }
+  };
+
+  if (loading) {
+    return (
+      <View className="flex-1 bg-[#7a8f5e] items-center justify-center">
+        <Text className="text-xl text-white">Loading...</Text>
+      </View>
+    );
+  }
 
   return (
-    <View style={styles.container}>
-      
-      <View style={styles.header}>
-        <View>
-          <Text style={styles.welcome}>Welcome,</Text>
-          <Text style={styles.username}>{userInfo ? `${userInfo.first_name || "—"} ${userInfo.last_name || ""}` : "—"}</Text>
-        </View>
-
-        {/* <Image
-          source={require("@/assets/images/google.png")}
-          style={styles.avatarPlaceholder}
-          resizeMode="cover"
-        /> */}
-      </View>
-
-      {/* <View style={styles.centerSection}>
-        <Image
-          source={require("@/assets/images/nurturaRack.png")}
-          style={styles.plantImage}
-          resizeMode="contain"
-        />
-
-        <View style={styles.messageContainer}>
-          <Text style={styles.boldText}>
-            <Text style={styles.placeholder}>{userInfo?.first_name || "—"}</Text>, doesn't have a Nurtura Rack
+    <SafeAreaView 
+      className="flex-1 bg-[#7a8f5e]"
+      edges={['top', 'bottom']}>
+      <StatusBar barStyle="light-content" />
+      <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+        {/* Header */}
+        <View className="px-10 pt-4 pb-2 flex-row items-center justify-between">
+          <Text className="text-3xl font-bold text-white">
+            Hi {data.user.name}!
           </Text>
-        </View>
-      </View> */}
-
-      <View className="flex-1 bg-white px-6 justify-center">
-        <View className="bg-gray-100 rounded-lg p-6 mb-6">
-          <Text className="text-lg font-semibold text-gray-800 mb-2">
-            Logged in as:
-          </Text>
-          <Text className="text-base text-gray-600">{auth.currentUser?.email}</Text>
-        </View>
-
-        {userInfo ? (
-            <>
-              <Text className="text-base text-gray-700">
-                <Text className="font-semibold">First Name: </Text>{userInfo.first_name || '—'}
-              </Text>
-              <Text className="text-base text-gray-700">
-                <Text className="font-semibold">Midlle Name: </Text>{userInfo.middle_name || '—'}
-              </Text>
-              <Text className="text-base text-gray-700">
-                <Text className="font-semibold">Last Name: </Text>{userInfo.last_name || '—'}
-              </Text>
-              <Text className="text-base text-gray-700">
-                <Text className="font-semibold">Suffix: </Text>{userInfo.suffix || '—'}
-              </Text>
-              <Text className="text-base text-gray-700">
-                <Text className="font-semibold">Address: </Text>{userInfo.address || '—'}
-              </Text>
-            </>
-          ) : (
-            <Text className="text-gray-500">No additional info found.</Text>
-          )}
-
-        {error && (
           <TouchableOpacity
-            className="bg-blue-500 rounded-lg py-3 mb-4 active:bg-blue-600"
-            onPress={() => refetch()}
+            onPress={handleNotificationPress}
+            className="relative p-2"
+            activeOpacity={0.7}
           >
-            <Text className="text-white text-center font-semibold">
-              Retry Fetch
-            </Text>
+            <Image
+              source={NotificationIcon}
+              className="w-8 h-8"
+              resizeMode="contain"
+            />
+
+            {data.user.hasNotifications && (
+              <View className="absolute top-0 right-0 w-3 h-3 bg-red-500 rounded-full border-2 border-white" />
+            )}
           </TouchableOpacity>
-        )}
+        </View>
 
-        <TouchableOpacity
-          className="bg-red-500 rounded-lg py-4 active:bg-red-600"
-          onPress={handleLogout}
-        >
-          <Text className="text-white text-center font-semibold text-lg">
-            Logout
-          </Text>
-        </TouchableOpacity>
+        {/* Content */}
+        <View className="pt-4">
+          <View className='px-4'>
+            <SummaryCard 
+            cards={data.summary}
+            onCardPress={handleCardPress}
+          />
+          </View>
+          
+          <View className="bg-white rounded-t-3xl p-6 shadow-lg">
+            <Highlight
+              title={data.highlight.title}
+              description={data.highlight.description}
+              buttonText={data.highlight.buttonText}
+              onButtonPress={handleAddRack}
+            />
 
-        <TouchableOpacity
-          className="bg-gray-500 rounded-lg py-4 active:bg-gray-600 mt-10"
-          onPress={() => router.push('/(tabs)/(home)/notification')}
-        >
-          <Text className="text-white text-center font-semibold text-lg">
-            Notification Test Routing
-          </Text>
-        </TouchableOpacity>
-      </View>
-    </View>
+            <RecentActivityBar activities={data.recentActivity} />
+          </View>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#fff",
-    paddingHorizontal: 28,
-    paddingTop: 60,
-    paddingBottom: 30,
-    justifyContent: "space-between",
-  },
-
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 30,
-  },
-
-  welcome: {
-    fontSize: 32,
-    color: "#333",
-    fontWeight: "600",
-  },
-
-  username: {
-    fontSize: 30,
-    color: "#000",
-    fontWeight: "800",
-    marginTop: 2,
-    maxWidth: 220,
-  },
-
-  centerSection: {
-    alignItems: "flex-start",
-  },
-
-   avatarPlaceholder: {
-    width: 60,
-    height: 60,
-    backgroundColor: "#e5e5e5",
-    borderRadius: 50,
-  },
-
-  plantImage: {
-    width: 150,
-    height: 150,
-    backgroundColor: "transparent",
-    marginBottom: 16,
-  },
-
-  messageContainer: {
-    width: "85%",
-  },
-
-  boldText: {
-    fontSize: 24,
-    fontWeight: "700",
-    color: "#333",
-    marginBottom: 6,
-  },
-
-  subText: {
-    fontSize: 14,
-    color: "#555",
-    lineHeight: 20,
-  },
-
-  highlight: {
-    color: "#7a934d",
-    fontWeight: "700",
-  },
-
-  placeholder: {
-    color: "#7a934d",
-  },
-
-  bottomSection: {
-    alignItems: "flex-start",
-  },
-
-  infoBlock: {
-    marginBottom: 26,
-  },
-});
