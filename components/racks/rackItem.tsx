@@ -1,0 +1,133 @@
+import React from "react";
+import { Image, Text, TouchableOpacity, View } from "react-native";
+import Svg, { Circle, Rect } from "react-native-svg";
+
+interface RackItemProps {
+  name: string;
+  plant: string;
+  image?: string;
+  leaves: number;
+  water: number;
+  humidity: number;
+  temperature: number;
+  hasAlert?: boolean;
+  onMorePress?: () => void;
+}
+
+// SVG Icons
+const LeafIcon = ({ size = 18, color = "#86A551" }) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Circle cx={12} cy={12} r={8} fill={color} />
+  </Svg>
+);
+
+const DropletIcon = ({ size = 18, color = "#60A5FA" }) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Circle cx={12} cy={12} r={8} fill={color} />
+  </Svg>
+);
+
+const WaveIcon = ({ size = 18, color = "#60A5FA" }) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Rect x={4} y={8} width={16} height={8} rx={2} fill={color} />
+  </Svg>
+);
+
+const ThermometerIcon = ({ size = 18, color = "#F87171" }) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Rect x={8} y={4} width={8} height={16} rx={4} fill={color} />
+  </Svg>
+);
+
+const MoreIcon = () => (
+  <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
+    <Circle cx={12} cy={6} r={2} fill="#666" />
+    <Circle cx={12} cy={12} r={2} fill="#666" />
+    <Circle cx={12} cy={18} r={2} fill="#666" />
+  </Svg>
+);
+
+const RackItem: React.FC<RackItemProps> = ({
+  name,
+  plant,
+  image,
+  leaves,
+  water,
+  humidity,
+  temperature,
+  hasAlert = false,
+  onMorePress,
+}) => {
+  return (
+    <View className="bg-white rounded-2xl p-5 shadow-md border border-gray-100 w-full">  
+      <View className="flex-row justify-between items-center mb-7">
+        <View className="flex-row items-center gap-5 flex-1"> 
+          <View className="w-14 h-14 bg-[#E5EDCF] rounded-xl items-center justify-center">
+            {image ? (
+              <Image
+                source={{ uri: image }}
+                className="w-12 h-12"
+                resizeMode="contain"
+              />
+            ) : (
+              <Text className="text-3xl"></Text>
+            )}
+          </View>
+ 
+          <View className="flex-1">
+            <View className="flex-row items-center gap-2 mb-1">
+              <Text
+                className="text-lg font-bold text-black"
+                numberOfLines={1}
+              >
+                {name}
+              </Text>
+              {hasAlert && (
+                <View className="w-2.5 h-2.5 rounded-full bg-red-500" />
+              )}
+            </View>
+            <Text className="text-sm text-[#86A551]" numberOfLines={1}>
+              {plant}
+            </Text>
+          </View>
+        </View>
+ 
+        <TouchableOpacity
+          onPress={onMorePress}
+          className="p-1"
+          activeOpacity={0.6}
+        >
+          <MoreIcon />
+        </TouchableOpacity>
+      </View>
+ 
+      <View className="flex-row justify-center items-center w-full gap-10"> 
+        <View className="flex-row items-center gap-1.5">
+          <LeafIcon size={18} />
+          <Text className="text-sm font-medium text-black">{leaves}</Text>
+        </View>
+ 
+        <View className="flex-row items-center gap-1.5">
+          <DropletIcon size={18} />
+          <Text className="text-sm font-medium text-black">
+            {water.toFixed(2)}
+          </Text>
+        </View>
+ 
+        <View className="flex-row items-center gap-1.5">
+          <WaveIcon size={18} />
+          <Text className="text-sm font-medium text-black">{humidity}%</Text>
+        </View>
+ 
+        <View className="flex-row items-center gap-1.5">
+          <ThermometerIcon size={18} />
+          <Text className="text-sm font-medium text-black">
+            {temperature}°C
+          </Text>
+        </View>
+      </View>
+    </View>
+  );
+};
+
+export default RackItem;
