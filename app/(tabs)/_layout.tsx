@@ -10,7 +10,7 @@ const _layout = () => {
         options={{ title: 'Home' }}
       />
       <Tabs.Screen
-        name="racks"
+        name="(racks)"
         options={{ title: 'Racks' }}
       />
       <Tabs.Screen

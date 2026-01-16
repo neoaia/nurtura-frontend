@@ -11,29 +11,30 @@ interface RackItemProps {
   humidity: number;
   temperature: number;
   hasAlert?: boolean;
+  onPress?: () => void; // Add this for card press
   onMorePress?: () => void;
 }
 
 // SVG Icons
-const LeafIcon = ({ size = 18, color = "#86A551" }) => (
+const LeafIcon = ({ size = 18, color = "#86975A" }) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
     <Circle cx={12} cy={12} r={8} fill={color} />
   </Svg>
 );
 
-const DropletIcon = ({ size = 18, color = "#60A5FA" }) => (
+const DropletIcon = ({ size = 18, color = "#86975A" }) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
     <Circle cx={12} cy={12} r={8} fill={color} />
   </Svg>
 );
 
-const WaveIcon = ({ size = 18, color = "#60A5FA" }) => (
+const WaveIcon = ({ size = 18, color = "#86975A" }) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
     <Rect x={4} y={8} width={16} height={8} rx={2} fill={color} />
   </Svg>
 );
 
-const ThermometerIcon = ({ size = 18, color = "#F87171" }) => (
+const ThermometerIcon = ({ size = 18, color = "#F0A877" }) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
     <Rect x={8} y={4} width={8} height={16} rx={4} fill={color} />
   </Svg>
@@ -56,12 +57,17 @@ const RackItem: React.FC<RackItemProps> = ({
   humidity,
   temperature,
   hasAlert = false,
+  onPress, // Add this
   onMorePress,
 }) => {
   return (
-    <View className="bg-white rounded-2xl p-5 shadow-md border border-gray-100 w-full">  
+    <TouchableOpacity
+      onPress={onPress}
+      activeOpacity={0.7}
+      className="bg-white rounded-2xl p-5 shadow-md border border-gray-100 w-full mb-5"
+    >
       <View className="flex-row justify-between items-center mb-7">
-        <View className="flex-row items-center gap-5 flex-1"> 
+        <View className="flex-row items-center gap-5 flex-1">
           <View className="w-14 h-14 bg-[#E5EDCF] rounded-xl items-center justify-center">
             {image ? (
               <Image
@@ -73,52 +79,52 @@ const RackItem: React.FC<RackItemProps> = ({
               <Text className="text-3xl"></Text>
             )}
           </View>
- 
+
           <View className="flex-1">
             <View className="flex-row items-center gap-2 mb-1">
-              <Text
-                className="text-lg font-bold text-black"
-                numberOfLines={1}
-              >
+              <Text className="text-lg font-bold text-black" numberOfLines={1}>
                 {name}
               </Text>
               {hasAlert && (
-                <View className="w-2.5 h-2.5 rounded-full bg-red-500" />
+                <View className="w-2.5 h-2.5 rounded-full bg-[#FF2121]" />
               )}
             </View>
-            <Text className="text-sm text-[#86A551]" numberOfLines={1}>
+            <Text className="text-sm text-[#73883C]" numberOfLines={1}>
               {plant}
             </Text>
           </View>
         </View>
- 
+
         <TouchableOpacity
-          onPress={onMorePress}
+          onPress={(e) => {
+            e.stopPropagation(); // Prevent card press when more is pressed
+            onMorePress?.();
+          }}
           className="p-1"
           activeOpacity={0.6}
         >
           <MoreIcon />
         </TouchableOpacity>
       </View>
- 
-      <View className="flex-row justify-center items-center w-full gap-10"> 
+
+      <View className="flex-row justify-center items-center w-full gap-10">
         <View className="flex-row items-center gap-1.5">
           <LeafIcon size={18} />
           <Text className="text-sm font-medium text-black">{leaves}</Text>
         </View>
- 
+
         <View className="flex-row items-center gap-1.5">
           <DropletIcon size={18} />
           <Text className="text-sm font-medium text-black">
             {water.toFixed(2)}
           </Text>
         </View>
- 
+
         <View className="flex-row items-center gap-1.5">
           <WaveIcon size={18} />
           <Text className="text-sm font-medium text-black">{humidity}%</Text>
         </View>
- 
+
         <View className="flex-row items-center gap-1.5">
           <ThermometerIcon size={18} />
           <Text className="text-sm font-medium text-black">
@@ -126,7 +132,7 @@ const RackItem: React.FC<RackItemProps> = ({
           </Text>
         </View>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 };
 
