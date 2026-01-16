@@ -1,10 +1,16 @@
 import PlantStatusIndicators from "@/components/racks/plantStatusIndicators";
 import SmallDescription from "@/components/shared/smallDescription";
+import { router } from "expo-router";
 import React from "react";
-import { ScrollView, Text, View } from "react-native";
+import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const rackInfo = () => {
+  const handleCarePress = () => {
+    router.push("/(tabs)/(racks)/care");
+  };
+
+
   return (
     <SafeAreaView className="bg-white flex-1">
       <ScrollView showsVerticalScrollIndicator={false}>
@@ -37,6 +43,18 @@ const rackInfo = () => {
               value="150-500 grams"
             />
           </View>
+
+          <TouchableOpacity className="w-full flex justify-center items-center bg-gray-400 p-5 mb-3" onPress={handleCarePress}>
+            <Text className="text-white font-bold">Plant Care History (Temporary Button)</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity className="w-full flex justify-center items-center bg-gray-400 p-5 mb-3">
+            <Text className="text-white font-bold">Harvest History (Temporary Button)</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity className="w-full flex justify-center items-center bg-gray-400 p-5 mb-3">
+            <Text className="text-white font-bold">Harvest Plant (Temporary Button)</Text>
+          </TouchableOpacity>
         </View>
       </ScrollView>
     </SafeAreaView>
