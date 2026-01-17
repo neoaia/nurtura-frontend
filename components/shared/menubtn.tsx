@@ -13,9 +13,9 @@ export const MenuCard: React.FC<MenuButtonCardProps> = ({ title, description, ic
   return (
     /* 1. Changed outer wrapper to View so the whole card isn't clickable */
     <View 
-      className="bg-white rounded-[12px] px-6 py-10 flex-row items-center shadow-md elevation-3 gap-3"
+      className="bg-white rounded-[12px] px-6 py-8 flex-row items-center shadow-md elevation-3 gap-3"
     >
-      <View className="w-[55px] h-[55px] bg-[#E5EDCF] rounded-[12px] justify-center items-center">
+      <View className="p-4 bg-[#E5EDCF] rounded-[12px] justify-center items-center">
         <Image 
           source={iconSource} 
           className="w-6 h-6"
@@ -25,10 +25,10 @@ export const MenuCard: React.FC<MenuButtonCardProps> = ({ title, description, ic
       </View>
 
       <View className="flex-1 ml-4 pr-2">
-        <Text className="text-[16px] font-bold text-[#333]">
+        <Text className="text-base font-bold text-[#333]">
           {title}
         </Text>
-        <Text className="text-[14px] text-[#919191] mt-2 leading-5">
+        <Text className="text-sm text-[#919191] mt-2 leading-5">
           {description}
         </Text>
       </View>
