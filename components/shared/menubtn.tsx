@@ -1,0 +1,47 @@
+import { router } from "expo-router";
+import React from "react";
+import { Image, ImageSourcePropType, Text, TouchableOpacity, View } from "react-native";
+
+interface MenuButtonCardProps {
+  title: string;
+  description: string;
+  iconSource: ImageSourcePropType;
+  route: string;
+}
+
+export const MenuCard: React.FC<MenuButtonCardProps> = ({ title, description, iconSource, route }) => {
+  return (
+    <TouchableOpacity 
+      activeOpacity={0.8}
+      onPress={() => router.push(route as any)}
+      className="bg-white rounded-[12px] px-6 py-10 flex-row items-center shadow-md elevation-3 gap-3"
+    >
+      <View className="w-[55px] h-[55px] bg-[#E5EDCF] rounded-[12px] justify-center items-center">
+        <Image 
+          source={iconSource} 
+          className="w-6 h-6"
+          style={{ tintColor: "#86975A" }}
+          resizeMode="contain"
+        />
+      </View>
+
+      <View className="flex-1 ml-4 pr-2">
+        <Text className="text-[16px] font-bold text-[#333]">
+          {title}
+        </Text>
+        <Text className="text-[14px] text-[#919191] mt-2 leading-5">
+          {description}
+        </Text>
+      </View>
+
+      <View className="w-[47px] h-[47px] bg-[#E5EDCF] rounded-[8px] justify-center items-center">
+        <Image 
+          source={require("@/assets/images/openarrow-icon.png")}
+          className="w-4 h-4"
+          style={{ tintColor: "#86975A" }}
+          resizeMode="contain"
+        />
+      </View>
+    </TouchableOpacity>
+  );
+};
