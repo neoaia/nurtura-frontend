@@ -1,19 +1,11 @@
 import PlantStatusIndicators from "@/components/racks/plantStatusIndicators";
+import { MenuCard } from "@/components/shared/menubtn";
 import SmallDescription from "@/components/shared/smallDescription";
-import { router } from "expo-router";
 import React from "react";
-import { ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-const rackInfo = () => {
-  const handleCarePress = () => {
-    router.push("/(tabs)/(racks)/care");
-  };
-
-  const handleHarvestHistoryPress = () => {
-    router.push("/(tabs)/(racks)/harvestHistory");
-  }
-
+const rackInfo = () => { 
 
   return (
     <SafeAreaView className="bg-white flex-1">
@@ -48,17 +40,10 @@ const rackInfo = () => {
             />
           </View>
 
-          <TouchableOpacity className="w-full flex justify-center items-center bg-gray-400 p-5 mb-3" onPress={handleCarePress}>
-            <Text className="text-white font-bold">Plant Care History (Temporary Button)</Text>
-          </TouchableOpacity>
+          <MenuCard title="Plant Care Activity" description="Logs based on watering and grow light activity." iconSource={require("@/assets/images/plantcare-icon.png")} route="/(tabs)/(racks)/care"></MenuCard>
 
-          <TouchableOpacity className="w-full flex justify-center items-center bg-gray-400 p-5 mb-3" onPress={handleHarvestHistoryPress}>
-            <Text className="text-white font-bold">Harvest History (Temporary Button)</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity className="w-full flex justify-center items-center bg-gray-400 p-5 mb-3">
-            <Text className="text-white font-bold">Harvest Plant (Temporary Button)</Text>
-          </TouchableOpacity>
+          <MenuCard title="Harvest Activity" description="Records of your past harvests for this plant." iconSource={require("@/assets/images/harvest-icon.png")} route="/(tabs)/(racks)/harvestHistory"></MenuCard>
+ 
         </View>
       </ScrollView>
     </SafeAreaView>
