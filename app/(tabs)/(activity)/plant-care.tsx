@@ -1,6 +1,6 @@
 import { ActivityItem } from "@/components/activity/activityItem";
-import { DateRangePicker } from "@/components/activity/datetimepicker";
 import { ActivityButton } from "@/components/activity/sensorToggle";
+import { DateRangePicker } from "@/components/shared/datetimepicker";
 
 import { Ionicons } from "@expo/vector-icons";
 import React, { useState } from "react";

@@ -1,5 +1,5 @@
-import { DateRangePicker } from "@/components/activity/datetimepicker";
 import { PlantItem } from "@/components/activity/plantingItem";
+import { DateRangePicker } from "@/components/shared/datetimepicker";
 
 import { Ionicons } from "@expo/vector-icons";
 import React, { useState } from "react";
