@@ -8,6 +8,7 @@ import { useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { useEffect, useState } from "react";
 import { Alert, ScrollView, Text, View } from "react-native";
+import { getFirebaseIdToken } from "@/lib/firebaseAuth";
 
 const USER_INFO_STORAGE_KEY = "temp_user_info";
 const SSO_INFO_STORAGE_KEY = "sso_temp_user_info";
@@ -64,7 +65,7 @@ const CreateUserInfo = () => {
   } = useFetch('/api/users', {
     method: 'POST',
     autoFetch: false,
-    withAuth: false
+    withAuth: true
   });
 
   const handleSubmitUserInfo = async () => {
@@ -125,12 +126,7 @@ const CreateUserInfo = () => {
       console.log("Creating account with details:", userDetails);
 
       const response = await createAccount({
-        body: {
-          ...userDetails
-        },
-        headers: {
-          Authorization: `Bearer ${tokenToUse}`,
-        },
+        body: { ...userDetails }
       });
 
       if (response.error) {
