@@ -16,15 +16,15 @@ export const EmailInput = ({
   return (
     <>
       <View
-        className={`w-[100%] pt-2 px-3 border-[2px] rounded-[12px] bg-white mb-[6px] ${
+        className={`w-[100%] pt-2 px-3 border-[2px] rounded-xl bg-white mb-[6px] ${
           error
             ? "border-[#E65656]"
             : hasError
               ? "border-[#E65656]"
-              : "border-[#919191]"
+              : "border-grayText"
         }`}
       >
-        <Text className="text-primary text-base pt-[4px] pl-[4px]">
+        <Text className="text-primary text-sm pt-[4px] pl-[4px]">
           Email
         </Text>
         <TextInput
