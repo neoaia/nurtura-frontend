@@ -11,9 +11,8 @@ interface MenuButtonCardProps {
 
 export const MenuCard: React.FC<MenuButtonCardProps> = ({ title, description, iconSource, route }) => {
   return (
-    <TouchableOpacity 
-      activeOpacity={0.8}
-      onPress={() => router.push(route as any)}
+    /* 1. Changed outer wrapper to View so the whole card isn't clickable */
+    <View 
       className="bg-white rounded-[12px] px-6 py-10 flex-row items-center shadow-md elevation-3 gap-3"
     >
       <View className="w-[55px] h-[55px] bg-[#E5EDCF] rounded-[12px] justify-center items-center">
@@ -34,14 +33,19 @@ export const MenuCard: React.FC<MenuButtonCardProps> = ({ title, description, ic
         </Text>
       </View>
 
-      <View className="w-[47px] h-[47px] bg-[#E5EDCF] rounded-[8px] justify-center items-center">
+      {/* 2. Now only the Arrow is the TouchableOpacity! */}
+      <TouchableOpacity 
+        activeOpacity={0.6}
+        onPress={() => router.push(route as any)}
+        className="w-[47px] h-[47px] bg-[#E5EDCF] rounded-[8px] justify-center items-center"
+      >
         <Image 
           source={require("@/assets/images/openarrow-icon.png")}
           className="w-4 h-4"
           style={{ tintColor: "#86975A" }}
           resizeMode="contain"
         />
-      </View>
-    </TouchableOpacity>
+      </TouchableOpacity>
+    </View>
   );
 };

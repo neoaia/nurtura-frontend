@@ -1,3 +1,4 @@
+import { router } from "expo-router";
 import React from "react";
 import {
   Image,
@@ -10,18 +11,18 @@ import {
 interface SettingsTabProps {
   iconSource: ImageSourcePropType;
   label: string;
-  onPress?: () => void;
+  route: string;
 }
 
 export const SettingsRow: React.FC<SettingsTabProps> = ({
   iconSource,
   label,
-  onPress,
+  route,
 }) => {
   return (
     <TouchableOpacity
-      className="flex-row items-center justify-between py-4 px-5 bg-white"
-      onPress={onPress}
+      className="w-full flex-row items-center justify-between py-4 px-5 bg-white"
+      onPress={() => router.push(route as any)}
       activeOpacity={0.6}
     >
       <View className="flex-row items-center" style={{ gap: 32 }}>

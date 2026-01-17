@@ -9,7 +9,7 @@ interface ProfileCardProps {
 
 export const ProfileCard: React.FC<ProfileCardProps> = ({ name, username, iconSource }) => {
   return (
-    <View className="bg-white rounded-[20px] p-6 mx-4 my-4 flex-row items-center shadow-md elevation-3">
+    <View className=" w-full bg-white rounded-[20px] p-6 mx-4 my-4 flex-row items-center shadow-md elevation-3">
       
       <View className="w-[60px] h-[60px] bg-[#E9F2D9] rounded-full justify-center items-center">
         <Image 
