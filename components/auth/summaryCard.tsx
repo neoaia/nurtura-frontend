@@ -1,8 +1,16 @@
-import React from 'react';
-import { Image, ImageSourcePropType, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import React from "react";
+import {
+  Image,
+  ImageSourcePropType,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
-import PlantsIcon from '../../assets/images/plantIcon.png';
-import RacksIcon from '../../assets/images/rackIcon.png';
+import { typography } from "../../assets/fonts/Text";
+import PlantsIcon from "../../assets/images/plantIcon.png";
+import RacksIcon from "../../assets/images/rackIcon.png";
 
 interface SummaryCardProps {
   cards: {
@@ -23,17 +31,20 @@ const SUMMARY_CONFIG: Record<
 > = {
   racks: {
     icon: RacksIcon,
-    title: 'Racks',
-    subtitle: 'Active',
+    title: "Racks",
+    subtitle: "Active",
   },
   plants: {
     icon: PlantsIcon,
-    title: 'Plants',
-    subtitle: 'All Types',
+    title: "Plants",
+    subtitle: "All Types",
   },
 };
 
-export const SummaryCard: React.FC<SummaryCardProps> = ({ cards, onCardPress }) => {
+export const SummaryCard: React.FC<SummaryCardProps> = ({
+  cards,
+  onCardPress,
+}) => {
   return (
     <ScrollView
       horizontal
@@ -54,7 +65,6 @@ export const SummaryCard: React.FC<SummaryCardProps> = ({ cards, onCardPress }) 
             style={{ width: 240 }}
             activeOpacity={0.7}
           >
-
             <View className="flex-row items-start justify-between mb-4">
               <View className="bg-white/40 rounded-xl p-3 w-14 h-14 items-center justify-center">
                 <Image
@@ -65,17 +75,17 @@ export const SummaryCard: React.FC<SummaryCardProps> = ({ cards, onCardPress }) 
               </View>
 
               {card.value !== null && (
-                <Text className="text-6xl font-bold text-white">
+                <Text style={typography["title-bold"]} className="text-white">
                   {card.value}
                 </Text>
               )}
             </View>
 
-            <Text className="text-2xl font-bold text-white mb-1">
+            <Text style={typography["h2-bold"]} className="text-white mb-1">
               {config.title}
             </Text>
 
-            <Text className="text-base text-white opacity-90">
+            <Text style={typography.body} className="text-white opacity-90">
               {config.subtitle}
             </Text>
           </TouchableOpacity>
