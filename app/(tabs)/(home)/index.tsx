@@ -170,7 +170,7 @@ export default function HomeScreen() {
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View className="px-10 pt-4 pb-2 flex-row items-center justify-between">
-          <Text className="text-3xl font-bold text-white">
+          <Text className="text-2xl font-bold text-white">
             Hi {data.user.name}!
           </Text>
           <TouchableOpacity
