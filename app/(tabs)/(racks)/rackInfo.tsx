@@ -10,6 +10,10 @@ const rackInfo = () => {
     router.push("/(tabs)/(racks)/care");
   };
 
+  const handleHarvestHistoryPress = () => {
+    router.push("/(tabs)/(racks)/harvestHistory");
+  }
+
 
   return (
     <SafeAreaView className="bg-white flex-1">
@@ -48,7 +52,7 @@ const rackInfo = () => {
             <Text className="text-white font-bold">Plant Care History (Temporary Button)</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity className="w-full flex justify-center items-center bg-gray-400 p-5 mb-3">
+          <TouchableOpacity className="w-full flex justify-center items-center bg-gray-400 p-5 mb-3" onPress={handleHarvestHistoryPress}>
             <Text className="text-white font-bold">Harvest History (Temporary Button)</Text>
           </TouchableOpacity>
 
