@@ -1,73 +1,40 @@
+import { router } from "expo-router";
 import React from "react";
 import {
-    Image,
-    ImageSourcePropType,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Image,
+  ImageSourcePropType,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 interface SettingsTabProps {
   iconSource: ImageSourcePropType;
   label: string;
-  onPress?: () => void;
+  route: string;
 }
 
 export const SettingsRow: React.FC<SettingsTabProps> = ({
   iconSource,
   label,
-  onPress,
+  route,
 }) => {
   return (
     <TouchableOpacity
-      style={styles.container}
-      onPress={onPress}
+      className="w-full flex-row items-center justify-between py-4 px-5 bg-white"
+      onPress={() => router.push(route as any)}
       activeOpacity={0.6}
     >
-      <View style={styles.leftSection}>
-        <Image source={iconSource} style={styles.icon} />
-        <Text style={styles.label}>{label}</Text>
+      <View className="flex-row items-center" style={{ gap: 32 }}>
+        <Image source={iconSource} className="w-[22px] h-[22px]" resizeMode="contain" />
+        <Text className="text-[14px] text-[#333] font-normal">{label}</Text>
       </View>
 
       <Image
         source={require("@/assets/images/openarrow-icon.png")}
-        style={styles.arrow}
+        className="w-[14px] h-[14px]"
+        resizeMode="contain"
       />
     </TouchableOpacity>
   );
 };
-
-const styles = StyleSheet.create({
-    container: {
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "space-between",
-      paddingVertical: 16,
-      paddingHorizontal: 20,
-      backgroundColor: "#fff",
-      borderBottomWidth: StyleSheet.hairlineWidth,
-      borderBottomColor: "#EEE",
-    },
-    leftSection: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: 32,
-    },
-    label: {
-      fontSize: 14,
-      color: "#333",
-      fontWeight: "400",
-    },
-    icon: {
-      width: 22,
-      height: 22,
-      resizeMode: "contain",
-    },
-    arrow: {
-      width: 14,
-      height: 14,
-      resizeMode: "contain",
-    },
-  });
-  

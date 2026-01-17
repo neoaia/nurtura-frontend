@@ -1,5 +1,5 @@
 import React from "react";
-import { Image, StyleSheet, Text, View } from "react-native";
+import { Image, Text, View } from "react-native";
 
 interface SummaryCardProps {
   value: string | number;
@@ -9,73 +9,26 @@ interface SummaryCardProps {
 
 export const HarvestSummaryCard: React.FC<SummaryCardProps> = ({ value, unit, label }) => {
   return (
-    <View style={styles.card}>
-      <View style={styles.topRow}>
-        <View style={styles.iconBackground}>
+    <View className="bg-white rounded-[16px] p-5 w-[200px] shadow-lg elevation-4" style={{ gap: 8 }}>
+      <View className="flex-row justify-between items-start mb-[15px]">
+        <View className="bg-[#E5EDCF] p-[10px] rounded-[12px]">
           <Image 
             source={require("@/assets/images/harvest-icon.png")} 
-            style={styles.icon} 
+            className="w-6 h-6"
+            style={{ tintColor: "#7a904a" }}
+            resizeMode="contain"
           />
         </View>
         
-        <Text style={styles.valueText}>{value}</Text>
+        <Text className="text-[38px] font-bold text-[#333] -mt-[3px]">
+          {value}
+        </Text>
       </View>
 
-      <View style={styles.bottomContent}>
-        <Text style={styles.unitText}>{unit}</Text>
-        <Text style={styles.labelText}>{label}</Text>
+      <View style={{ gap: 4 }}>
+        <Text className="text-[18px] font-bold text-[#333]">{unit}</Text>
+        <Text className="text-[14px] text-[#86975A] font-medium">{label}</Text>
       </View>
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  card: {
-    backgroundColor: "#fff",
-    borderRadius: 16,
-    padding: 20,
-    width: 200,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 4,
-    gap: 8,
-  },
-  topRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    marginBottom: 15,
-  },
-  iconBackground: {
-    backgroundColor: "#E5EDCF",
-    padding: 10,
-    borderRadius: 12,
-  },
-  icon: {
-    width: 24,
-    height: 24,
-    tintColor: "#7a904a",
-    resizeMode: "contain",
-  },
-  valueText: {
-    fontSize: 38,
-    fontWeight: "bold",
-    color: "#333",
-    marginTop: -3,
-  },
-  bottomContent: {
-    gap: 4,
-  },
-  unitText: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#333",
-  },
-  labelText: {
-    fontSize: 14,
-    color: "#86975A",
-    fontWeight: "500",
-  },
-});

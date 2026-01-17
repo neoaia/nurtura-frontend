@@ -1,5 +1,5 @@
 import React from "react";
-import { Image, StyleSheet, Text, View } from "react-native";
+import { Image, Text, View } from "react-native";
 
 interface ActivityItemProps {
   type: "water" | "light";
@@ -29,93 +29,35 @@ export const ActivityItem: React.FC<ActivityItemProps> = ({ type, plantName, rac
   const config = activityCategory[type];
 
   return (
-    <View style={styles.activityCard}>
-      <View style={styles.activityRow}>
-        <View style={styles.activityDetails}>
-
-        <View>
-            <Text style={styles.activityText}>
-                {config.actionText} 
-                <Text style={{ color: config.plantcolor, fontWeight: 'bold' }}> {plantName}</Text>
+    <View className="bg-white rounded-[14px] p-[14px] mb-2 shadow-md elevation-3">
+      <View className="flex-row items-center">
+        <View className="m-[10px] flex-1" style={{ gap: 25 }}>
+          
+          <View>
+            <Text className="text-[14px] font-medium text-[#333]">
+              {config.actionText} 
+              <Text style={{ color: config.plantcolor }} className="font-bold"> {plantName}</Text>
             </Text>
             
-            <Text style={styles.activitySubText}>
-                {rackName} at {location}
+            <Text className="text-[14px] font-medium mt-1 text-[#919191]">
+              {rackName} at {location}
             </Text>
-        </View>
+          </View>
 
-        <View style={styles.activitySubRow}>
-            <View style={styles.activitySubRowDetails}>
-                <Image source={config.time} style={styles.subIcon} />
-                <Text style={styles.activityTime}>{time}</Text>
+          <View className="flex-row items-center mt-1" style={{ gap: 86 }}>
+            <View className="flex-row" style={{ gap: 6 }}>
+              <Image source={config.time} className="w-4 h-4" resizeMode="contain" />
+              <Text className="text-[#919191] text-[12px] ml-1">{time}</Text>
             </View>
 
-            <View style={styles.activitySubRowDetails}>
-                <Image source={config.icon} style={styles.subIcon} />
-                <Text style={styles.activityTime}>{duration}</Text>
+            <View className="flex-row" style={{ gap: 6 }}>
+              <Image source={config.icon} className="w-4 h-4" resizeMode="contain" />
+              <Text className="text-[#919191] text-[12px] ml-1">{duration}</Text>
             </View>
-        </View>
+          </View>
 
         </View>
       </View>
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-    activityCard: {
-      backgroundColor: "#fff",
-      borderRadius: 14,
-      padding: 14,
-      marginBottom: 8,
-      elevation: 2,
-    },
-  
-    activityRow: {
-      flexDirection: "row",
-      alignItems: "center",
-    },
-  
-    activityDetails: {
-      margin: 10,
-      flex: 1,
-      gap: 25,
-    },
-  
-    activityText: {
-      fontSize: 14,
-      fontWeight: "500",
-      color: "#333",
-    },
-
-    activitySubText: {
-        fontSize: 14,
-        fontWeight: "500",
-        marginTop: 4,
-        color: "#919191",
-      },
-  
-    activitySubRow: {
-      flexDirection: "row",
-      alignItems: "center",
-      marginTop: 4,
-      gap: 86,
-    },
-
-    activitySubRowDetails: {
-        flexDirection: "row",
-        gap: 6,
-    },
-  
-    activityTime: {
-      color: "#919191",
-      fontSize: 12,
-      marginLeft: 4,
-    },
-
-    subIcon: {
-        width: 16,
-        height: 16,
-        resizeMode: 'contain',
-      },
-  });

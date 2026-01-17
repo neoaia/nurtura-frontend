@@ -1,5 +1,5 @@
 import React from "react";
-import { Image, StyleSheet, TouchableOpacity } from "react-native";
+import { Image, TouchableOpacity } from "react-native";
 
 type ButtonStatus = "defaultLight" | "defaultWater" | "clickedLight" | "clickedWater";
 
@@ -36,31 +36,12 @@ export const ActivityButton: React.FC<ActivityButtonProps> = ({ status, onPress 
 
   return (
     <TouchableOpacity 
-      style={[
-        styles.button, 
-        { backgroundColor: config.bgColor, borderColor: config.borderColor }
-      ]} 
+      className="w-[160px] h-[35px] rounded-[8px] border-[2.5px] justify-center items-center m-2"
+      style={{ backgroundColor: config.bgColor, borderColor: config.borderColor }}
       onPress={onPress}
       activeOpacity={0.7}
     >
-      <Image source={config.icon} style={styles.icon} />
+      <Image source={config.icon} className="w-4 h-4" resizeMode="contain" />
     </TouchableOpacity>
   );
 };
-
-const styles = StyleSheet.create({
-  button: {
-    width: 160,
-    height: 35,
-    borderRadius: 8,
-    borderWidth: 2.5,
-    justifyContent: "center",
-    alignItems: "center",
-    margin: 8,
-  },
-  icon: {
-    width: 16,
-    height: 16,
-    resizeMode: "contain",
-  },
-});

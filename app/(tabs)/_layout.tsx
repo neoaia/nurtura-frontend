@@ -18,11 +18,11 @@ const _layout = () => {
         options={{ title: 'Add New' }}
       />
       <Tabs.Screen
-        name="activity"
+        name="(activity)"
         options={{ title: 'Activity' }}
       />
       <Tabs.Screen
-        name="account"
+        name="(account)"
         options={{ title: 'Account' }}
       />
 
