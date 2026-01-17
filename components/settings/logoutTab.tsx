@@ -19,8 +19,8 @@ export const LogOutRow: React.FC<LogOutTabProps> = ({
       activeOpacity={0.6}
     >
       <View className="flex-row items-center" style={{ gap: 32 }}>
-        <Image source={iconSource} className="w-[22px] h-[22px]" resizeMode="contain" />
-        <Text className="text-[14px] text-[#D34545] font-normal">{label}</Text>
+        <Image source={iconSource} className="w-6 h-6" resizeMode="contain" />
+        <Text className="text-sm text-[#D34545] font-normal">{label}</Text>
       </View>
     </TouchableOpacity>
   );
