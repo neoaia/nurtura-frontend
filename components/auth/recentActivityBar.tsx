@@ -1,13 +1,13 @@
-import React from 'react';
-import { Image, Text, View } from 'react-native';
-import ClockIcon from '../../assets/images/clockIcon.png';
-import LightIcon from '../../assets/images/lightUsedIcon.png';
-import WaterIcon from '../../assets/images/wateredIcon.png';
-
+import React from "react";
+import { Image, Text, View } from "react-native";
+import { typography } from "../../assets/fonts/Text";
+import ClockIcon from "../../assets/images/clockIcon.png";
+import LightIcon from "../../assets/images/lightUsedIcon.png";
+import WaterIcon from "../../assets/images/wateredIcon.png";
 
 interface Activity {
   id: string;
-  type: 'water' | 'light';
+  type: "water" | "light";
   action: string;
   plant: string;
   timestamp: string;
@@ -19,25 +19,34 @@ interface RecentActivityBarProps {
   activities: Activity[];
 }
 
-const getIconConfig = (type: 'water' | 'light') => {
-  const configs: Record<'water' | 'light', { icon: any; bgColor: string; textColor: string }> = {
-    water: { icon: WaterIcon, bgColor: '#CFE6ED', textColor: '#619AAC' },
-    light: { icon: LightIcon, bgColor: '#F1EEA2', textColor: '#D6C125' },
+const getIconConfig = (type: "water" | "light") => {
+  const configs: Record<
+    "water" | "light",
+    { icon: any; bgColor: string; textColor: string }
+  > = {
+    water: { icon: WaterIcon, bgColor: "#CFE6ED", textColor: "#619AAC" },
+    light: { icon: LightIcon, bgColor: "#F1EEA2", textColor: "#D6C125" },
   };
   return configs[type];
 };
 
-export const RecentActivityBar: React.FC<RecentActivityBarProps> = ({ activities }) => {
+export const RecentActivityBar: React.FC<RecentActivityBarProps> = ({
+  activities,
+}) => {
   return (
     <>
       <View className="pt-8 pb-4 px-4">
-        <Text className="text-xl font-bold text-gray-800">Recent Activity</Text>
+        <Text style={typography["h2-bold"]} className="text-gray-800">
+          Recent Activity
+        </Text>
       </View>
 
       <View>
         {activities.length === 0 ? (
           <View className="p-8 items-center border border-gray-200 rounded-xl">
-            <Text className="text-gray-500">No recent activities</Text>
+            <Text style={typography.body} className="text-gray-500">
+              No recent activities
+            </Text>
           </View>
         ) : (
           activities.map((activity, index) => {
@@ -51,9 +60,9 @@ export const RecentActivityBar: React.FC<RecentActivityBarProps> = ({ activities
                 className={`
                   px-3 py-4 flex-row items-center
                   border border-gray-200
-                  ${!isLast ? 'border-b-0' : ''}
-                  ${isFirst ? 'rounded-t-xl' : ''}
-                  ${isLast ? 'rounded-b-xl' : ''}
+                  ${!isLast ? "border-b-0" : ""}
+                  ${isFirst ? "rounded-t-xl" : ""}
+                  ${isLast ? "rounded-b-xl" : ""}
                 `}
               >
                 <View
@@ -68,26 +77,27 @@ export const RecentActivityBar: React.FC<RecentActivityBarProps> = ({ activities
                 </View>
 
                 <View className="flex-1">
-                  <Text className="text-sm text-gray-700 mb-2">
-                    {activity.action}{' '}
+                  <Text style={typography.label} className="text-gray-700 mb-2">
+                    {activity.action}{" "}
                     <Text
-                    className="font-semibold"
-                    style={{ color: iconConfig.textColor }}
+                      style={typography["label-bold"]}
+                      className="font-semibold"
+                      style={{ color: iconConfig.textColor }}
                     >
-                    {activity.plant}
+                      {activity.plant}
                     </Text>
                   </Text>
 
                   <View className="flex-row items-center gap-4">
                     <View className="flex-row items-center">
-                        <Image
-                            source={ClockIcon}
-                            className="w-4.5 h-4.5 mr-2"
-                            resizeMode="contain"
-                        />
-                        <Text className="text-xs text-gray-600">
-                            {activity.timestamp}
-                        </Text>
+                      <Image
+                        source={ClockIcon}
+                        className="w-4.5 h-4.5 mr-2"
+                        resizeMode="contain"
+                      />
+                      <Text style={typography.label} className="text-gray-600">
+                        {activity.timestamp}
+                      </Text>
                     </View>
 
                     <View className="flex-row items-center">
@@ -96,7 +106,7 @@ export const RecentActivityBar: React.FC<RecentActivityBarProps> = ({ activities
                         className="w-5 h-5 mr-1.5"
                         resizeMode="contain"
                       />
-                      <Text className="text-xs text-gray-600">
+                      <Text style={typography.label} className="text-gray-600">
                         {activity.amount || activity.duration}
                       </Text>
                     </View>
