@@ -17,21 +17,21 @@ export const HarvestItem: React.FC<HarvestItemProps> = ({
   plantImage 
 }) => {
   return (
-    <View className="bg-white rounded-[14px] p-4 flex-row items-center shadow-md elevation-3 my-2">
+    <View className="bg-white rounded-2xl p-4 flex-row items-center shadow-md border-gray-100 elevation-3 my-2">
       
-      <View className="w-[90px] h-[90px] bg-[#e9f2d9] rounded-[18px] justify-center items-center">
+      <View className=" bg-[#e9f2d9] rounded-2xl justify-center items-center">
         <Image source={plantImage} className="w-[90px] h-[90px]" resizeMode="contain" />
       </View>
 
       
-      <View className="flex-1 ml-6" style={{ gap: 24 }}>
+      <View className="ml-5 flex-1 gap-5">
         <View style={{ gap: 4 }}>
-          <Text className="text-[14px] font-bold text-[#86975A]">{plantName}</Text>
-          <Text className="text-[14px] text-[#919191] font-medium">at {rackName}</Text>
+          <Text className="text-sm font-bold text-primary">{plantName}</Text>
+          <Text className="text-sm text-[#919191]">at {rackName}</Text>
         </View>
 
         
-        <View className="flex-row mr-8" style={{ gap: 64 }}>
+        <View className="flex-row mr-8" style={{ gap: 56 }}>
           <View className="flex-row items-center" style={{ gap: 6 }}>
             <Image 
               source={require("@/assets/images/plant-time-icon.png")} 
@@ -39,7 +39,7 @@ export const HarvestItem: React.FC<HarvestItemProps> = ({
               style={{ tintColor: "#7a904a" }}
               resizeMode="contain"
             />
-            <Text className="text-[12px] text-[#919191] font-medium">{time}</Text>
+            <Text className="text-sm text-grayText">{time}</Text>
           </View>
 
           <View className="flex-row items-center" style={{ gap: 6 }}>
@@ -49,7 +49,7 @@ export const HarvestItem: React.FC<HarvestItemProps> = ({
               style={{ tintColor: "#7a904a" }}
               resizeMode="contain"
             />
-            <Text className="text-[12px] text-[#919191] font-medium">{weight}</Text>
+            <Text className="text-sm text-grayText">{weight}</Text>
           </View>
         </View>
       </View>

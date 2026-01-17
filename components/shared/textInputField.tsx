@@ -17,9 +17,9 @@ export const TextInputField = ({
 }: TextInputFieldProps) => {
   return (
     <View
-      className={`${width} pt-2 px-3 border-[2px] rounded-[12px] bg-white mb-[10px] border-[#919191]`}
+      className={`${width} pt-2 px-3 border-[2px] rounded-xl bg-white mb-[10px] border-grayText`}
     >
-      <Text className="text-primary text-base pt-[4px] pl-[4px]">
+      <Text className="text-primary text-sm pt-1 pl-1">
         {label}
       </Text>
       <TextInput
