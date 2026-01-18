@@ -91,7 +91,7 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({
             {getUnit()}
           </Text>
           .{" "}
-          <Text style={typography["subheader"]} className="text-gray-400">
+          <Text style={typography["subheader"]} className="text-grayText">
             {time}
           </Text>
         </Text>
@@ -114,7 +114,7 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({
             {getUnit()}
           </Text>
           .{" "}
-          <Text style={typography["subheader"]} className="text-gray-400">
+          <Text style={typography["subheader"]} className="text-grayText">
             {time}
           </Text>
         </Text>
@@ -136,7 +136,7 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({
             {rackName}
           </Text>{" "}
           has been disconnected.{" "}
-          <Text style={typography["subheader"]} className="text-gray-400">
+          <Text style={typography["subheader"]} className="text-grayText">
             {time}
           </Text>
         </Text>
@@ -154,7 +154,7 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({
             {rackName}
           </Text>{" "}
           has been disconnected.{" "}
-          <Text style={typography["subheader"]} className="text-gray-400">
+          <Text style={typography["subheader"]} className="text-grayText">
             {time}
           </Text>
         </Text>

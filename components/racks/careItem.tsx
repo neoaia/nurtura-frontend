@@ -40,7 +40,10 @@ const CareItem = ({ type, plantName, value, time }: CareItemProps) => {
           <Text style={typography["subheader-bold"]} className=" text-black">
             {value}
           </Text>
-          . <Text className="text-gray-400">{time}</Text>
+          .{" "}
+          <Text style={typography["subheader"]} className="text-grayText">
+            {time}
+          </Text>
         </Text>
       </View>
     </View>

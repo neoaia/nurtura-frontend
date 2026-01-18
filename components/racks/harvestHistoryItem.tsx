@@ -32,7 +32,7 @@ const HarvestHistoryItem = ({
           <Text style={typography["subheader-bold"]} className=" text-black">
             {plantName}
           </Text>{" "}
-          from your rack. <Text className="text-gray-400">{time}</Text>
+          from your rack. <Text style={typography['subheader']} className="text-grayText">{time}</Text>
         </Text>
       </View>
     </View>
