@@ -1,3 +1,4 @@
+import { typography } from "@/assets/fonts/Text";
 import React from "react";
 import { Image, Text, TouchableOpacity, View } from "react-native";
 import Svg, { Circle, Rect } from "react-native-svg";
@@ -82,14 +83,14 @@ const RackItem: React.FC<RackItemProps> = ({
 
           <View className="flex-1">
             <View className="flex-row items-center gap-2 mb-1">
-              <Text className="text-lg font-bold text-black" numberOfLines={1}>
+              <Text style={typography['h2-bold']} className=" text-black" numberOfLines={1}>
                 {name}
               </Text>
               {hasAlert && (
                 <View className="w-2.5 h-2.5 rounded-full bg-[#FF2121]" />
               )}
             </View>
-            <Text className="text-sm text-[#73883C]" numberOfLines={1}>
+            <Text style={typography['subheader']} className=" text-[#73883C]" numberOfLines={1}>
               {plant}
             </Text>
           </View>
@@ -110,24 +111,24 @@ const RackItem: React.FC<RackItemProps> = ({
       <View className="flex-row justify-center items-center w-full gap-10">
         <View className="flex-row items-center gap-1.5">
           <LeafIcon size={18} />
-          <Text className="text-sm font-medium text-black">{leaves}</Text>
+          <Text style={typography['label-bold']} className="text-black">{leaves}</Text>
         </View>
 
         <View className="flex-row items-center gap-1.5">
           <DropletIcon size={18} />
-          <Text className="text-sm font-medium text-black">
+          <Text style={typography['label-bold']} className="text-black">
             {water.toFixed(2)}
           </Text>
         </View>
 
         <View className="flex-row items-center gap-1.5">
           <WaveIcon size={18} />
-          <Text className="text-sm font-medium text-black">{humidity}%</Text>
+          <Text style={typography['label-bold']} className="text-black">{humidity}%</Text>
         </View>
 
         <View className="flex-row items-center gap-1.5">
           <ThermometerIcon size={18} />
-          <Text className="text-sm font-medium text-black">
+          <Text style={typography['label-bold']} className="text-black">
             {temperature}°C
           </Text>
         </View>
