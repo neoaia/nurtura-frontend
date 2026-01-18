@@ -23,7 +23,7 @@ export const MenuCard: React.FC<MenuButtonCardProps> = ({
   route,
 }) => {
   return (
-    <View className="bg-white rounded-xl px-6 py-8 flex-row items-center shadow-md elevation-3 gap-3">
+    <View className="bg-white rounded-2xl px-6 py-8 flex-row items-center border border-gray-100 shadow-md elevation-3 gap-3">
       <View className="p-4 bg-[#E5EDCF] rounded-xl justify-center items-center">
         <Image
           source={iconSource}
