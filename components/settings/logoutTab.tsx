@@ -19,7 +19,7 @@ export const LogOutRow: React.FC<LogOutTabProps> = ({
       onPress={onPress}
       activeOpacity={0.6}
     >
-      <View className="flex-row items-center" style={{ gap: 32 }}>
+      <View className="flex-row items-center w-full" style={{ gap: 32 }}>
         <Image source={iconSource} className="w-6 h-6" resizeMode="contain" />
         <Text style={typography['subheader']} className="  text-[#D34545]  ">{label}</Text>
       </View>

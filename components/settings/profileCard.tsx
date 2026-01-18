@@ -14,7 +14,7 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
   iconSource,
 }) => {
   return (
-    <View className=" w-full bg-white rounded-2xl py-5 px-6 mx-4 my-4 flex-row items-center shadow-md elevation-3">
+    <View className="w-full bg-white rounded-2xl py-5 px-6 flex-row items-center shadow-md elevation-3">
       <View className="w-14 h-14 bg-[#E9F2D9] rounded-full justify-center items-center">
         <Image
           source={iconSource}
