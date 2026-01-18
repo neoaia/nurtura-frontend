@@ -15,7 +15,7 @@ export const LogOutRow: React.FC<LogOutTabProps> = ({
 }) => {
   return (
     <TouchableOpacity
-      className="w-full flex-row items-center justify-between py-4 px-5 bg-white border-b border-[#EEE]"
+      className="w-full flex-row items-center justify-between py-4 px-5 bg-white"
       onPress={onPress}
       activeOpacity={0.6}
     >
