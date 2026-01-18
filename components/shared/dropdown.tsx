@@ -30,11 +30,12 @@ const Dropdown: React.FC<DropdownProps> = ({
   return (
     <TouchableOpacity
       onPress={onPress}
-      className="w-full border-2 border-gray-300 rounded-2xl px-5 py-4 flex-row items-center justify-between bg-white"
+      className="w-full border-2 border-grayText rounded-2xl px-5 py-4 flex-row items-center justify-between bg-white"
       activeOpacity={0.7}
     >
       <Text
-        style={typography['button']} className={`  flex-1 mr-2 ${value ? "text-black  " : "text-grayText"}`}
+        style={typography["subheader"]}
+        className={`  flex-1 mr-2 ${value ? "text-black  " : "text-grayText"}`}
         numberOfLines={1}
       >
         {value || placeholder}
