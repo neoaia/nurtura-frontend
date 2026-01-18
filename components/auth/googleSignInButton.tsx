@@ -1,3 +1,4 @@
+import { typography } from "@/assets/fonts/Text";
 import { Image, Text, TouchableOpacity } from "react-native";
 
 interface GoogleSignInButtonProps {
@@ -29,7 +30,7 @@ export const GoogleSignInButton = ({
         className="w-5 h-5 mr-3"
         resizeMode="contain"
       />
-      <Text className="text-xl font-semibold text-black">
+      <Text style={typography['button-bold']} className="  text-black">
         Continue with Google
       </Text>
     </TouchableOpacity>

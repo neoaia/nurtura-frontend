@@ -1,3 +1,4 @@
+import { typography } from "@/assets/fonts/Text";
 import { Image, Text, TextInput, TouchableOpacity, View } from "react-native";
 
 interface PasswordInputProps {
@@ -33,13 +34,14 @@ export const PasswordInput = ({
   return (
     <View className="relative w-full">
       <View
-        className={`w-[100%] pt-2 px-3 border-[2px] rounded-[12px] bg-white mb-[6px] ${getBorderColor()}`}
+        className={`w-[100%] py-3 px-3 border-[2px] rounded-2xl bg-white mb-[6px] ${getBorderColor()}`}
       >
-        <Text className="text-primary text-base pt-[4px] pl-[4px]">
+        <Text style={typography["subheader"]} className="text-primary pl-1">
           {label}
         </Text>
         <TextInput
-          className="text-black text-base pr-10"
+          style={[typography["button"], { padding: 0, margin: 0, minHeight: 22 }]}
+          className="text-black pl-1 pr-10"
           secureTextEntry={!isVisible}
           keyboardType="default"
           autoCapitalize="none"

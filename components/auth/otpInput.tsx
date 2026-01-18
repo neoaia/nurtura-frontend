@@ -1,3 +1,4 @@
+import { typography } from "@/assets/fonts/Text";
 import React from "react";
 import {
   NativeSyntheticEvent,
@@ -14,7 +15,7 @@ interface OTPInputProps {
     index: number
   ) => void;
   onFocus: () => void;
-  inputRefs: React.MutableRefObject<Array<TextInput | null>>;
+  inputRefs: React.MutableRefObject<(TextInput | null)[]>;
   isInvalid?: boolean;
 }
 
@@ -40,7 +41,8 @@ export const OTPInput = ({
           onFocus={onFocus}
           keyboardType="number-pad"
           maxLength={1}
-          className={`h-[60px] w-[60px] border-[2px] rounded-[12px] text-black text-center text-xl font-bold ${
+          style={typography['h2-bold']}
+          className={`h-[60px] w-[60px] border-[2px] rounded-xl text-black text-center   ${
             isInvalid ? "border-[#E65656]" : "border-grayText"
           }`}
           returnKeyType="next"
