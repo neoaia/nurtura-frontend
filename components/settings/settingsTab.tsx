@@ -1,3 +1,4 @@
+import { typography } from "@/assets/fonts/Text";
 import { router } from "expo-router";
 import React from "react";
 import {
@@ -27,7 +28,7 @@ export const SettingsRow: React.FC<SettingsTabProps> = ({
     >
       <View className="flex-row items-center" style={{ gap: 32 }}>
         <Image source={iconSource} className="w-5 h-5" resizeMode="contain" />
-        <Text className="text-sm text-black">{label}</Text>
+        <Text style={typography['subheader']} className="text-black">{label}</Text>
       </View>
 
       <Image
