@@ -1,7 +1,8 @@
 import BottomSheet, {
-    BottomSheetBackdrop,
-    BottomSheetView,
+  BottomSheetBackdrop,
+  BottomSheetView,
 } from "@gorhom/bottom-sheet";
+import { router } from "expo-router";
 import React, { useCallback, useEffect, useRef } from "react";
 import { Text, TouchableOpacity, View } from "react-native";
 import { typography } from "../../assets/fonts/Text";
@@ -23,7 +24,7 @@ export default function AddNewModal({ onClose }: AddNewModalProps) {
         onClose();
       }
     },
-    [onClose]
+    [onClose],
   );
 
   const renderBackdrop = useCallback(
@@ -36,13 +37,13 @@ export default function AddNewModal({ onClose }: AddNewModalProps) {
         pressBehavior="close"
       />
     ),
-    []
+    [],
   );
 
   const handlePlantPress = () => {
     bottomSheetRef.current?.close();
     onClose();
-    // router.push('/add-plant');
+    router.push("/(tabs)/(add_pages)/(addNewPlant)/addNewPlant1");
   };
 
   const handleRackPress = () => {
@@ -71,7 +72,10 @@ export default function AddNewModal({ onClose }: AddNewModalProps) {
       }}
     >
       <BottomSheetView className="flex-1 px-6 pt-4 pb-8 items-center">
-        <Text style={typography['h2-bold']} className="  text-[#86975A] mb-8 text-center">
+        <Text
+          style={typography["h2-bold"]}
+          className="  text-[#86975A] mb-8 text-center"
+        >
           Add to your Nurtura Farm
         </Text>
 
@@ -84,7 +88,9 @@ export default function AddNewModal({ onClose }: AddNewModalProps) {
             <View className="w-20 h-20 bg-[#E5EDCF] rounded-2xl justify-center items-center mb-3">
               <Text className="text-4xl"></Text>
             </View>
-            <Text style={typography['subheader']} className="  text-[#86975A]">Plant</Text>
+            <Text style={typography["subheader"]} className="  text-[#86975A]">
+              Plant
+            </Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -95,7 +101,12 @@ export default function AddNewModal({ onClose }: AddNewModalProps) {
             <View className="w-20 h-20 bg-[#E5EDCF] rounded-2xl justify-center items-center mb-3">
               <Text className="text-4xl"></Text>
             </View>
-            <Text style={typography['subheader']} className=" *: text-[#86975A]">Rack</Text>
+            <Text
+              style={typography["subheader"]}
+              className=" *: text-[#86975A]"
+            >
+              Rack
+            </Text>
           </TouchableOpacity>
         </View>
       </BottomSheetView>

@@ -112,6 +112,13 @@ const Layout = () => {
             ),
           }}
         />
+        <Tabs.Screen
+          name="(add_pages)"
+          options={{
+            href: null,
+            tabBarStyle: { display: "none" },
+          }}
+        />
       </Tabs>
 
       {modalVisible && <AddNewModal onClose={() => setModalVisible(false)} />}
