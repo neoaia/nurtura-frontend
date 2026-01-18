@@ -18,11 +18,11 @@ export const TextInputField = ({
 }: TextInputFieldProps) => {
   return (
     <View
-      className={`${width} py-4 px-3 border-[2px] rounded-2xl bg-white mb-[10px] border-grayText`}
+      className={`${width} py-3 px-3 border-[2px] rounded-2xl bg-white mb-[10px] border-grayText`}
     >
       <Text style={typography['subheader']} className="text-primary pl-1 mb-1">{label}</Text>
       <TextInput
-        style={[typography["button"], { padding: 0, margin: 0 }]}
+        style={[typography["button"], { padding: 0, margin: 0, minHeight: 22 }]}
         className="text-black pl-1"
         value={value}
         onChangeText={onChangeText}
