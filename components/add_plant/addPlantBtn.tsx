@@ -1,3 +1,4 @@
+import { typography } from "@/assets/fonts/Text";
 import React from "react";
 import { Text, TouchableOpacity, View } from "react-native";
 import Svg, { Path } from "react-native-svg";
@@ -32,7 +33,7 @@ const AddPlantButton: React.FC<AddPlantButtonProps> = ({
         <View className="px-2 py-2 sm:w-12 sm:h-12 bg-[#D9D9D9] rounded-xl items-center justify-center">
           <PlusIcon />
         </View>
-        <Text className="text-lg sm:text-xl font-semibold text-black">
+        <Text style={typography["h2-bold"]} className="  text-black">
           {label}
         </Text>
       </View>
