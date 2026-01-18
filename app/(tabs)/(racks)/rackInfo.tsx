@@ -36,7 +36,7 @@ const rackInfo = () => {
             <PlantStatusIndicators type="soil-moisture" value="40%" />
           </View>
 
-          <View className="flex-col gap-8 mt-6 mb-8">
+          <View className="flex-col gap-8 mt-6 mb-8 pl-2">
             <SmallDescription label="Date Planted" value="July 23, 2025" />
             <SmallDescription
               label="Recommended Soil"
@@ -47,8 +47,8 @@ const rackInfo = () => {
               value="150-500 grams"
             />
           </View>
-
-          <MenuCard
+          <View className="flex-col gap-3 mb-8">
+            <MenuCard
             title="Plant Care Activity"
             description="Logs based on watering and grow light activity."
             iconSource={require("@/assets/images/plantcare-icon.png")}
@@ -61,6 +61,8 @@ const rackInfo = () => {
             iconSource={require("@/assets/images/harvest-icon.png")}
             route="/(tabs)/(racks)/harvestHistory"
           ></MenuCard>
+          </View>
+          
         </View>
       </ScrollView>
     </SafeAreaView>
