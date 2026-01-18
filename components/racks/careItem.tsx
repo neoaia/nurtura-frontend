@@ -1,3 +1,4 @@
+import { typography } from "@/assets/fonts/Text";
 import React from "react";
 import { Text, View } from "react-native";
 
@@ -27,11 +28,19 @@ const CareItem = ({ type, plantName, value, time }: CareItemProps) => {
         className={`p-6 mr-4 rounded-xl items-center justify-center`}
       ></View>
       <View className="flex-1">
-        <Text className="text-base text-gray-700 leading-5">
-          The <Text className="font-bold text-black">{plantName}</Text>{" "}
+        <Text
+          style={typography["subheader"]}
+          className=" text-gray-700 leading-5"
+        >
+          The{" "}
+          <Text style={typography["subheader-bold"]} className=" text-black">
+            {plantName}
+          </Text>{" "}
           {getActionText()}{" "}
-          <Text className="font-bold text-black">{value}</Text>.{" "}
-          <Text className="text-gray-400">{time}</Text>
+          <Text style={typography["subheader-bold"]} className=" text-black">
+            {value}
+          </Text>
+          . <Text className="text-gray-400">{time}</Text>
         </Text>
       </View>
     </View>
