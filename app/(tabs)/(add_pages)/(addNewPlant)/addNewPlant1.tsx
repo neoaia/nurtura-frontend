@@ -1,9 +1,13 @@
 import { typography } from "@/assets/fonts/Text";
 import Dropdown from "@/components/shared/dropdown";
+import { router } from "expo-router";
 import React from "react";
-import { Text, View } from "react-native";
+import { Text, TouchableOpacity, View } from "react-native";
 
 const addNewPlant1 = () => {
+  const handleNextPress = () => {
+    router.push("/(tabs)/(add_pages)/(addNewPlant)/addNewPlant2");
+  };
   return (
     <View className="flex-1 bg-white px-[16px] pb-[34px] w-full justify-between h-screen">
       <View className="mt-[34px] flex-1 items-start">
@@ -25,6 +29,15 @@ const addNewPlant1 = () => {
         </Text>
 
         <Dropdown></Dropdown>
+
+        <TouchableOpacity
+          className="mt-[20px] w-full bg-primary rounded-2xl py-4"
+          onPress={handleNextPress}
+        >
+          <Text style={typography["button"]} className="text-white text-center">
+            Go to Page 2
+          </Text>
+        </TouchableOpacity>
       </View>
     </View>
   );

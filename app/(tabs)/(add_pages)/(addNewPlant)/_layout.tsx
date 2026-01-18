@@ -35,17 +35,6 @@ export default function AddNewPlantLayout() {
           headerShown: true,
         }}
       />
-      <Stack.Screen
-        name="addNewPlant3"
-        options={{
-          headerTitle: () => (
-            <Image
-              source={require("@/assets/images/add-new-plant/progress-bar-3.png")}
-            />
-          ),
-          headerShown: true,
-        }}
-      />
     </Stack>
   );
 }
