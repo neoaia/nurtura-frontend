@@ -1,3 +1,4 @@
+import { typography } from "@/assets/fonts/Text";
 import React from "react";
 import { Image, Text, View } from "react-native";
 
@@ -7,27 +8,38 @@ interface SummaryCardProps {
   label: string;
 }
 
-export const HarvestSummaryCard: React.FC<SummaryCardProps> = ({ value, unit, label }) => {
+export const HarvestSummaryCard: React.FC<SummaryCardProps> = ({
+  value,
+  unit,
+  label,
+}) => {
   return (
-    <View className="bg-white rounded-2xl p-5 w-[200px] shadow-lg elevation-4" style={{ gap: 8 }}>
+    <View
+      className="bg-white rounded-2xl p-5 w-[200px] shadow-lg elevation-4"
+      style={{ gap: 8 }}
+    >
       <View className="flex-row justify-between items-start mb-3">
         <View className="bg-[#E5EDCF] p-[10px] rounded-[12px]">
-          <Image 
-            source={require("@/assets/images/harvest-icon.png")} 
+          <Image
+            source={require("@/assets/images/harvest-icon.png")}
             className="w-6 h-6"
             style={{ tintColor: "#7a904a" }}
             resizeMode="contain"
           />
         </View>
-        
-        <Text className="text-4xl font-bold text-[#333] -mt-[3px]">
+
+        <Text style={typography["title-bold"]} className="text-[#333] mt-[3px]">
           {value}
         </Text>
       </View>
 
       <View style={{ gap: 4 }}>
-        <Text className="text-base font-bold text-[#333]">{unit}</Text>
-        <Text className="text-sm text-[#86975A] font-medium">{label}</Text>
+        <Text style={typography["button-bold"]} className="text-[#333]">
+          {unit}
+        </Text>
+        <Text style={typography["subheader"]} className="  text-[#86975A]  ">
+          {label}
+        </Text>
       </View>
     </View>
   );

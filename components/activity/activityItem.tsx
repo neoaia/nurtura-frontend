@@ -1,3 +1,4 @@
+import { typography } from "@/assets/fonts/Text";
 import React from "react";
 import { Image, Text, View } from "react-native";
 
@@ -40,7 +41,7 @@ export const ActivityItem: React.FC<ActivityItemProps> = ({
       <View className="flex-row items-center">
         <View className="m-3 flex-1 gap-5">
           <View>
-            <Text className="text-sm text-black">
+            <Text style={typography["subheader"]} className=" text-black">
               {config.actionText}
               <Text style={{ color: config.plantcolor }} className="font-bold">
                 {" "}
@@ -48,7 +49,10 @@ export const ActivityItem: React.FC<ActivityItemProps> = ({
               </Text>
             </Text>
 
-            <Text className="text-sm mt-1 text-grayText">
+            <Text
+              style={typography["subheader"]}
+              className=" mt-1 text-grayText"
+            >
               {rackName} at {location}
             </Text>
           </View>
@@ -60,7 +64,12 @@ export const ActivityItem: React.FC<ActivityItemProps> = ({
                 className="w-4 h-4"
                 resizeMode="contain"
               />
-              <Text className="text-[#919191] text-sm ml-1">{time}</Text>
+              <Text
+                style={typography["subheader"]}
+                className="text-[#919191] ml-1"
+              >
+                {time}
+              </Text>
             </View>
 
             <View className="flex-row" style={{ gap: 6 }}>
@@ -69,7 +78,12 @@ export const ActivityItem: React.FC<ActivityItemProps> = ({
                 className="w-4 h-4"
                 resizeMode="contain"
               />
-              <Text className="text-[#919191] text-sm ml-1">{duration}</Text>
+              <Text
+                style={typography["subheader"]}
+                className="text-[#919191] ml-1"
+              >
+                {duration}
+              </Text>
             </View>
           </View>
         </View>

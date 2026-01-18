@@ -1,3 +1,4 @@
+import { typography } from "@/assets/fonts/Text";
 import React from "react";
 import { Image, ImageSourcePropType, Text, View } from "react-native";
 
@@ -9,47 +10,56 @@ interface PlantItemProps {
   plantImage: ImageSourcePropType;
 }
 
-export const PlantItem: React.FC<PlantItemProps> = ({ 
-  plantName, 
-  rackName, 
-  time, 
-  weight, 
-  plantImage 
+export const PlantItem: React.FC<PlantItemProps> = ({
+  plantName,
+  rackName,
+  time,
+  weight,
+  plantImage,
 }) => {
   return (
-    <View className="bg-white rounded-[14px] p-4 flex-row items-center shadow-md elevation-3 my-2">
-      
-      <View className="w-[90px] h-[90px] bg-[#e9f2d9] rounded-[18px] justify-center items-center">
-        <Image source={plantImage} className="w-[90px] h-[90px]" resizeMode="contain" />
+    <View className="bg-white rounded-2xl px-4 py-6 flex-row items-center shadow-md elevation-3 my-2">
+      <View className="w-20 h-20 bg-[#e9f2d9] rounded-2xl justify-center items-center">
+        <Image
+          // source={plantImage}
+          className="w-20 h-20"
+          resizeMode="contain"
+        />
       </View>
 
-      
       <View className="flex-1 ml-6" style={{ gap: 24 }}>
         <View style={{ gap: 4 }}>
-          <Text className="text-[14px] font-bold text-[#86975A]">{plantName}</Text>
-          <Text className="text-[14px] text-[#919191] font-medium">at {rackName}</Text>
+          <Text style={typography["label-bold"]} className=" text-[#86975A]">
+            {plantName}
+          </Text>
+          <Text style={typography["label"]} className=" text-[#919191]">
+            at {rackName}
+          </Text>
         </View>
 
-        
-        <View className="flex-row mr-8" style={{ gap: 72 }}>
+        <View className="flex-row mr-8" style={{ gap: 56 }}>
           <View className="flex-row items-center" style={{ gap: 6 }}>
-            <Image 
-              source={require("@/assets/images/plant-time-icon.png")} 
-              className="w-[16px] h-[16px]" 
+            <Image
+              source={require("@/assets/images/plant-time-icon.png")}
+              className="w-[16px] h-[16px]"
               style={{ tintColor: "#7a904a" }}
               resizeMode="contain"
             />
-            <Text className="text-[12px] text-[#919191] font-medium">{time}</Text>
+            <Text style={typography["label"]} className="  text-[#919191] ">
+              {time}
+            </Text>
           </View>
 
           <View className="flex-row items-center" style={{ gap: 6 }}>
-            <Image 
-              source={require("@/assets/images/planting-icon.png")} 
-              className="w-[16px] h-[16px]" 
+            <Image
+              source={require("@/assets/images/planting-icon.png")}
+              className="w-[16px] h-[16px]"
               style={{ tintColor: "#7a904a" }}
               resizeMode="contain"
             />
-            <Text className="text-[12px] text-[#919191] font-medium">{weight}</Text>
+            <Text style={typography["label"]} className="  text-[#919191] ">
+              {weight}
+            </Text>
           </View>
         </View>
       </View>
