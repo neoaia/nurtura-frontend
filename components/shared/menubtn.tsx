@@ -1,3 +1,4 @@
+import { typography } from "@/assets/fonts/Text";
 import { router } from "expo-router";
 import React from "react";
 import {
@@ -33,8 +34,8 @@ export const MenuCard: React.FC<MenuButtonCardProps> = ({
       </View>
 
       <View className="flex-1 ml-4 pr-2">
-        <Text className="text-base font-bold text-[#333]">{title}</Text>
-        <Text className="text-sm text-[#919191] mt-2 leading-5">
+        <Text style={typography['button-bold']} className="  text-[#333]">{title}</Text>
+        <Text style={typography['subheader']} className=" F text-[#919191] mt-2 leading-5">
           {description}
         </Text>
       </View>
