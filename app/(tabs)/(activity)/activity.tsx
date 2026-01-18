@@ -1,3 +1,4 @@
+import { typography } from "@/assets/fonts/Text";
 import { MenuCard } from "@/components/shared/menubtn";
 import React from "react";
 import { ScrollView, Text, View } from 'react-native';
@@ -26,11 +27,11 @@ export default function ActivityScreen() {
   ];
 
   return (
-    <SafeAreaView className="bg-white">
+    <SafeAreaView className="bg-white flex-1">
       <ScrollView showsVerticalScrollIndicator={false}>
         <View className="flex justify-center items-center px-4 bg-white">
           <View className="flex justify-start items-start w-full mb-2 mt-8 pl-3">
-            <Text className="text-black font-bold text-5xl mb-[20px] pl-2">
+            <Text style={typography['title-bold']} className="text-black   mb-[20px]">
               Activity
             </Text>
           </View>
