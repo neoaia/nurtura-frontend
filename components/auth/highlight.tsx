@@ -21,7 +21,7 @@ export const Highlight: React.FC<HighlightProps> = ({
         <Text style={typography["h1-bold"]} className="text-white mb-2">
           {title}
         </Text>
-        <Text style={typography.body} className="text-white opacity-90 mb-5">
+        <Text style={typography.label} className="text-white opacity-90 mb-5 max-w-[190px]">
           {description}
         </Text>
         <TouchableOpacity
@@ -29,7 +29,7 @@ export const Highlight: React.FC<HighlightProps> = ({
           className="bg-[#7a8f5e] rounded-xl py-3 px-6 self-start"
           activeOpacity={0.8}
         >
-          <Text style={typography.button} className="text-white">
+          <Text style={typography["label-bold"]} className="text-white">
             {buttonText}
           </Text>
         </TouchableOpacity>

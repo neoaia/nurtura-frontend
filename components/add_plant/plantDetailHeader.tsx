@@ -1,3 +1,4 @@
+import { typography } from "@/assets/fonts/Text";
 import React from "react";
 import { Text, TouchableOpacity, View } from "react-native";
 import Svg, { Path } from "react-native-svg";
@@ -20,7 +21,11 @@ interface PlantDetailHeaderProps {
   onClose?: () => void;
 }
 
-const PlantDetailHeader: React.FC<PlantDetailHeaderProps> = ({ plantName, plantType, onClose }) => {
+const PlantDetailHeader: React.FC<PlantDetailHeaderProps> = ({
+  plantName,
+  plantType,
+  onClose,
+}) => {
   return (
     <View className="w-full">
       <View className="w-full items-center justify-start flex-row gap-5">
@@ -41,8 +46,12 @@ const PlantDetailHeader: React.FC<PlantDetailHeaderProps> = ({ plantName, plantT
 
         <View className="flex-1">
           <View className="mb-2">
-            <Text className="text-black text-lg font-bold">{plantName}</Text>
-            <Text className="text-sm text-grayText">{plantType}</Text>
+            <Text style={typography["h2-bold"]} className="text-black   mb-1">
+              {plantName}
+            </Text>
+            <Text style={typography["subheader"]} className=" text-grayText mb-2">
+              {plantType}
+            </Text>
           </View>
           <Dropdown />
         </View>

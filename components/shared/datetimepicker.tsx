@@ -1,3 +1,4 @@
+import { typography } from "@/assets/fonts/Text";
 import { Ionicons } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import React, { useState } from "react";
@@ -40,11 +41,11 @@ export const DateRangePicker = ({ value, onChange }: Props) => {
     <View>
       <TouchableOpacity
         onPress={() => setMode("start")}
-        className="flex-row items-center justify-between border border-gray-300 rounded-xl py-3 px-4 bg-white"
+        className="flex-row items-center justify-between border-[2px] border-gray-300 rounded-xl py-3 px-4 bg-white"
       >
         <View className="flex-row items-center">
           <Ionicons name="calendar-outline" size={20} color="#666" />
-          <Text className="ml-3 text-black">
+          <Text style={typography["subheader"]} className="ml-3 text-black ">
             {formatRange()}
           </Text>
         </View>

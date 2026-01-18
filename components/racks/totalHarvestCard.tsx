@@ -1,3 +1,4 @@
+import { typography } from "@/assets/fonts/Text";
 import React from "react";
 import { Image, Text, View } from "react-native";
 
@@ -15,7 +16,7 @@ const TotalHarvestCard: React.FC<TotalHarvestCardProps> = ({
   return (
     <View className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 w-full">
       <View className="flex-row justify-between items-center">
-        <View className="flex-row items-center gap-4 flex-1"> 
+        <View className="flex-row items-center gap-4 flex-1">
           <View className="w-14 h-14 bg-[#E5EDCF] rounded-xl items-center justify-center">
             {image ? (
               <Image
@@ -29,16 +30,22 @@ const TotalHarvestCard: React.FC<TotalHarvestCardProps> = ({
           </View>
 
           <View className="flex-1">
-            <Text className="text-lg font-bold text-black mb-1">
+            <Text style={typography["h2-bold"]} className="text-black mb-2">
               Total Harvest
             </Text>
-            <Text className="text-sm text-grayText">since {sinceDate}</Text>
+            <Text style={typography["subheader"]} className="text-grayText">
+              since {sinceDate}
+            </Text>
           </View>
         </View>
 
-        <View className="items-end">
-          <Text className="text-2xl font-bold text-black">{totalGrams}</Text>
-          <Text className="text-sm text-grayText mt-1">grams</Text>
+        <View className="items-center">
+          <Text style={typography["title-2 bold"]} className="text-black">
+            {totalGrams}
+          </Text>
+          <Text style={typography["subheader"]} className="text-grayText">
+            grams
+          </Text>
         </View>
       </View>
     </View>

@@ -1,3 +1,4 @@
+import { typography } from "@/assets/fonts/Text";
 import React from "react";
 import { Text, View } from "react-native";
 
@@ -39,18 +40,24 @@ const PlantStatusIndicators: React.FC<plantStatusIndicators> = ({
   const displayLabel = label || config.label;
 
   return (
-    <View className="items-center bg-white rounded-xl py-3 px-2 shadow-sm border border-gray-100 flex-1 mx-1">
+    <View className="items-center bg-white rounded-xl py-4 px-3 shadow-sm border border-gray-100 flex-1 mx-1">
       <View
         className={`w-10 h-10 ${config.bgColor} rounded-lg items-center justify-center mb-2`}
       ></View>
 
       <Text
-        className={`text-sm font-medium ${config.textColor} mb-0.5 text-center`}
+        style={typography["label"]}
+        className={` ${config.textColor} mb-0.5 text-center`}
       >
         {displayLabel}
       </Text>
 
-      <Text className={`text-base font-bold ${config.textColor}`}>{value}</Text>
+      <Text
+        style={typography["button-bold"]}
+        className={` ${config.textColor}`}
+      >
+        {value}
+      </Text>
     </View>
   );
 };

@@ -16,13 +16,13 @@ export default function RackLayout() {
       <Stack.Screen
         name="racks"
         options={{
-          headerShown: false,  
+          headerShown: false,
         }}
       />
       <Stack.Screen
         name="rackInfo"
         options={{
-          headerShown: true,  
+          headerShown: true,
         }}
       />
       <Stack.Screen

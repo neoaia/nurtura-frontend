@@ -1,3 +1,4 @@
+import { typography } from "@/assets/fonts/Text";
 import { Text, TouchableOpacity, View } from "react-native";
 
 interface ResendCodeProps {
@@ -8,13 +9,17 @@ interface ResendCodeProps {
 export const ResendCode = ({ onResend, timer }: ResendCodeProps) => {
   return (
     <View className="self-start pl-2 mb-[26px] flex-row items-center">
-      <Text className="text-base text-gray-700 leading-normal">
-        Didn't receive the code?{" "}
+      <Text
+        style={typography.button}
+        className="  text-black leading-normal"
+      >
+        Didn&apos;t receive the code?{" "}
       </Text>
       <TouchableOpacity onPress={onResend} disabled={timer > 0}>
         <Text
-          className={`text-base font-semibold underline ${
-            timer > 0 ? "text-gray-400" : "text-primary"
+          style={typography["button-bold"]}
+          className={` underline ${
+            timer > 0 ? "text-grayText" : "text-primary"
           }`}
         >
           Resend code
@@ -22,7 +27,7 @@ export const ResendCode = ({ onResend, timer }: ResendCodeProps) => {
       </TouchableOpacity>
 
       {timer > 0 && (
-        <Text className="ml-2 text-base text-gray-500">({timer}s)</Text>
+        <Text style={typography.button} className="ml-2   text-grayText">({timer}s)</Text>
       )}
     </View>
   );

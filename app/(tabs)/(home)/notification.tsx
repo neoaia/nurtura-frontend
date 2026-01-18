@@ -1,19 +1,22 @@
-import { NotificationItem } from '@/components/notifications/notificationItem';
-import { auth } from '@/firebase';
-import { router } from "expo-router";
-import { Text, View } from "react-native";
+import NotificationItem from "@/components/notifications/notificationItem";
+import { ScrollView, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+
 
 export default function NotificationScreen() {
-    return (
-        <View className='flex justify-center items-center h-screen'>
-            <Text>Notification Screen</Text>
-            <Text>Email: {auth.currentUser?.email}</Text>
-            <NotificationItem type="water" />
-            <NotificationItem type="light" />
-            <NotificationItem type="harvest" />
-            <NotificationItem type="sensor" />
-            <NotificationItem type="environment" />
-            <Text onPress={() => router.back()} className='underline text-red-800'> Go Back </Text>
+  return (
+    <SafeAreaView className="bg-white flex-1">
+      <ScrollView showsVerticalScrollIndicator={false}>
+        <View className="px-4 py-4 bg-white">
+          <NotificationItem type="water" plantName="Lettuce" value="200" time="2h ago" />
+          <NotificationItem type="light" plantName="Tomato" value="80" time="5m ago" />
+            <NotificationItem type="harvest" plantName="Basil" value="150" time="1d ago" />
+            <NotificationItem type="sensor" plantName="Cucumber" metric="moisture" value="30" time="30m ago" />
+            <NotificationItem type="environment" rackName="Rack A" component="Temperature Sensor" value="85" time="10m ago" />
+            <NotificationItem type="info" time="Just now" />
+            <NotificationItem type="info" time="Just now" />
         </View>
-    )
+      </ScrollView>
+    </SafeAreaView>
+  );
 }

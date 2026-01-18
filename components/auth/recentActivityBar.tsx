@@ -36,7 +36,7 @@ export const RecentActivityBar: React.FC<RecentActivityBarProps> = ({
   return (
     <>
       <View className="pt-8 pb-4 px-4">
-        <Text style={typography["h2-bold"]} className="text-gray-800">
+        <Text style={typography["h2-bold"]} className="text-black">
           Recent Activity
         </Text>
       </View>
@@ -44,7 +44,7 @@ export const RecentActivityBar: React.FC<RecentActivityBarProps> = ({
       <View>
         {activities.length === 0 ? (
           <View className="p-8 items-center border border-gray-200 rounded-xl">
-            <Text style={typography.body} className="text-gray-500">
+            <Text style={typography.body} className="text-grayText">
               No recent activities
             </Text>
           </View>
@@ -58,7 +58,7 @@ export const RecentActivityBar: React.FC<RecentActivityBarProps> = ({
               <View
                 key={activity.id}
                 className={`
-                  px-3 py-4 flex-row items-center
+                  px-3 py-5 flex-row items-center
                   border border-gray-200
                   ${!isLast ? "border-b-0" : ""}
                   ${isFirst ? "rounded-t-xl" : ""}
@@ -67,32 +67,31 @@ export const RecentActivityBar: React.FC<RecentActivityBarProps> = ({
               >
                 <View
                   style={{ backgroundColor: iconConfig.bgColor }}
-                  className="rounded-xl p-3 mr-4 w-14 h-14 items-center justify-center"
+                  className="rounded-2xl p-3 mr-6 w-14 h-14 items-center justify-center"
                 >
                   <Image
                     source={iconConfig.icon}
-                    className="w-8 h-8"
+                    className="w-5 h-5"
                     resizeMode="contain"
                   />
                 </View>
 
                 <View className="flex-1">
-                  <Text style={typography.label} className="text-gray-700 mb-2">
+                  <Text style={typography.button} className="text-gray-700 mb-4">
                     {activity.action}{" "}
                     <Text
-                      style={typography["label-bold"]}
-                      className="font-semibold"
-                      style={{ color: iconConfig.textColor }}
+                      style={{ ...typography["button-bold"], color: iconConfig.textColor }}
+                      className="mb-6" 
                     >
                       {activity.plant}
                     </Text>
                   </Text>
 
-                  <View className="flex-row items-center gap-4">
+                  <View className="flex-row items-center gap-10">
                     <View className="flex-row items-center">
                       <Image
                         source={ClockIcon}
-                        className="w-4.5 h-4.5 mr-2"
+                        className="w-4 h-4 mr-2"
                         resizeMode="contain"
                       />
                       <Text style={typography.label} className="text-gray-600">
@@ -103,7 +102,7 @@ export const RecentActivityBar: React.FC<RecentActivityBarProps> = ({
                     <View className="flex-row items-center">
                       <Image
                         source={iconConfig.icon}
-                        className="w-5 h-5 mr-1.5"
+                        className="w-4 h-4 mr-2"
                         resizeMode="contain"
                       />
                       <Text style={typography.label} className="text-gray-600">

@@ -1,32 +1,32 @@
+import { typography } from "@/assets/fonts/Text";
 import PlantStatusIndicators from "@/components/racks/plantStatusIndicators";
+import { MenuCard } from "@/components/shared/menubtn";
 import SmallDescription from "@/components/shared/smallDescription";
-import { router } from "expo-router";
 import React from "react";
-import { ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const rackInfo = () => {
-  const handleCarePress = () => {
-    router.push("/(tabs)/(racks)/care");
-  };
-
-  const handleHarvestHistoryPress = () => {
-    router.push("/(tabs)/(racks)/harvestHistory");
-  }
-
-
   return (
     <SafeAreaView className="bg-white flex-1">
       <ScrollView showsVerticalScrollIndicator={false}>
         <View className="px-4 py-4 bg-white">
           <View className="w-full flex-row justify-between items-start mb-6">
             <View className="flex-1 pl-2">
-              <Text className="text-2xl font-bold text-black">Lettuce</Text>
-              <Text className="text-sm text-grayText">Fruit Vegetable</Text>
+              <Text style={typography["h1-bold"]} className="  text-black">
+                Lettuce
+              </Text>
+              <Text style={typography["subheader"]} className="text-grayText">
+                Fruit Vegetable
+              </Text>
             </View>
             <View className="items-end pr-2">
-              <Text className="text-2xl font-bold text-black">3</Text>
-              <Text className="text-sm text-grayText">Seeds</Text>
+              <Text style={typography["h1-bold"]} className="  text-black">
+                3
+              </Text>
+              <Text style={typography["subheader"]} className="text-grayText">
+                Seeds
+              </Text>
             </View>
           </View>
 
@@ -36,7 +36,7 @@ const rackInfo = () => {
             <PlantStatusIndicators type="soil-moisture" value="40%" />
           </View>
 
-          <View className="flex-col gap-8 mt-6 mb-8">
+          <View className="flex-col gap-8 mt-6 mb-8 pl-2">
             <SmallDescription label="Date Planted" value="July 23, 2025" />
             <SmallDescription
               label="Recommended Soil"
@@ -47,18 +47,22 @@ const rackInfo = () => {
               value="150-500 grams"
             />
           </View>
+          <View className="flex-col gap-3 mb-8">
+            <MenuCard
+            title="Plant Care Activity"
+            description="Logs based on watering and grow light activity."
+            iconSource={require("@/assets/images/plantcare-icon.png")}
+            route="/(tabs)/(racks)/care"
+          ></MenuCard>
 
-          <TouchableOpacity className="w-full flex justify-center items-center bg-gray-400 p-5 mb-3" onPress={handleCarePress}>
-            <Text className="text-white font-bold">Plant Care History (Temporary Button)</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity className="w-full flex justify-center items-center bg-gray-400 p-5 mb-3" onPress={handleHarvestHistoryPress}>
-            <Text className="text-white font-bold">Harvest History (Temporary Button)</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity className="w-full flex justify-center items-center bg-gray-400 p-5 mb-3">
-            <Text className="text-white font-bold">Harvest Plant (Temporary Button)</Text>
-          </TouchableOpacity>
+          <MenuCard
+            title="Harvest Activity"
+            description="Records of your past harvests for this plant."
+            iconSource={require("@/assets/images/harvest-icon.png")}
+            route="/(tabs)/(racks)/harvestHistory"
+          ></MenuCard>
+          </View>
+          
         </View>
       </ScrollView>
     </SafeAreaView>

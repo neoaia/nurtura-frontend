@@ -1,3 +1,4 @@
+import { typography } from "@/assets/fonts/Text";
 import React from "react";
 import { Text, View } from "react-native";
 
@@ -13,10 +14,12 @@ const SelectedRackCard: React.FC<SelectedRackCardProps> = ({ rackName }) => {
           <View className="w-14 h-14 bg-[#E5EDCF] rounded-xl items-center justify-center" />
 
           <View className="flex-1">
-            <Text className="text-lg font-bold text-black mb-1">
+            <Text style={typography["h2-bold"]} className="  text-black mb-1">
               {rackName}
             </Text>
-            <Text className="text-sm text-grayText">Selected Rack</Text>
+            <Text style={typography["subheader"]} className="  text-grayText">
+              Selected Rack
+            </Text>
           </View>
         </View>
       </View>

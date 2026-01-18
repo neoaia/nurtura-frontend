@@ -1,3 +1,4 @@
+import { typography } from "@/assets/fonts/Text";
 import React from "react";
 import { Image, ImageSourcePropType, Text, TouchableOpacity, View } from "react-native";
 
@@ -14,13 +15,13 @@ export const LogOutRow: React.FC<LogOutTabProps> = ({
 }) => {
   return (
     <TouchableOpacity
-      className="w-full flex-row items-center justify-between py-4 px-5 bg-white border-b border-[#EEE]"
+      className="w-full flex-row items-center justify-between py-4 px-5 bg-white"
       onPress={onPress}
       activeOpacity={0.6}
     >
-      <View className="flex-row items-center" style={{ gap: 32 }}>
+      <View className="flex-row items-center w-full" style={{ gap: 32 }}>
         <Image source={iconSource} className="w-6 h-6" resizeMode="contain" />
-        <Text className="text-sm text-[#D34545] font-normal">{label}</Text>
+        <Text style={typography['subheader']} className="  text-[#D34545]  ">{label}</Text>
       </View>
     </TouchableOpacity>
   );

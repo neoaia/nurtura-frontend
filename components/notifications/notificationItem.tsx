@@ -1,3 +1,4 @@
+import { typography } from "@/assets/fonts/Text";
 import React from "react";
 import { Text, View } from "react-native";
 
@@ -69,51 +70,93 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({
     }
   };
 
-  const renderContent = () => { 
+  const renderContent = () => {
     if (type === "water" || type === "light" || type === "harvest") {
       return (
-        <Text className="text-base text-gray-700 leading-5">
-          The <Text className="font-bold text-black">{plantName}</Text> on{" "}
-          <Text className="font-bold text-black">{location}</Text> Garden{" "}
-          {getActionText()}{" "}
-          <Text className="font-bold text-black">
+        <Text
+          style={typography["subheader"]}
+          className="  text-gray-700 leading-5"
+        >
+          The{" "}
+          <Text style={typography["subheader-bold"]} className="  text-black">
+            {plantName}
+          </Text>{" "}
+          on{" "}
+          <Text style={typography["subheader-bold"]} className="  text-black">
+            {location}
+          </Text>{" "}
+          Garden {getActionText()}{" "}
+          <Text style={typography["subheader-bold"]} className="  text-black">
             {value}
             {getUnit()}
           </Text>
-          . <Text className="text-gray-400">{time}</Text>
+          .{" "}
+          <Text style={typography["subheader"]} className="text-grayText">
+            {time}
+          </Text>
         </Text>
       );
     }
- 
+
     if (type === "environment") {
       return (
-        <Text className="text-base text-gray-700 leading-5">
-          The <Text className="font-bold text-black">{rackName}</Text> has
-          reached a {metric} of{" "}
-          <Text className="font-bold text-black">
+        <Text
+          style={typography["subheader"]}
+          className="  text-gray-700 leading-5"
+        >
+          The{" "}
+          <Text style={typography["subheader-bold"]} className="  text-black">
+            {rackName}
+          </Text>{" "}
+          has reached a {metric} of{" "}
+          <Text style={typography["subheader-bold"]} className="  text-black">
             {value}
             {getUnit()}
           </Text>
-          . <Text className="text-gray-400">{time}</Text>
+          .{" "}
+          <Text style={typography["subheader"]} className="text-grayText">
+            {time}
+          </Text>
         </Text>
       );
     }
- 
+
     if (type === "sensor") {
       return (
-        <Text className="text-base text-gray-700 leading-5">
-          The <Text className="font-bold text-black">{component}</Text> on{" "}
-          <Text className="font-bold text-black">{rackName}</Text> has been
-          disconnected. <Text className="text-gray-400">{time}</Text>
+        <Text
+          style={typography["subheader"]}
+          className="  text-gray-700 leading-5"
+        >
+          The{" "}
+          <Text style={typography["subheader-bold"]} className="  text-black">
+            {component}
+          </Text>{" "}
+          on{" "}
+          <Text style={typography["subheader-bold"]} className="  text-black">
+            {rackName}
+          </Text>{" "}
+          has been disconnected.{" "}
+          <Text style={typography["subheader"]} className="text-grayText">
+            {time}
+          </Text>
         </Text>
       );
     }
- 
+
     if (type === "info") {
       return (
-        <Text className="text-base text-gray-700 leading-5">
-          The <Text className="font-bold text-black">{rackName}</Text> has been
-          disconnected. <Text className="text-gray-400">{time}</Text>
+        <Text
+          style={typography["subheader"]}
+          className="  text-gray-700 leading-5"
+        >
+          The{" "}
+          <Text style={typography["subheader-bold"]} className="  text-black">
+            {rackName}
+          </Text>{" "}
+          has been disconnected.{" "}
+          <Text style={typography["subheader"]} className="text-grayText">
+            {time}
+          </Text>
         </Text>
       );
     }

@@ -1,3 +1,4 @@
+import { typography } from "@/assets/fonts/Text";
 import AddRackButton from "@/components/racks/addRackItemBtn";
 import RackItem from "@/components/racks/rackItem";
 import { router } from "expo-router";
@@ -11,11 +12,11 @@ export default function RacksScreen() {
   };
 
   return (
-    <SafeAreaView className="bg-white">
+    <SafeAreaView className="bg-white flex-1">
       <ScrollView showsVerticalScrollIndicator={false}>
         <View className="flex justify-center items-center px-4 bg-white">
           <View className="flex justify-start items-start w-full mb-2 mt-8 pl-3">
-            <Text className="text-black font-bold text-5xl mb-[20px] pl-2">
+            <Text style={typography['title-bold']} className="text-black text-5xl mb-[20px]">
               Racks
             </Text>
           </View>

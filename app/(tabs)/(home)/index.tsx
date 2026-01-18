@@ -1,3 +1,5 @@
+import { typography } from '@/assets/fonts/Text';
+import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { Image, ScrollView, StatusBar, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -139,6 +141,7 @@ export default function HomeScreen() {
   const handleNotificationPress = async () => {
     console.log('Notification pressed');
     const notifications = await apiService.getNotifications();
+    router.push('/notification');
   };
 
   const handleCardPress = (cardType: string) => {
@@ -170,7 +173,7 @@ export default function HomeScreen() {
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View className="px-10 pt-4 pb-2 flex-row items-center justify-between">
-          <Text className="text-2xl font-bold text-white">
+          <Text style={typography['h1-bold']} className=" text-white">
             Hi {data.user.name}!
           </Text>
           <TouchableOpacity

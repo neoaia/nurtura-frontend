@@ -85,7 +85,7 @@ export const SummaryCard: React.FC<SummaryCardProps> = ({
               {config.title}
             </Text>
 
-            <Text style={typography.body} className="text-white opacity-90">
+            <Text style={typography['subheader']} className="text-white opacity-90">
               {config.subtitle}
             </Text>
           </TouchableOpacity>
