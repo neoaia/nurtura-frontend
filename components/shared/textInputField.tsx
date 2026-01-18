@@ -1,3 +1,4 @@
+import { typography } from "@/assets/fonts/Text";
 import { Text, TextInput, View } from "react-native";
 
 interface TextInputFieldProps {
@@ -17,13 +18,12 @@ export const TextInputField = ({
 }: TextInputFieldProps) => {
   return (
     <View
-      className={`${width} pt-2 px-3 border-[2px] rounded-xl bg-white mb-[10px] border-grayText`}
+      className={`${width} py-4 px-3 border-[2px] rounded-2xl bg-white mb-[10px] border-grayText`}
     >
-      <Text className="text-primary text-sm pt-1 pl-1">
-        {label}
-      </Text>
+      <Text style={typography['subheader']} className="text-primary pl-1 mb-1">{label}</Text>
       <TextInput
-        className="text-black text-base"
+        style={[typography["button"], { padding: 0, margin: 0 }]}
+        className="text-black pl-1"
         value={value}
         onChangeText={onChangeText}
         placeholder={placeholder}

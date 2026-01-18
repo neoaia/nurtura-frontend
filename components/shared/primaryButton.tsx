@@ -1,3 +1,4 @@
+import { typography } from "@/assets/fonts/Text";
 import { ActivityIndicator, Text, TouchableOpacity } from "react-native";
 
 interface PrimaryButtonProps {
@@ -14,7 +15,7 @@ export const PrimaryButton = ({
   title,
 }: PrimaryButtonProps) => {
   const isDisabled = loading || disabled;
-  
+
   return (
     <TouchableOpacity
       className={`w-full p-6 rounded-[12px] mt-2 flex items-center ${
@@ -26,7 +27,9 @@ export const PrimaryButton = ({
       {loading ? (
         <ActivityIndicator color="white" />
       ) : (
-        <Text className="text-white text-xl font-bold">{title}</Text>
+        <Text style={typography["button-bold"]} className="text-white">
+          {title}
+        </Text>
       )}
     </TouchableOpacity>
   );

@@ -1,3 +1,4 @@
+import { typography } from "@/assets/fonts/Text";
 import React from "react";
 import { Text, TouchableOpacity } from "react-native";
 import Svg, { Path } from "react-native-svg";
@@ -33,7 +34,7 @@ const Dropdown: React.FC<DropdownProps> = ({
       activeOpacity={0.7}
     >
       <Text
-        className={`text-base flex-1 mr-2 ${value ? "text-gray-900 font-medium" : "text-gray-400"}`}
+        style={typography['button']} className={`  flex-1 mr-2 ${value ? "text-black  " : "text-grayText"}`}
         numberOfLines={1}
       >
         {value || placeholder}

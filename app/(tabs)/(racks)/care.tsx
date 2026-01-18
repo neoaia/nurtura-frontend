@@ -14,7 +14,7 @@ const care = () => {
             value="200 mL"
             time="2h ago"
           />
-          <CareItem type="light" plantName="Tomato" value="80%" time="5m ago" />
+          <CareItem type="light" plantName="Tomato" value="80%" time="5m ago" /> 
         </View>
       </ScrollView>
     </SafeAreaView>
