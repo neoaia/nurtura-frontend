@@ -1,3 +1,4 @@
+import { typography } from "@/assets/fonts/Text";
 import React from "react";
 import { Text, View } from "react-native";
 
@@ -19,11 +20,19 @@ const HarvestHistoryItem = ({
         className="p-6 mr-4 rounded-xl items-center justify-center"
       />
       <View className="flex-1">
-        <Text className="text-base text-gray-700 leading-5">
+        <Text
+          style={typography["subheader"]}
+          className=" text-gray-700 leading-5"
+        >
           You have harvested{" "}
-          <Text className="font-bold text-black">{value} g</Text> of{" "}
-          <Text className="font-bold text-black">{plantName}</Text> from your
-          rack. <Text className="text-gray-400">{time}</Text>
+          <Text style={typography["subheader-bold"]} className=" text-black">
+            {value} g
+          </Text>{" "}
+          of{" "}
+          <Text style={typography["subheader-bold"]} className=" text-black">
+            {plantName}
+          </Text>{" "}
+          from your rack. <Text className="text-gray-400">{time}</Text>
         </Text>
       </View>
     </View>
