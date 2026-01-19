@@ -1,23 +1,43 @@
 import { ActivityItem } from "@/components/activity/activityItem";
 import { ActivityButton } from "@/components/activity/sensorToggle";
 import { DateRangePicker } from "@/components/shared/datetimepicker";
+import { useNavigation } from "expo-router";
 
 import { Ionicons } from "@expo/vector-icons";
-import React, { useState } from "react";
+import React, { useLayoutEffect, useState } from "react";
 import { ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function PlantCareScreen() {
+  const navigation = useNavigation();
+
+  useLayoutEffect(() => {
+    navigation.getParent()?.setOptions({
+      tabBarStyle: { display: "none" },
+    });
+
+    return () => {
+      navigation.getParent()?.setOptions({
+        tabBarStyle: {
+          height: 100,
+          paddingBottom: 10,
+          paddingTop: 15,
+          display: "flex",
+        },
+      });
+    };
+  }, [navigation]);
+
   const [activeTab, setActiveTab] = useState<"water" | "light">("water");
   const dateToday = new Date();
 
   const formatDate = (date: Date) => {
-  return date.toLocaleDateString("en-US", {
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-  });
-};
+    return date.toLocaleDateString("en-US", {
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+    });
+  };
 
   const [dateRange, setDateRange] = useState<{
     start: Date | null;
@@ -35,10 +55,7 @@ export default function PlantCareScreen() {
       >
         {/* date range calender */}
         <View className="px-6 mt-4">
-          <DateRangePicker
-            value={dateRange}
-            onChange={setDateRange}
-          />
+          <DateRangePicker value={dateRange} onChange={setDateRange} />
         </View>
 
         {/* send=sor toggle */}
