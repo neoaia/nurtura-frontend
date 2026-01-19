@@ -1,4 +1,6 @@
+import { typography } from "@/assets/fonts/Text";
 import { Stack } from "expo-router";
+import { TextStyle } from "react-native";
 
 export default function AccountLayout() {
   return (
@@ -10,7 +12,10 @@ export default function AccountLayout() {
         headerShadowVisible: false,
         headerTitleAlign: "center",
         headerShown: true,
-        title: "",
+        headerTitleStyle: {
+          ...(typography["h2-bold"] as TextStyle),
+          color: "#424242",
+        },
       }}
     >
       <Stack.Screen
