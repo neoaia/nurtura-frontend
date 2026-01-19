@@ -1,4 +1,6 @@
+import { typography } from "@/assets/fonts/Text";
 import { Stack } from "expo-router";
+import { TextStyle } from "react-native";
 
 export default function RackLayout() {
   return (
@@ -10,7 +12,10 @@ export default function RackLayout() {
         headerShadowVisible: false,
         headerTitleAlign: "center",
         headerShown: true,
-        title: "",
+        headerTitleStyle: {
+          ...(typography["h2-bold"] as TextStyle),
+          color: "#424242",
+        },
       }}
     >
       <Stack.Screen
@@ -23,18 +28,21 @@ export default function RackLayout() {
         name="rackInfo"
         options={{
           headerShown: true,
+          title: "My First Rack",
         }}
       />
       <Stack.Screen
         name="care"
         options={{
           headerShown: true,
+          title: "Plant Care Activity",
         }}
       />
       <Stack.Screen
         name="harvestHistory"
         options={{
           headerShown: true,
+          title: "Harvest History",
         }}
       />
       <Stack.Screen

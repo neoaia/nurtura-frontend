@@ -1,4 +1,7 @@
 import { Stack } from "expo-router";
+// Siguraduhin na tama ang path at export ng typography mo
+import { typography } from "@/assets/fonts/Text";
+import { TextStyle } from "react-native"; // Optional: for type checking
 
 export default function ActivityLayout() {
   return (
@@ -10,7 +13,10 @@ export default function ActivityLayout() {
         headerShadowVisible: false,
         headerTitleAlign: "center",
         headerShown: true,
-        title: "Activity",
+        headerTitleStyle: {
+          ...(typography["h2-bold"] as TextStyle),
+          color: "#424242",
+        },
       }}
     >
       <Stack.Screen

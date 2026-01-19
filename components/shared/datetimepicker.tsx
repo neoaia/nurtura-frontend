@@ -41,7 +41,7 @@ export const DateRangePicker = ({ value, onChange }: Props) => {
     <View>
       <TouchableOpacity
         onPress={() => setMode("start")}
-        className="flex-row items-center justify-between border-[2px] border-gray-300 rounded-xl py-3 px-4 bg-white"
+        className="flex-row items-center justify-between border-[2px] border-grayText rounded-xl py-3 px-4 bg-white"
       >
         <View className="flex-row items-center">
           <Ionicons name="calendar-outline" size={20} color="#666" />
