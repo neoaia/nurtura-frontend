@@ -3,10 +3,10 @@ import { ActivityButton } from "@/components/activity/sensorToggle";
 import { DateRangePicker } from "@/components/shared/datetimepicker";
 import { useNavigation } from "expo-router";
 
+import { typography } from "@/assets/fonts/Text";
 import { Ionicons } from "@expo/vector-icons";
 import React, { useLayoutEffect, useState } from "react";
 import { ScrollView, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function PlantCareScreen() {
   const navigation = useNavigation();
@@ -48,47 +48,46 @@ export default function PlantCareScreen() {
   });
 
   return (
-    <SafeAreaView className="flex-1 bg-[#F8F9FA]">
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 20 }}
-      >
-        {/* date range calender */}
-        <View className="px-6 mt-4">
-          <DateRangePicker value={dateRange} onChange={setDateRange} />
+    <ScrollView
+      showsVerticalScrollIndicator={false}
+      contentContainerStyle={{ paddingBottom: 20 }}
+      className="bg-white"
+    >
+      {/* date range calender */}
+      <View className="px-6 mt-4">
+        <DateRangePicker value={dateRange} onChange={setDateRange} />
+      </View>
+
+      {/* send=sor toggle */}
+      <View className="flex-row justify-center mb-3 mt-4">
+        <ActivityButton
+          status={activeTab === "water" ? "clickedWater" : "defaultWater"}
+          onPress={() => setActiveTab("water")}
+        />
+        <ActivityButton
+          status={activeTab === "light" ? "clickedLight" : "defaultLight"}
+          onPress={() => setActiveTab("light")}
+        />
+      </View>
+
+      {/* activty itemss */}
+      <View className="px-6 mt-6">
+        <View className="flex-row justify-between items-center mb-4">
+          <Text style={typography["button-bold"]} className=" text-black">
+            {formatDate(dateToday)}
+          </Text>
+          <Ionicons name="swap-vertical" size={20} color="#619AAC" />
         </View>
 
-        {/* send=sor toggle */}
-        <View className="flex-row justify-center mb-3 mt-4">
-          <ActivityButton
-            status={activeTab === "water" ? "clickedWater" : "defaultWater"}
-            onPress={() => setActiveTab("water")}
-          />
-          <ActivityButton
-            status={activeTab === "light" ? "clickedLight" : "defaultLight"}
-            onPress={() => setActiveTab("light")}
-          />
-        </View>
-
-        {/* activty itemss */}
-        <View className="px-6 mt-6">
-          <View className="flex-row justify-between items-center mb-4">
-            <Text className="text-xl font-bold text-gray-800">
-              {formatDate(dateToday)}
-            </Text>
-            <Ionicons name="swap-vertical" size={20} color="#619AAC" />
-          </View>
-
-          <ActivityItem
-            type={activeTab}
-            plantName="Cherry Tomato"
-            rackName="Greens Rack"
-            location="Lily Pod Garden"
-            time="9:00 AM"
-            duration="2 mins"
-          />
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+        <ActivityItem
+          type={activeTab}
+          plantName="Cherry Tomato"
+          rackName="Greens Rack"
+          location="Lily Pod Garden"
+          time="9:00 AM"
+          duration="2 mins"
+        />
+      </View>
+    </ScrollView>
   );
 }

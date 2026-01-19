@@ -2,10 +2,10 @@ import { PlantItem } from "@/components/activity/plantingItem";
 import { DateRangePicker } from "@/components/shared/datetimepicker";
 import { useNavigation } from "expo-router";
 
+import { typography } from "@/assets/fonts/Text";
 import { Ionicons } from "@expo/vector-icons";
 import React, { useLayoutEffect, useState } from "react";
 import { ScrollView, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function PlantCareScreen() {
   const navigation = useNavigation();
@@ -47,48 +47,47 @@ export default function PlantCareScreen() {
   });
 
   return (
-    <SafeAreaView className="flex-1 bg-[#F8F9FA]">
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 20 }}
-      >
-        {/* date range calender */}
-        <View className="px-6 mt-4">
-          <DateRangePicker value={dateRange} onChange={setDateRange} />
+    <ScrollView
+      showsVerticalScrollIndicator={false}
+      contentContainerStyle={{ paddingBottom: 20 }}
+      className="bg-white"
+    >
+      {/* date range calender */}
+      <View className="px-6 mt-4">
+        <DateRangePicker value={dateRange} onChange={setDateRange} />
+      </View>
+
+      {/* planting itemss */}
+      <View className="px-6 mt-6">
+        <View className="flex-row justify-between items-center mb-4">
+          <Text style={typography["button-bold"]} className=" text-black">
+            {formatDate(dateToday)}
+          </Text>
+          <Ionicons name="swap-vertical" size={20} color="#86975A" />
         </View>
 
-        {/* planting itemss */}
-        <View className="px-6 mt-6">
-          <View className="flex-row justify-between items-center mb-4">
-            <Text className="text-xl font-bold text-gray-800">
-              {formatDate(dateToday)}
-            </Text>
-            <Ionicons name="swap-vertical" size={20} color="#86975A" />
-          </View>
-
-          <PlantItem
-            plantName="Lettuce"
-            rackName="Greens Rack"
-            time="9:18 AM"
-            weight="3"
-            plantImage={require("@/assets/images/plant-sample.png")}
-          />
-          <PlantItem
-            plantName="Lettuce"
-            rackName="Greens Rack"
-            time="9:18 AM"
-            weight="3"
-            plantImage={require("@/assets/images/plant-sample.png")}
-          />
-          <PlantItem
-            plantName="Lettuce"
-            rackName="Greens Rack"
-            time="9:18 AM"
-            weight="3"
-            plantImage={require("@/assets/images/plant-sample.png")}
-          />
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+        <PlantItem
+          plantName="Lettuce"
+          rackName="Greens Rack"
+          time="9:18 AM"
+          weight="3"
+          plantImage={require("@/assets/images/plant-sample.png")}
+        />
+        <PlantItem
+          plantName="Lettuce"
+          rackName="Greens Rack"
+          time="9:18 AM"
+          weight="3"
+          plantImage={require("@/assets/images/plant-sample.png")}
+        />
+        <PlantItem
+          plantName="Lettuce"
+          rackName="Greens Rack"
+          time="9:18 AM"
+          weight="3"
+          plantImage={require("@/assets/images/plant-sample.png")}
+        />
+      </View>
+    </ScrollView>
   );
 }

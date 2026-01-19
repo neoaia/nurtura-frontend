@@ -3,10 +3,10 @@ import { HarvestItem } from "@/components/activity/harvestItem";
 import { DateRangePicker } from "@/components/shared/datetimepicker";
 import { useNavigation } from "expo-router";
 
+import { typography } from "@/assets/fonts/Text";
 import { Ionicons } from "@expo/vector-icons";
 import React, { useLayoutEffect, useState } from "react";
 import { ScrollView, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function PlantCareScreen() {
   const navigation = useNavigation();
@@ -48,76 +48,75 @@ export default function PlantCareScreen() {
   });
 
   return (
-    <SafeAreaView className="flex-1 bg-[#F8F9FA]">
+    <ScrollView
+      showsVerticalScrollIndicator={false}
+      contentContainerStyle={{ paddingBottom: 20 }}
+      className="bg-white"
+    >
+      {/* date range calender */}
+      <View className="px-6 mt-4">
+        <DateRangePicker value={dateRange} onChange={setDateRange} />
+      </View>
+
+      {/* harvest card na sliding */}
       <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 20 }}
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={{ paddingHorizontal: 24 }}
+        className="mt-4 mb-3"
       >
-        {/* date range calender */}
-        <View className="px-6 mt-4">
-          <DateRangePicker value={dateRange} onChange={setDateRange} />
-        </View>
-
-        {/* harvest card na sliding */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ paddingHorizontal: 24 }}
-          className="mt-4 mb-3"
-        >
-          <View className="flex-row gap-4">
-            <HarvestSummaryCard
-              value="4.5"
-              unit="Kilograms"
-              label="Total harvest"
-            />
-            <HarvestSummaryCard
-              value="4.5"
-              unit="Kilograms"
-              label="Total harvest"
-            />
-          </View>
-        </ScrollView>
-
-        {/* harvest itemss */}
-        <View className="px-6 mt-6">
-          <View className="flex-row justify-between items-center mb-4">
-            <Text className="text-xl font-bold text-gray-800">
-              {formatDate(dateToday)}
-            </Text>
-            <Ionicons name="swap-vertical" size={20} color="#86975A" />
-          </View>
-
-          <HarvestItem
-            plantName="Radish"
-            rackName="Greens Rack"
-            time="9:18 AM"
-            weight="750 g"
-            plantImage={require("@/assets/images/plant-sample.png")}
+        <View className="flex-row gap-4 py-3">
+          <HarvestSummaryCard
+            value="4.5"
+            unit="Kilograms"
+            label="Total harvest"
           />
-          <HarvestItem
-            plantName="Radish"
-            rackName="Greens Rack"
-            time="9:18 AM"
-            weight="750 g"
-            plantImage={require("@/assets/images/plant-sample.png")}
-          />
-          <HarvestItem
-            plantName="Radish"
-            rackName="Greens Rack"
-            time="9:18 AM"
-            weight="750 g"
-            plantImage={require("@/assets/images/plant-sample.png")}
-          />
-          <HarvestItem
-            plantName="Radish"
-            rackName="Greens Rack"
-            time="9:18 AM"
-            weight="750 g"
-            plantImage={require("@/assets/images/plant-sample.png")}
+          <HarvestSummaryCard
+            value="4.5"
+            unit="Kilograms"
+            label="Total harvest"
           />
         </View>
       </ScrollView>
-    </SafeAreaView>
+
+      {/* harvest itemss */}
+      <View className="px-6 mt-6">
+        <View className="flex-row justify-between items-center mb-4">
+          <Text style={typography["button-bold"]} className=" text-black">
+            {formatDate(dateToday)}
+          </Text>
+          <Ionicons name="swap-vertical" size={20} color="#86975A" />
+        </View>
+
+        <HarvestItem
+          plantName="Radish"
+          rackName="Greens Rack"
+          time="9:18 AM"
+          weight="750 g"
+          plantImage={require("@/assets/images/plant-sample.png")}
+        />
+        <HarvestItem
+          plantName="Radish"
+          rackName="Greens Rack"
+          time="9:18 AM"
+          weight="750 g"
+          plantImage={require("@/assets/images/plant-sample.png")}
+        />
+        <HarvestItem
+          plantName="Radish"
+          rackName="Greens Rack"
+          time="9:18 AM"
+          weight="750 g"
+          plantImage={require("@/assets/images/plant-sample.png")}
+        />
+        <HarvestItem
+          plantName="Radish"
+          rackName="Greens Rack"
+          time="9:18 AM"
+          weight="750 g"
+          plantImage={require("@/assets/images/plant-sample.png")}
+        />
+      </View>
+    </ScrollView>
   );
 }
