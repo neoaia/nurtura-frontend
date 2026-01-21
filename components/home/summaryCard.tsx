@@ -66,10 +66,10 @@ export const SummaryCard: React.FC<SummaryCardProps> = ({
             activeOpacity={0.7}
           >
             <View className="flex-row items-start justify-between mb-4">
-              <View className="bg-white/40 rounded-xl p-3 w-14 h-14 items-center justify-center">
+              <View className="bg-[#E5EDCF] rounded-xl p-3 w-14 h-14 items-center justify-center">
                 <Image
                   source={config.icon}
-                  className="w-8 h-8"
+                  className="w-6 h-6"
                   resizeMode="contain"
                 />
               </View>
@@ -85,7 +85,10 @@ export const SummaryCard: React.FC<SummaryCardProps> = ({
               {config.title}
             </Text>
 
-            <Text style={typography['subheader']} className="text-white opacity-90">
+            <Text
+              style={typography["subheader"]}
+              className="text-white opacity-90"
+            >
               {config.subtitle}
             </Text>
           </TouchableOpacity>

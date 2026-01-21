@@ -11,9 +11,9 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import NotificationIcon from "../../../assets/images/notificationIcon.png"; // replace with your actual image
-import { Highlight } from "../../../components/auth/highlight";
-import { RecentActivityBar } from "../../../components/auth/recentActivityBar";
-import { SummaryCard } from "../../../components/auth/summaryCard";
+import { Highlight } from "../../../components/home/highlight";
+import { RecentActivityBar } from "../../../components/home/recentActivityBar";
+import { SummaryCard } from "../../../components/home/summaryCard";
 
 interface DashboardDTO {
   user: {
@@ -173,7 +173,7 @@ export default function HomeScreen() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-[#7a8f5e]" edges={["top", "bottom"]}>
+    <SafeAreaView className="flex-1 bg-primary" edges={["top", "bottom"]}>
       <StatusBar barStyle="light-content" />
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
         {/* Header */}
@@ -188,7 +188,7 @@ export default function HomeScreen() {
           >
             <Image
               source={NotificationIcon}
-              className="w-8 h-8"
+              className="w-6 h-6"
               resizeMode="contain"
             />
 
