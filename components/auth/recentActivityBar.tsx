@@ -35,7 +35,7 @@ export const RecentActivityBar: React.FC<RecentActivityBarProps> = ({
 }) => {
   return (
     <>
-      <View className="pt-8 pb-4 px-4">
+      <View className=" pb-4 px-4">
         <Text style={typography["h2-bold"]} className="text-black">
           Recent Activity
         </Text>
@@ -77,11 +77,17 @@ export const RecentActivityBar: React.FC<RecentActivityBarProps> = ({
                 </View>
 
                 <View className="flex-1">
-                  <Text style={typography.button} className="text-gray-700 mb-4">
+                  <Text
+                    style={typography["subheader"]}
+                    className="text-gray-700 mb-4"
+                  >
                     {activity.action}{" "}
                     <Text
-                      style={{ ...typography["button-bold"], color: iconConfig.textColor }}
-                      className="mb-6" 
+                      style={{
+                        ...typography["subheader-bold"],
+                        color: iconConfig.textColor,
+                      }}
+                      className="mb-6"
                     >
                       {activity.plant}
                     </Text>

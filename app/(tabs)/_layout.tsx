@@ -1,9 +1,9 @@
+import { AddNewModal } from "@/components/modals/addNewModal";
 import { Tabs } from "expo-router";
 import { useState } from "react";
-import { Image, Pressable } from "react-native";
+import { Image, TouchableOpacity } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import "../globals.css";
-import AddNewModal from "./addNew";
 
 const Layout = () => {
   const [modalVisible, setModalVisible] = useState(false);
@@ -56,17 +56,29 @@ const Layout = () => {
           }}
         />
         <Tabs.Screen
-          name="addNew"
+          name="(add_pages)"
           options={{
             title: "Add New",
-            tabBarIcon: ({ focused }) => (
-              <Pressable onPress={() => setModalVisible(true)}>
+            tabBarButton: () => (
+              <TouchableOpacity
+                onPress={() => {
+                  console.log("TANGINA NAPINDOT!!!");
+                  setModalVisible(true);
+                }}
+                activeOpacity={0.7}
+                style={{
+                  flex: 1,
+                  justifyContent: "center",
+                  alignItems: "center",
+                  marginTop: -33,
+                }}
+              >
                 <Image
                   source={require("@/assets/images/bottom-nav/bm-add-new.png")}
                   style={{ width: 56, height: 56 }}
                   resizeMode="contain"
                 />
-              </Pressable>
+              </TouchableOpacity>
             ),
           }}
         />
@@ -112,16 +124,12 @@ const Layout = () => {
             ),
           }}
         />
-        <Tabs.Screen
-          name="(add_pages)"
-          options={{
-            href: null,
-            tabBarStyle: { display: "none" },
-          }}
-        />
       </Tabs>
 
-      {modalVisible && <AddNewModal onClose={() => setModalVisible(false)} />}
+      <AddNewModal
+        isVisible={modalVisible}
+        onClose={() => setModalVisible(false)}
+      />
     </GestureHandlerRootView>
   );
 };
