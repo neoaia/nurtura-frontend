@@ -49,6 +49,7 @@ export default function AccountSubpagesLayout() {
         options={{
           headerShown: true,
           title: "User Information",
+          headerTitleAlign: "left",
         }}
       />
       <Stack.Screen
@@ -56,6 +57,7 @@ export default function AccountSubpagesLayout() {
         options={{
           headerShown: true,
           title: "Account Security",
+          headerTitleAlign: "left",
         }}
       />
       <Stack.Screen
@@ -63,6 +65,7 @@ export default function AccountSubpagesLayout() {
         options={{
           headerShown: true,
           title: "Change Password",
+          headerTitleAlign: "left",
         }}
       />
       <Stack.Screen
@@ -70,6 +73,7 @@ export default function AccountSubpagesLayout() {
         options={{
           headerShown: true,
           title: "Update Email",
+          headerTitleAlign: "left",
         }}
       />
     </Stack>

@@ -49,6 +49,7 @@ export default function ActivitySubpagesLayout() {
         options={{
           headerShown: true,
           title: "Plant Care Activity",
+          headerTitleAlign: "left",
         }}
       />
       <Stack.Screen
@@ -56,6 +57,7 @@ export default function ActivitySubpagesLayout() {
         options={{
           headerShown: true,
           title: "Harvest Activity",
+          headerTitleAlign: "left",
         }}
       />
       <Stack.Screen
@@ -63,6 +65,7 @@ export default function ActivitySubpagesLayout() {
         options={{
           headerShown: true,
           title: "Planting Activity",
+          headerTitleAlign: "left",
         }}
       />
     </Stack>
