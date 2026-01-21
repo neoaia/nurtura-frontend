@@ -10,8 +10,8 @@ import { ScrollView, Text, View } from "react-native";
 const RackInfo = () => {
   const [showModal, setShowModal] = useState(false);
 
-  const handleSubmit = () => {
-    console.log("Submitted!");
+  const handleSubmit = (val: number) => {
+    console.log("Final Yield:", val);
     setShowModal(false);
   };
 
@@ -88,10 +88,9 @@ const RackInfo = () => {
         isVisible={showModal}
         title="Record Harvest"
         onConfirm={(val) => {
-          console.log("Final Yield:", val);
-          setShowModal(false);
+          handleSubmit(val);
         }}
-        onCancel={() => setShowModal(false)}
+        onCancel={handleCancel}
       />
     </>
   );
