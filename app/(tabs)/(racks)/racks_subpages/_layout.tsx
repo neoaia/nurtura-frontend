@@ -1,7 +1,7 @@
 import { typography } from "@/assets/fonts/Text";
-import { Stack, useNavigation } from "expo-router";
+import { router, Stack, useNavigation } from "expo-router";
 import { useLayoutEffect } from "react";
-import { TextStyle } from "react-native";
+import { Image, TextStyle, TouchableOpacity, View } from "react-native";
 
 export default function RacksSubpagesLayout() {
   const navigation = useNavigation();
@@ -49,6 +49,35 @@ export default function RacksSubpagesLayout() {
         options={{
           headerShown: true,
           title: "My First Rack",
+          headerTitleAlign: "left",
+          headerRight: () => (
+            <View className="flex-row items-center pr-2">
+              <TouchableOpacity
+                onPress={() =>
+                  router.push("/(tabs)/(racks)/racks_subpages/rackConnection")
+                }
+                className="py-2 px-2 mr-1"
+              >
+                <Image
+                  source={require("@/assets/images/racks/connection.png")}
+                  className="w-6 h-6"
+                  resizeMode="contain"
+                />
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={() =>
+                  router.push("/(tabs)/(racks)/racks_subpages/editRack")
+                }
+                className="p-2"
+              >
+                <Image
+                  source={require("@/assets/images/racks/edit.png")}
+                  className="w-5 h-5"
+                />
+              </TouchableOpacity>
+            </View>
+          ),
         }}
       />
       <Stack.Screen
@@ -56,6 +85,7 @@ export default function RacksSubpagesLayout() {
         options={{
           headerShown: true,
           title: "Plant Care Activity",
+          headerTitleAlign: "left",
         }}
       />
       <Stack.Screen
@@ -63,12 +93,21 @@ export default function RacksSubpagesLayout() {
         options={{
           headerShown: true,
           title: "Harvest History",
+          headerTitleAlign: "left",
         }}
       />
       <Stack.Screen
         name="harvestAction"
         options={{
           headerShown: true,
+        }}
+      />
+      <Stack.Screen
+        name="editRack"
+        options={{
+          headerShown: true,
+          title: "Edit Rack",
+          headerTitleAlign: "left",
         }}
       />
     </Stack>

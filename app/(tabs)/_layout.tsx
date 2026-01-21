@@ -32,7 +32,7 @@ const Layout = () => {
                     ? require("@/assets/images/bottom-nav/bm-home-active.png")
                     : require("@/assets/images/bottom-nav/bm-home-inactive.png")
                 }
-                style={{ width: 24, height: 24 }}
+                style={{ width: 22, height: 22 }}
                 resizeMode="contain"
               />
             ),
@@ -49,7 +49,7 @@ const Layout = () => {
                     ? require("@/assets/images/bottom-nav/bm-rack-active.png")
                     : require("@/assets/images/bottom-nav/bm-rack-inactive.png")
                 }
-                style={{ width: 24, height: 24 }}
+                style={{ width: 22, height: 22 }}
                 resizeMode="contain"
               />
             ),
@@ -62,7 +62,6 @@ const Layout = () => {
             tabBarButton: () => (
               <TouchableOpacity
                 onPress={() => {
-                  console.log("TANGINA NAPINDOT!!!");
                   setModalVisible(true);
                 }}
                 activeOpacity={0.7}
@@ -95,8 +94,8 @@ const Layout = () => {
                 }
                 style={
                   focused
-                    ? { width: 28, height: 28 }
-                    : { width: 24, height: 24 }
+                    ? { width: 26, height: 26 }
+                    : { width: 22, height: 22 }
                 }
                 resizeMode="contain"
               />
@@ -116,8 +115,8 @@ const Layout = () => {
                 }
                 style={
                   focused
-                    ? { width: 28, height: 28 }
-                    : { width: 24, height: 24 }
+                    ? { width: 26, height: 26 }
+                    : { width: 22, height: 22 }
                 }
                 resizeMode="contain"
               />

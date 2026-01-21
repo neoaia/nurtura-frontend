@@ -19,7 +19,7 @@ interface OptionButtonProps {
 
 const OptionButton: React.FC<OptionButtonProps> = ({ label, onPress }) => (
   <TouchableOpacity
-    className="items-center"
+    className="items-center mb-5"
     onPress={onPress}
     activeOpacity={0.7}
   >

@@ -23,6 +23,7 @@ const RackInfo = () => {
     console.log("Harvest button pressed");
     setShowModal(true);
   };
+
   return (
     <>
       <View className="flex-1 bg-white">
@@ -69,14 +70,16 @@ const RackInfo = () => {
                 title="Plant Care Activity"
                 description="Logs based on watering and grow light activity."
                 iconSource={require("@/assets/images/plantcare-icon.png")}
-                route="/(tabs)/(racks)/care"
+                route="/(tabs)/(racks)/racks_subpages/care"
+                type="green"
               />
 
               <MenuCard
                 title="Harvest Activity"
                 description="Records of your past harvests for this plant."
                 iconSource={require("@/assets/images/harvest-icon.png")}
-                route="/(tabs)/(racks)/harvestHistory"
+                route="/(tabs)/(racks)/racks_subpages/harvestHistory"
+                type="green"
               />
             </View>
           </View>
