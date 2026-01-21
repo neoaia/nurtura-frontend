@@ -10,7 +10,6 @@ const EditRack = () => {
       desc: "Edit how you want to call your Nurtura Rack.",
       icon: require("@/assets/images/plantcare-icon.png"),
       path: "/(tabs)/(activity)/activity_subpages/plant-care",
-      type: "green",
     },
     {
       title: "Remove Plant",

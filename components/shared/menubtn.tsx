@@ -10,7 +10,7 @@ import {
 } from "react-native";
 
 interface MenuButtonCardProps {
-  type: string;
+  type?: string;
   title: string;
   description: string;
   iconSource: ImageSourcePropType;
@@ -27,12 +27,12 @@ export const MenuCard: React.FC<MenuButtonCardProps> = ({
   return (
     <View className="bg-white rounded-2xl px-6 py-8 flex-row items-center border border-gray-100 shadow-md elevation-3 gap-3">
       <View
-        className={`p-4 ${type === "green" ? "bg-[#E5EDCF]" : "bg-[#FFC5C5]"} rounded-xl justify-center items-center`}
+        className={`p-4 ${type === "red" ? "bg-[#FFC5C5]" : "bg-[#E5EDCF]"} rounded-xl justify-center items-center`}
       >
         <Image
           source={iconSource}
           className="w-6 h-6"
-          style={{ tintColor: type === "green" ? "#86975A" : "#A72929" }}
+          style={{ tintColor: type === "red" ? "#A72929" : "#86975A" }}
           resizeMode="contain"
         />
       </View>
@@ -52,23 +52,23 @@ export const MenuCard: React.FC<MenuButtonCardProps> = ({
       {route ? (
         <TouchableOpacity
           onPress={() => router.push(route as any)}
-          className={`p-4 ${type === "green" ? "bg-[#E5EDCF]" : "bg-[#FFC5C5]"} rounded-xl justify-center items-center`}
+          className={`p-4 ${type === "red" ? "bg-[#FFC5C5]" : "bg-[#E5EDCF]"} rounded-xl justify-center items-center`}
         >
           <Image
             source={require("@/assets/images/openarrow-icon.png")}
             className="w-4 h-4"
-            style={{ tintColor: type === "green" ? "#86975A" : "#A72929" }}
+            style={{ tintColor: type === "red" ? "#A72929" : "#86975A" }}
             resizeMode="contain"
           />
         </TouchableOpacity>
       ) : (
         <View
-          className={`p-4 ${type === "green" ? "bg-[#E5EDCF]" : "bg-[#FFC5C5]"} rounded-xl justify-center items-center`}
+          className={`p-4 ${type === "red" ? "bg-[#E5EDCF]" : "bg-[#FFC5C5]"} rounded-xl justify-center items-center`}
         >
           <Image
             source={require("@/assets/images/openarrow-icon.png")}
             className="w-4 h-4"
-            style={{ tintColor: type === "green" ? "#86975A" : "#A72929" }}
+            style={{ tintColor: type === "red" ? "#A72929" : "#86975A" }}
             resizeMode="contain"
           />
         </View>
