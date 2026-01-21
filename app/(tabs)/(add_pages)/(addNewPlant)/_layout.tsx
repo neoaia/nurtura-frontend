@@ -1,8 +1,27 @@
-import { Stack } from "expo-router";
+import { Stack, useNavigation } from "expo-router";
+import { useLayoutEffect } from "react";
 import { Image } from "react-native";
 import "../../../globals.css";
 
 export default function AddNewPlantLayout() {
+  const navigation = useNavigation();
+
+  useLayoutEffect(() => {
+    navigation.getParent()?.setOptions({
+      tabBarStyle: { display: "none" },
+    });
+
+    return () => {
+      navigation.getParent()?.setOptions({
+        tabBarStyle: {
+          height: 100,
+          paddingBottom: 10,
+          paddingTop: 15,
+          display: "flex",
+        },
+      });
+    };
+  }, [navigation]);
   return (
     <Stack
       screenOptions={{
