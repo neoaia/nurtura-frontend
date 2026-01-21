@@ -8,7 +8,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 export default function RacksScreen() {
   const handleCardPress = () => {
     console.log("Card clicked!");
-    router.push("/(tabs)/(racks)/rackInfo");
+    router.push("/(tabs)/(racks)/racks_subpages/rackInfo");
   };
 
   return (
