@@ -1,20 +1,23 @@
 import { typography } from "@/assets/fonts/Text";
+import { BottomButton } from "@/components/shared/bottomButton";
 import Dropdown from "@/components/shared/dropdown";
 import { router } from "expo-router";
 import React from "react";
-import { Text, TouchableOpacity, View } from "react-native";
+import { ScrollView, Text, View } from "react-native";
 
-const addNewPlant1 = () => {
+const AddNewPlant1 = () => {
   const handleNextPress = () => {
     router.push("/(tabs)/(add_pages)/(addNewPlant)/addNewPlant2");
   };
+
   return (
-    <View className="flex-1 bg-white px-[16px] pb-[34px] w-full justify-between h-screen">
-      <View className="mt-[34px] flex-1 items-start">
-        <Text
-          style={typography["h1-bold"]}
-          className="text-black mb-[13px] pl-2"
-        >
+    <View className="flex-1 bg-white">
+      <ScrollView
+        className="flex-1 px-4"
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingTop: 34 }}
+      >
+        <Text style={typography["h1-bold"]} className="text-black mb-3 pl-2">
           Select a{" "}
           <Text style={typography["h1-bold"]} className="text-primary">
             Nurtura Rack
@@ -23,24 +26,17 @@ const addNewPlant1 = () => {
 
         <Text
           style={typography["subheader"]}
-          className="mb-[20px] text-gray-700 leading-normal pl-2"
+          className="mb-5 text-gray-700 leading-normal pl-2"
         >
-          Enter a secure password to protect your account.
+          Choose which rack you want to add your plant to.
         </Text>
 
-        <Dropdown></Dropdown>
+        <Dropdown />
+      </ScrollView>
 
-        <TouchableOpacity
-          className="mt-[20px] w-full bg-primary rounded-2xl py-4"
-          onPress={handleNextPress}
-        >
-          <Text style={typography["button"]} className="text-white text-center">
-            Go to Page 2
-          </Text>
-        </TouchableOpacity>
-      </View>
+      <BottomButton title="Next" onPress={handleNextPress} />
     </View>
   );
 };
 
-export default addNewPlant1;
+export default AddNewPlant1;
