@@ -2,30 +2,10 @@ import { typography } from "@/assets/fonts/Text";
 import PlantStatusIndicators from "@/components/racks/plantStatusIndicators";
 import { MenuCard } from "@/components/shared/menubtn";
 import SmallDescription from "@/components/shared/smallDescription";
-import { useNavigation } from "expo-router";
-import React, { useLayoutEffect } from "react";
+import React from "react";
 import { ScrollView, Text, View } from "react-native";
 
 const RackInfo = () => {
-  const navigation = useNavigation();
-
-  useLayoutEffect(() => {
-    navigation.getParent()?.setOptions({
-      tabBarStyle: { display: "none" },
-    });
-
-    return () => {
-      navigation.getParent()?.setOptions({
-        tabBarStyle: {
-          height: 100,
-          paddingBottom: 10,
-          paddingTop: 15,
-          display: "flex",
-        },
-      });
-    };
-  }, [navigation]);
-
   return (
     <ScrollView showsVerticalScrollIndicator={false} className="bg-white">
       <View className="px-4 py-4 bg-white">

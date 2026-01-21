@@ -1,33 +1,13 @@
 import { HarvestSummaryCard } from "@/components/activity/harvestCard";
 import { HarvestItem } from "@/components/activity/harvestItem";
 import { DateRangePicker } from "@/components/shared/datetimepicker";
-import { useNavigation } from "expo-router";
 
 import { typography } from "@/assets/fonts/Text";
 import { Ionicons } from "@expo/vector-icons";
-import React, { useLayoutEffect, useState } from "react";
+import React, { useState } from "react";
 import { ScrollView, Text, View } from "react-native";
 
 export default function PlantCareScreen() {
-  const navigation = useNavigation();
-
-  useLayoutEffect(() => {
-    navigation.getParent()?.setOptions({
-      tabBarStyle: { display: "none" },
-    });
-
-    return () => {
-      navigation.getParent()?.setOptions({
-        tabBarStyle: {
-          height: 100,
-          paddingBottom: 10,
-          paddingTop: 15,
-          display: "flex",
-        },
-      });
-    };
-  }, [navigation]);
-
   const [activeTab, setActiveTab] = useState<"water" | "light">("water");
   const dateToday = new Date();
 

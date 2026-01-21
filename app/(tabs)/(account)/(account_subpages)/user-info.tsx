@@ -1,29 +1,9 @@
-import React, { useLayoutEffect, useState } from "react";
+import React, { useState } from "react";
 import { ScrollView, View } from "react-native";
 
 import { TextInputField } from "@/components/shared/textInputField";
-import { useNavigation } from "expo-router";
 
 export default function UserInformationScreen() {
-  const navigation = useNavigation();
-
-  useLayoutEffect(() => {
-    navigation.getParent()?.setOptions({
-      tabBarStyle: { display: "none" },
-    });
-
-    return () => {
-      navigation.getParent()?.setOptions({
-        tabBarStyle: {
-          height: 100,
-          paddingBottom: 10,
-          paddingTop: 15,
-          display: "flex",
-        },
-      });
-    };
-  }, [navigation]);
-
   const [username, setUsername] = useState("JuanMasipag");
   const [firstName, setFirstName] = useState("Juan");
   const [lastName, setLastName] = useState("Dela Cruz");

@@ -1,29 +1,9 @@
 import { MenuCard } from "@/components/shared/menubtn";
-import { useNavigation } from "expo-router";
 
-import React, { useLayoutEffect } from "react";
+import React from "react";
 import { ScrollView, View } from "react-native";
 
 export default function AccountSecurityScreen() {
-  const navigation = useNavigation();
-
-  useLayoutEffect(() => {
-    navigation.getParent()?.setOptions({
-      tabBarStyle: { display: "none" },
-    });
-
-    return () => {
-      navigation.getParent()?.setOptions({
-        tabBarStyle: {
-          height: 100,
-          paddingBottom: 10,
-          paddingTop: 15,
-          display: "flex",
-        },
-      });
-    };
-  }, [navigation]);
-
   const menuItems = [
     {
       title: "Change Password",
