@@ -95,13 +95,10 @@ export const AddNewModal: React.FC<AddNewModalProps> = ({
   const handleRackPress = () =>
     handleNavigation("/(add_pages)/(addNewRack)/addNewRack1");
 
-  // TANGGAL MO YUNG IF STATEMENT NA TO PUTANGINA
-  // if (!isVisible) return null;
-
   return (
     <BottomSheet
       ref={bottomSheetRef}
-      index={-1} // Start closed
+      index={-1}
       snapPoints={snapPoints}
       onChange={handleSheetChanges}
       enablePanDownToClose={true}

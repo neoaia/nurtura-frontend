@@ -12,30 +12,35 @@ export default function RacksScreen() {
   };
 
   return (
-    <SafeAreaView className="bg-white flex-1">
-      <ScrollView showsVerticalScrollIndicator={false}>
-        <View className="flex justify-center items-center px-4 bg-white">
-          <View className="flex justify-start items-start w-full mb-2 mt-8 pl-3">
-            <Text style={typography['title-bold']} className="text-black text-5xl mb-[20px]">
-              Racks
-            </Text>
+    <>
+      <SafeAreaView className="bg-white flex-1">
+        <ScrollView showsVerticalScrollIndicator={false}>
+          <View className="flex justify-center items-center px-4 bg-white">
+            <View className="flex justify-start items-start w-full mb-2 mt-8 pl-3">
+              <Text
+                style={typography["title-bold"]}
+                className="text-black text-5xl mb-[20px]"
+              >
+                Racks
+              </Text>
+            </View>
+
+            <RackItem
+              name="My First Rack"
+              plant="Lettuce"
+              leaves={24}
+              water={1.5}
+              humidity={60}
+              temperature={22}
+              hasAlert={true}
+              onMorePress={() => console.log("More Pressed")}
+              onPress={() => handleCardPress()}
+            />
+
+            <AddRackButton onPress={() => console.log("Add Rack Pressed")} />
           </View>
-
-          <RackItem
-            name="My First Rack"
-            plant="Lettuce"
-            leaves={24}
-            water={1.5}
-            humidity={60}
-            temperature={22}
-            hasAlert={true}
-            onMorePress={() => console.log("More Pressed")}
-            onPress={() => handleCardPress()}
-          />
-
-          <AddRackButton onPress={() => console.log("Add Rack Pressed")} />
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+        </ScrollView>
+      </SafeAreaView>
+    </>
   );
 }
