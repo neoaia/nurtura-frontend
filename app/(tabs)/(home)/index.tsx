@@ -1,12 +1,19 @@
-import { typography } from '@/assets/fonts/Text';
-import { router } from 'expo-router';
-import React, { useEffect, useState } from 'react';
-import { Image, ScrollView, StatusBar, Text, TouchableOpacity, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import NotificationIcon from '../../../assets/images/notificationIcon.png'; // replace with your actual image
-import { Highlight } from '../../../components/auth/highlight';
-import { RecentActivityBar } from '../../../components/auth/recentActivityBar';
-import { SummaryCard } from '../../../components/auth/summaryCard';
+import { typography } from "@/assets/fonts/Text";
+import { router } from "expo-router";
+import React, { useEffect, useState } from "react";
+import {
+  Image,
+  ScrollView,
+  StatusBar,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import NotificationIcon from "../../../assets/images/notificationIcon.png"; // replace with your actual image
+import { Highlight } from "../../../components/auth/highlight";
+import { RecentActivityBar } from "../../../components/auth/recentActivityBar";
+import { SummaryCard } from "../../../components/auth/summaryCard";
 
 interface DashboardDTO {
   user: {
@@ -25,7 +32,7 @@ interface DashboardDTO {
   };
   recentActivity: {
     id: string;
-    type: 'water' | 'light';
+    type: "water" | "light";
     action: string;
     plant: string;
     timestamp: string;
@@ -37,52 +44,52 @@ interface DashboardDTO {
 // Mock data
 const mockApiResponse: DashboardDTO = {
   user: {
-    name: 'Juan',
-    hasNotifications: true
+    name: "Juan",
+    hasNotifications: true,
   },
   summary: [
     {
-      id: 'racks',
-      type: 'racks',
+      id: "racks",
+      type: "racks",
       value: 2,
     },
     {
-      id: 'plants',
-      type: 'plants',
+      id: "plants",
+      type: "plants",
       value: 2,
-    }
+    },
   ],
   highlight: {
-    title: 'Farm Efficiently',
-    description: 'Start growing your plant with Nurtura Racks.',
-    buttonText: 'Add a Rack'
+    title: "Farm Efficiently",
+    description: "Start growing your plant with Nurtura Racks.",
+    buttonText: "Add a Rack",
   },
   recentActivity: [
     {
-      id: '1',
-      type: 'water',
-      action: 'Watered the',
-      plant: 'Cherry Tomato',
-      timestamp: '9:18 AM',
-      amount: '76 mL',
+      id: "1",
+      type: "water",
+      action: "Watered the",
+      plant: "Cherry Tomato",
+      timestamp: "9:18 AM",
+      amount: "76 mL",
     },
     {
-      id: '2',
-      type: 'light',
-      action: 'Gave light to',
-      plant: 'Cherry Tomato',
-      timestamp: '9:28 AM',
-      duration: '2 mins',
+      id: "2",
+      type: "light",
+      action: "Gave light to",
+      plant: "Cherry Tomato",
+      timestamp: "9:28 AM",
+      duration: "2 mins",
     },
     {
-      id: '3',
-      type: 'light',
-      action: 'Gave light to',
-      plant: 'Cherry Tomato',
-      timestamp: '9:18 AM',
-      duration: '2 mins',
-    }
-  ]
+      id: "3",
+      type: "light",
+      action: "Gave light to",
+      plant: "Cherry Tomato",
+      timestamp: "9:18 AM",
+      duration: "2 mins",
+    },
+  ],
 };
 
 // API
@@ -93,17 +100,17 @@ const apiService = {
         setTimeout(() => resolve(mockApiResponse), 500);
       });
     } catch (error) {
-      console.error('Error fetching dashboard:', error);
+      console.error("Error fetching dashboard:", error);
       throw error;
     }
   },
 
   addRack: async (rackData: any) => {
     try {
-      console.log('Adding rack:', rackData);
+      console.log("Adding rack:", rackData);
       return { success: true };
     } catch (error) {
-      console.error('Error adding rack:', error);
+      console.error("Error adding rack:", error);
       throw error;
     }
   },
@@ -112,10 +119,10 @@ const apiService = {
     try {
       return { notifications: [] };
     } catch (error) {
-      console.error('Error fetching notifications:', error);
+      console.error("Error fetching notifications:", error);
       throw error;
     }
-  }
+  },
 };
 
 export default function HomeScreen() {
@@ -132,28 +139,28 @@ export default function HomeScreen() {
       const dashboardData = await apiService.fetchDashboard();
       setData(dashboardData);
     } catch (error) {
-      console.error('Failed to load dashboard:', error);
+      console.error("Failed to load dashboard:", error);
     } finally {
       setLoading(false);
     }
   };
 
   const handleNotificationPress = async () => {
-    console.log('Notification pressed');
+    console.log("Notification pressed");
     const notifications = await apiService.getNotifications();
-    router.push('/notification');
+    router.push("/notification");
   };
 
   const handleCardPress = (cardType: string) => {
-    console.log('Card pressed:', cardType);
+    console.log("Card pressed:", cardType);
   };
 
   const handleAddRack = async () => {
     try {
-      await apiService.addRack({ name: 'New Rack' });
+      await apiService.addRack({ name: "New Rack" });
       loadDashboard();
     } catch (error) {
-      console.error('Failed to add rack:', error);
+      console.error("Failed to add rack:", error);
     }
   };
 
@@ -166,14 +173,12 @@ export default function HomeScreen() {
   }
 
   return (
-    <SafeAreaView 
-      className="flex-1 bg-[#7a8f5e]"
-      edges={['top', 'bottom']}>
+    <SafeAreaView className="flex-1 bg-[#7a8f5e]" edges={["top", "bottom"]}>
       <StatusBar barStyle="light-content" />
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View className="px-10 pt-4 pb-2 flex-row items-center justify-between">
-          <Text style={typography['h1-bold']} className=" text-white">
+          <Text style={typography["h1-bold"]} className=" text-white">
             Hi {data.user.name}!
           </Text>
           <TouchableOpacity
@@ -195,14 +200,11 @@ export default function HomeScreen() {
 
         {/* Content */}
         <View className="pt-4">
-          <View className='px-4'>
-            <SummaryCard 
-            cards={data.summary}
-            onCardPress={handleCardPress}
-          />
+          <View className="px-4">
+            <SummaryCard cards={data.summary} onCardPress={handleCardPress} />
           </View>
-          
-          <View className="bg-white rounded-t-3xl p-6 shadow-lg">
+
+          <View className="bg-white rounded-t-2xl p-6 shadow-lg">
             <Highlight
               title={data.highlight.title}
               description={data.highlight.description}

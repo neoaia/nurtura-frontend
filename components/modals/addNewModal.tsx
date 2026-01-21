@@ -4,7 +4,7 @@ import BottomSheet, {
 } from "@gorhom/bottom-sheet";
 import { router } from "expo-router";
 import React, { useCallback, useEffect, useMemo, useRef } from "react";
-import { Image, Text, TouchableOpacity, View } from "react-native";
+import { Text, TouchableOpacity, View } from "react-native";
 import { typography } from "../../assets/fonts/Text";
 
 interface AddNewModalProps {
@@ -13,24 +13,17 @@ interface AddNewModalProps {
 }
 
 interface OptionButtonProps {
-  icon: any;
   label: string;
   onPress: () => void;
 }
 
-const OptionButton: React.FC<OptionButtonProps> = ({
-  icon,
-  label,
-  onPress,
-}) => (
+const OptionButton: React.FC<OptionButtonProps> = ({ label, onPress }) => (
   <TouchableOpacity
     className="items-center"
     onPress={onPress}
     activeOpacity={0.7}
   >
-    <View className="w-20 h-20 bg-[#E5EDCF] rounded-2xl justify-center items-center mb-3">
-      <Image source={icon} className="w-10 h-10" resizeMode="contain" />
-    </View>
+    <View className="w-20 h-20 bg-[#E5EDCF] rounded-2xl justify-center items-center mb-3"></View>
     <Text style={typography["subheader"]} className="text-[#86975A]">
       {label}
     </Text>
@@ -123,16 +116,8 @@ export const AddNewModal: React.FC<AddNewModalProps> = ({
         </Text>
 
         <View className="flex-row gap-6 justify-center w-full">
-          <OptionButton
-            icon={require("@/assets/images/plantIcon.png")}
-            label="Plant"
-            onPress={handlePlantPress}
-          />
-          <OptionButton
-            icon={require("@/assets/images/rackIcon.png")}
-            label="Rack"
-            onPress={handleRackPress}
-          />
+          <OptionButton label="Plant" onPress={handlePlantPress} />
+          <OptionButton label="Rack" onPress={handleRackPress} />
         </View>
       </BottomSheetView>
     </BottomSheet>
