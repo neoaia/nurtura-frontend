@@ -22,6 +22,7 @@ export default function AddNewPlantLayout() {
       });
     };
   }, [navigation]);
+
   return (
     <Stack
       screenOptions={{
@@ -49,6 +50,17 @@ export default function AddNewPlantLayout() {
           headerTitle: () => (
             <Image
               source={require("@/assets/images/add-new-plant/progress-bar-2.png")}
+            />
+          ),
+          headerShown: true,
+        }}
+      />
+      <Stack.Screen
+        name="step-3"
+        options={{
+          headerTitle: () => (
+            <Image
+              source={require("@/assets/images/add-new-plant/progress-bar-3.png")}
             />
           ),
           headerShown: true,

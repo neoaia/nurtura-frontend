@@ -1,13 +1,13 @@
 import { typography } from "@/assets/fonts/Text";
-import SelectedRackCard from "@/components/add_plant/selectedRackCard";
 import { BottomButton } from "@/components/shared/bottomButton";
 import { router } from "expo-router";
 import React from "react";
 import { ScrollView, Text, View } from "react-native";
 
-const AddNewPlant2 = () => {
+const AddNewPlant3 = () => {
   const handleNextPress = () => {
-    router.push("/(tabs)/(add_pages)/(addNewPlant)/step-3");
+    router.dismissAll();
+    router.push("/(tabs)/(home)");
   };
 
   return (
@@ -18,28 +18,20 @@ const AddNewPlant2 = () => {
         contentContainerStyle={{ paddingTop: 34 }}
       >
         <Text style={typography["h1-bold"]} className="text-black mb-3 pl-2">
-          Choose your Plant
+          Add your Plant
         </Text>
 
         <Text
           style={typography["subheader"]}
           className="mb-5 text-gray-700 leading-normal pl-2"
         >
-          Choose a plant to add to your{" "}
-          <Text style={typography["subheader-bold"]} className="text-black">
-            Nurtura Rack
-          </Text>
-          .
+          View details about the plant that you&apos;ll put in the rack.
         </Text>
       </ScrollView>
 
-      <View className="px-4 mb-6">
-        <SelectedRackCard rackName="Sample Rack"></SelectedRackCard>
-      </View>
-
-      <BottomButton title="Next" onPress={handleNextPress} />
+      <BottomButton title="Finish" onPress={handleNextPress} />
     </View>
   );
 };
 
-export default AddNewPlant2;
+export default AddNewPlant3;
