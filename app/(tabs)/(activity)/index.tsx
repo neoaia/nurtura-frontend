@@ -10,19 +10,19 @@ export default function ActivityScreen() {
       title: "Plant Care Activity",
       desc: "View your watering and grow light activity.",
       icon: require("@/assets/images/plantcare-icon.png"),
-      path: "/(tabs)/(activity)/activity_subpages/plant-care",
+      path: "/(tabs)/(activity)/plant-care",
     },
     {
       title: "Harvest Activity",
       desc: "View history of your harvests.",
       icon: require("@/assets/images/harvest-icon.png"),
-      path: "/(tabs)/(activity)/activity_subpages/harvest",
+      path: "/(tabs)/(activity)/harvest",
     },
     {
       title: "Planting Activity",
       desc: "View logs based on your planting activity.",
       icon: require("@/assets/images/planting-icon.png"),
-      path: "/(tabs)/(activity)/activity_subpages/planting",
+      path: "/(tabs)/(activity)/planting",
     },
   ];
 
