@@ -81,14 +81,14 @@ const RackInfo = () => {
               title="Plant Care Activity"
               description="Logs based on watering and grow light activity."
               iconSource={require("@/assets/images/plantcare-icon.png")}
-              route="/(tabs)/(racks)/racks_subpages/care"
+              route="/(tabs)/(racks)/[rackId]/care"
             />
 
             <MenuCard
               title="Harvest Activity"
               description="Records of your past harvests for this plant."
               iconSource={require("@/assets/images/harvest-icon.png")}
-              route="/(tabs)/(racks)/racks_subpages/harvestHistory"
+              route="/(tabs)/(racks)/[rackId]/harvest-history"
             />
           </View>
         </ScrollView>

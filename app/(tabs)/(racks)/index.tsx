@@ -5,10 +5,12 @@ import { router } from "expo-router";
 import { ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+const rackId = "1";
+
 export default function RacksScreen() {
   const handleCardPress = () => {
     console.log("Card clicked!");
-    router.push("/(tabs)/(racks)/racks_subpages/rackInfo");
+    router.push(`/(tabs)/(racks)/${rackId}` as any); // temporary lang for testing loveu
   };
 
   return (

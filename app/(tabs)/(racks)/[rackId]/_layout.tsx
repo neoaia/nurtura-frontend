@@ -1,27 +1,12 @@
 import { typography } from "@/assets/fonts/Text";
-import { router, Stack, useNavigation } from "expo-router";
-import { useLayoutEffect } from "react";
+import { Stack, router, useGlobalSearchParams } from "expo-router";
 import { Image, TextStyle, TouchableOpacity, View } from "react-native";
 
-export default function RacksSubpagesLayout() {
-  const navigation = useNavigation();
+export default function RackIDLayout() {
+  const params = useGlobalSearchParams();
 
-  useLayoutEffect(() => {
-    navigation.getParent()?.setOptions({
-      tabBarStyle: { display: "none" },
-    });
-
-    return () => {
-      navigation.getParent()?.setOptions({
-        tabBarStyle: {
-          height: 100,
-          paddingBottom: 10,
-          paddingTop: 15,
-          display: "flex",
-        },
-      });
-    };
-  }, [navigation]);
+  // temporary id lang for testing loveu
+  const rackId = params.rackId || "1";
 
   return (
     <Stack
@@ -39,22 +24,18 @@ export default function RacksSubpagesLayout() {
       }}
     >
       <Stack.Screen
-        name="racks"
+        name="index"
         options={{
-          headerShown: false,
-        }}
-      />
-      <Stack.Screen
-        name="rackInfo"
-        options={{
-          headerShown: true,
-          title: "My First Rack",
+          title: `Rack ${rackId}`,
           headerTitleAlign: "left",
           headerRight: () => (
             <View className="flex-row items-center pr-2">
               <TouchableOpacity
                 onPress={() =>
-                  router.push("/(tabs)/(racks)/racks_subpages/rackConnection")
+                  router.push({
+                    pathname: "/(tabs)/(racks)/[rackId]/connection",
+                    params: { rackId: rackId },
+                  })
                 }
                 className="py-2 px-2 mr-1"
               >
@@ -67,7 +48,10 @@ export default function RacksSubpagesLayout() {
 
               <TouchableOpacity
                 onPress={() =>
-                  router.push("/(tabs)/(racks)/racks_subpages/editRack")
+                  router.push({
+                    pathname: "/(tabs)/(racks)/[rackId]/edit",
+                    params: { rackId: rackId },
+                  })
                 }
                 className="p-2"
               >
@@ -80,35 +64,25 @@ export default function RacksSubpagesLayout() {
           ),
         }}
       />
+
       <Stack.Screen
         name="care"
-        options={{
-          headerShown: true,
-          title: "Plant Care Activity",
-          headerTitleAlign: "left",
-        }}
+        options={{ title: "Plant Care Activity", headerTitleAlign: "left" }}
       />
+
       <Stack.Screen
-        name="harvestHistory"
-        options={{
-          headerShown: true,
-          title: "Harvest History",
-          headerTitleAlign: "left",
-        }}
+        name="harvest-history"
+        options={{ title: "Harvest History", headerTitleAlign: "left" }}
       />
+
       <Stack.Screen
-        name="harvestAction"
-        options={{
-          headerShown: true,
-        }}
+        name="edit"
+        options={{ title: "Edit Rack", headerTitleAlign: "left" }}
       />
+
       <Stack.Screen
-        name="editRack"
-        options={{
-          headerShown: true,
-          title: "Edit Rack",
-          headerTitleAlign: "left",
-        }}
+        name="connection"
+        options={{ title: "Rack Connection", headerTitleAlign: "left" }}
       />
     </Stack>
   );
