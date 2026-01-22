@@ -148,7 +148,7 @@ export default function HomeScreen() {
   const handleNotificationPress = async () => {
     console.log("Notification pressed");
     const notifications = await apiService.getNotifications();
-    router.push("/notification");
+    router.push("/notifications");
   };
 
   const handleCardPress = (cardType: string) => {

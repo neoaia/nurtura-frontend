@@ -28,7 +28,7 @@ export default function HomeLayout() {
           }}
         />
         <Stack.Screen
-          name="notification"
+          name="notifications"
           options={{ title: "Notifications", headerTitleAlign: "left" }}
         />
       </Stack>
