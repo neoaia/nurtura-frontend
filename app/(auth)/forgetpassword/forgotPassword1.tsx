@@ -12,6 +12,10 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { authService } from '@/services/authService';
+import { createLogger } from '@/utils/logger';
+
+const logger = createLogger('ForgotPassword1');
 
 const ForgotPassword1 = () => {
   const [isEmailValid, setIsEmailValid] = useState(false);
@@ -38,44 +42,6 @@ const ForgotPassword1 = () => {
     autoFetch: false,
     withAuth: false
   });
-
-  const isEmailAlreadyRegistered = async (email: string): Promise<boolean> => {
-    try {
-      const response = await checkEmailExists({
-        params: { email }
-      });
-
-      if (!response || response.error) {
-        console.error("Error checking email existence:", response?.error);
-        setEmailError("Unable to verify email. Please try again.");
-        return false;
-      }
-
-      return response?.data?.available === false;
-    } catch (error) {
-      console.error("Error checking email existence:", error);
-      setEmailError("Unable to verify email. Please try again.");
-      return false;
-    }
-  };
-
-  const emailProvider = async (email: string): Promise<string[]> => {
-    try {
-      const response = await checkSignInMethods({
-        params: { email }
-      });
-
-      if (!response || response.error) {
-        console.error("Error checking sign-in methods:", response?.error);
-        return [];
-      }
-
-      return response?.data?.providers || [];
-    } catch (error) {
-      console.error("Error checking sign-in methods:", error);
-      return [];
-    }
-  };
 
   const validateEmailFormat = (email: string): string[] => {
     const errors: string[] = [];
@@ -120,14 +86,14 @@ const ForgotPassword1 = () => {
   useEffect(() => {
     const clearStorageOnFirstMount = async () => {
       if (isFirstMount) {
-        console.log('Clearing storage on first mount');
+        logger.log('Clearing storage on first mount');
         try {
           await SecureStore.deleteItemAsync("forgot_password_email");
           await SecureStore.deleteItemAsync("forgot_password_verified_email");
           await SecureStore.deleteItemAsync("forgot_password_new_password");
           await SecureStore.deleteItemAsync("forgot_password_confirm_password");
         } catch (error) {
-          console.error('Error clearing storage:', error);
+          logger.error('Error clearing storage', error);
         }
         setIsFirstMount(false);
       }
@@ -138,10 +104,11 @@ const ForgotPassword1 = () => {
 
   useEffect(() => {
     const loadSavedEmail = async () => {
+      logger.debug('Loading saved email from storage');
       try {
         const savedEmail = await SecureStore.getItemAsync("forgot_password_email");
         if (savedEmail) {
-          console.log('Loading saved email:', savedEmail);
+          logger.log(`Loaded saved email: ${savedEmail}`);
           setEmail(savedEmail);
           const errors = validateEmailFormat(savedEmail);
           if (errors.length === 0) {
@@ -149,7 +116,7 @@ const ForgotPassword1 = () => {
           }
         }
       } catch (error) {
-        console.error('Error loading saved email:', error);
+        logger.error('Error loading saved email', error);
       }
     };
     loadSavedEmail();
@@ -158,6 +125,7 @@ const ForgotPassword1 = () => {
   useFocusEffect(
     useCallback(() => {
       const backAction = () => {
+        logger.log('Back button pressed');
         Alert.alert(
           "Go back?", 
           "Your process will be deleted and cleared.", 
@@ -167,14 +135,14 @@ const ForgotPassword1 = () => {
               text: "Yes",
               style: "destructive",
               onPress: async () => {
-                console.log('User confirmed going back');
+                logger.log('User confirmed going back, clearing storage');
                 try {
                   await SecureStore.deleteItemAsync("forgot_password_email");
                   await SecureStore.deleteItemAsync("forgot_password_verified_email");
                   await SecureStore.deleteItemAsync("forgot_password_new_password");
                   await SecureStore.deleteItemAsync("forgot_password_confirm_password");
                 } catch (error) {
-                  console.error('Error clearing storage on back:', error);
+                  logger.error('Error clearing storage on back', error);
                 }
                 router.back();
               },
@@ -191,37 +159,56 @@ const ForgotPassword1 = () => {
     }, [])
   );
 
-  const handleNextPress = async () => {
-    if (!isNextButtonEnabled) return;
+const handleNextPress = async () => {
+    
+    if (!isNextButtonEnabled) {
+      logger.warn('Next button disabled - invalid email');
+      return;
+    }
 
     setLoading(true);
     setEmailError("");
-    console.log(`Starting forgot password process for: ${email}`);
 
     try {
       const formatErrors = validateEmailFormat(email);
       if (formatErrors.length > 0) {
+        logger.warn('Email validation failed', { errors: formatErrors });
         setEmailError(formatErrors[0]);
         return;
       }
 
-      console.log('Checking if email exists');
-      const emailExists = await isEmailAlreadyRegistered(email);
-      
-      if (!emailExists) {
-        setEmailError("We couldn't find an account with this email address.");
+      const emailResponse = await authService.emailAvailable(checkEmailExists, email);
+
+      if (!emailResponse.success) {
+        logger.warn('Email availability check failed');
+        Alert.alert("Error", "Unable to verify email. Please try again.");
         return;
       }
 
-      console.log('Email exists, proceeding to check providers');
+      if (emailResponse.available) {
+        logger.warn('Email not registered');
+        setEmailError("No account found with this email address.");
+        return;
+      }
 
-      const providers = await emailProvider(email);
-      console.log('Available providers:', providers);
+      const providerResponse = await authService.getProvider(checkSignInMethods, email);
 
-      console.log('Saving email to secure storage');
+      if (!providerResponse.success) {
+        logger.warn('Provider check failed');
+        Alert.alert("Error", "Unable to verify sign-in methods. Please try again.");
+        return;
+      }
+
+      const providers = Array.isArray(providerResponse.provider) 
+        ? providerResponse.provider 
+        : (providerResponse.provider ? [providerResponse.provider] : []);
+      
+      logger.debug('Providers retrieved', { providers });
+
       await SecureStore.setItemAsync("forgot_password_email", email);
 
-      if (providers.includes('google') && providers.length === 1) {
+      if (providers.includes('google.com') && providers.length === 1) {
+        logger.log('Google-only account detected');
         Alert.alert(
           "Google Account", 
           "This email is associated with a Google account. Please reset your password using Google instead.",
@@ -230,6 +217,7 @@ const ForgotPassword1 = () => {
             { 
               text: "Use Google", 
               onPress: () => {
+                logger.log('User chose Google, navigating to login');
                 router.replace('/(auth)/login');
               }
             }
@@ -238,20 +226,20 @@ const ForgotPassword1 = () => {
         return;
       }
 
-      console.log('All checks passed, navigating to next step');
       router.push({
-          pathname: "/(auth)/forgetpassword/forgotPassword2",
-          params: { email },
-        });
+        pathname: "/(auth)/forgetpassword/forgotPassword2",
+        params: { email },
+      });
 
     } catch (error) {
-      console.error('Unexpected error:', error);
+      logger.error('Unexpected error in handleNextPress', error);
       
       if (error instanceof Error) {
         if (error.message.includes('Network')) {
           setEmailError("Network error. Please check your connection and try again.");
-        } 
-        
+        } else {
+          setEmailError("An unexpected error occurred. Please try again.");
+        }
       } else {
         setEmailError("An unexpected error occurred. Please try again.");
       }
@@ -260,7 +248,7 @@ const ForgotPassword1 = () => {
     }
   };
 
-    return (
+  return (
     <View className="flex-1 bg-white px-[16px] pb-[34px] w-screen justify-between h-screen">
       <View className="mt-[34px] flex-1 items-start">
         <Text className="text-black font-bold text-3xl mb-[20px] pl-2">
@@ -285,7 +273,6 @@ const ForgotPassword1 = () => {
           />
         </View>
 
-        {/* 🔹 Error message */}
         {emailError.length > 0 && (
           <Text className="text-[#E65656] text-base mt-1 pl-2">
             {emailError}

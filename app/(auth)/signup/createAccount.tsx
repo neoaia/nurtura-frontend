@@ -8,6 +8,8 @@ import { Divider } from "@/components/shared/divider";
 import { PrimaryButton } from "@/components/shared/primaryButton";
 import { useAuth } from "@/contexts/AuthContext";
 import useFetch from "@/hooks/useFetch";
+import { authService } from "@/services/authService";
+import { createLogger } from "@/utils/logger";
 import { cleanInput, validateEmail } from "@/utils/validation";
 import { useFocusEffect } from "@react-navigation/native";
 import { router } from "expo-router";
@@ -15,6 +17,8 @@ import * as SecureStore from "expo-secure-store";
 import { useCallback, useEffect, useState } from 'react';
 import { Alert, BackHandler, Text, View } from "react-native";
 import "../../globals.css";
+
+const logger = createLogger('CreateAccount');
 
 const USER_INFO_STORAGE_KEY = "temp_user_info";
 const SSO_INFO_STORAGE_KEY = "sso_temp_user_info";
@@ -31,8 +35,7 @@ const STORAGE_KEYS = [
 ];
 
 const CreateAccount = () => {
-
-const [email, setEmail] = useState("");
+  const [email, setEmail] = useState("");
   const [isCheckedTS, setIsCheckedTS] = useState(false);
   const [isCheckedPP, setIsCheckedPP] = useState(false);
   const [isEmailValid, setIsEmailValid] = useState(false);
@@ -104,6 +107,7 @@ const [email, setEmail] = useState("");
   };
 
   const handleConsentAccept = () => {
+    logger.log(`Consent accepted: ${currentConsentType}`);
     if (currentConsentType === "TS") setIsCheckedTS(true);
     if (currentConsentType === "PP") setIsCheckedPP(true);
     setHasScrolledToEnd(false);
@@ -111,17 +115,22 @@ const [email, setEmail] = useState("");
   };
 
   const handleConsentDecline = () => {
+    logger.log(`Consent declined: ${currentConsentType}`);
     setHasScrolledToEnd(false);
     setShowConsentModal(false);
   };
 
   const handleNextPress = async () => {
+    logger.log('Next button pressed');
+    
     if (!isNextButtonEnabled) {
+      logger.warn('Next button disabled - invalid email');
       setEmailError("Email is invalid");
       return;
     }
 
     if (!isCheckedTS || !isCheckedPP) {
+      logger.warn('Terms not accepted', { isCheckedTS, isCheckedPP });
       Alert.alert(
         "Terms Required",
         "Please agree to the Terms of Service and Privacy Policy to continue.",
@@ -134,9 +143,10 @@ const [email, setEmail] = useState("");
     try {
       const savedEmail = await SecureStore.getItemAsync("signup_email");
       const verifiedEmail = await SecureStore.getItemAsync("verified_email");
+      logger.debug('Storage check', { savedEmail, verifiedEmail });
 
       if (savedEmail && savedEmail !== email) {
-        console.log("Email changed, clearing related data");
+        logger.log('Email changed, clearing related storage');
         await Promise.all([
           SecureStore.deleteItemAsync(USER_INFO_STORAGE_KEY),
           SecureStore.deleteItemAsync("signup_password"),
@@ -150,35 +160,31 @@ const [email, setEmail] = useState("");
       await SecureStore.setItemAsync("fromGoogle", "false");
 
       if (verifiedEmail === email) {
-        console.log("Email already verified, skipping OTP");
+        logger.log('Email already verified, navigating to createPassword');
         router.push("/(auth)/signup/createPassword");
         return;
       }
 
-      const response = await checkEmailExists({
-        params: { email }
-      });
+      const emailResponse = await authService.emailAvailable(checkEmailExists, email);
 
-      if (!response || response.error) {
-        console.error("Error checking email existence:", response?.error);
+      if (!emailResponse.success) {
         Alert.alert("Error", "Unable to verify email. Please try again.");
         return;
       }
 
-      const emailExists = response?.data?.available === false;
-
-      if (emailExists) {
+      if (!emailResponse.available) {
         Alert.alert("Error", "This email is already registered. Please use a different email.");
         return;
       }
 
+      logger.log('Navigating to emailOTP');
       await SecureStore.setItemAsync("signup_email", email);
       router.push({
         pathname: "/(auth)/signup/emailOTP",
         params: { email },
       });
     } catch (error) {
-      console.error("Error in handleNextPress:", error);
+      logger.error('Unexpected error in handleNextPress', error);
       Alert.alert("Error", "An unexpected error occurred. Please try again.");
     } finally {
       setLoading(false);
@@ -186,66 +192,69 @@ const [email, setEmail] = useState("");
   }
 
   const handleGooglePress = async () => {
-    if (!isGoogleButtonEnabled || loading) return;
+    logger.log('Google Sign-In button pressed');
+    
+    if (!isGoogleButtonEnabled || loading) {
+      logger.warn('Google button disabled', { isGoogleButtonEnabled, loading });
+      return;
+    }
 
     setLoading(true);
 
-    try {
+    try {   
+      logger.log('Clearing previous SSO storage');
       await Promise.all([
         SecureStore.deleteItemAsync(USER_INFO_STORAGE_KEY),
         SecureStore.deleteItemAsync(SSO_INFO_STORAGE_KEY),
       ]);
 
+      logger.log('Starting Google Sign-In flow');
       const { userData } = await googleSignInAndVerify();
 
       if (!userData?.email) {
+        logger.warn('No email returned from Google');
         Alert.alert("Error", "Failed to retrieve email from Google. Please try again.");
         return;
       }
 
       const email = userData.email.trim().toLowerCase();
+      logger.debug('Google user data', { email, firstName: userData.firstName, lastName: userData.lastName });
 
-      const response = await checkNeedsOnboarding({
-        params: { email }
-      });
+      const onboardingResponse = await authService.onboardingStatus(checkNeedsOnboarding, email);
 
-      if (!response || response.error) {
-        console.error("Error checking onboarding status:", response?.error);
+      if (!onboardingResponse.success) {
         Alert.alert("Error", "Unable to proceed with Google Sign-In. Please try again.");
         return;
-      };
+      }
 
-      const needsOnboarding = response?.data?.needsOnboarding;
-
-      if (needsOnboarding) {
-        if (email) {
-          const userInfoFromGoogle = {
-            email: userData.email ?? "",
-            firstName: userData.firstName ?? "",
-            lastName: userData.lastName ?? "",
-            token: userData.token ?? ""
-          };
-
-          await SecureStore.setItemAsync(
-            SSO_INFO_STORAGE_KEY,
-            JSON.stringify(userInfoFromGoogle)
-          );
-
-          await SecureStore.setItemAsync("fromGoogle", "true");
-
-          console.log("Google Sign-In successful");
+      if (onboardingResponse.needsOnboarding) {
+        logger.log('User needs onboarding, saving SSO data');
+        const userInfoFromGoogle = {
+          email: userData.email ?? "",
+          firstName: userData.firstName ?? "",
+          lastName: userData.lastName ?? "",
+          token: userData.token ?? ""
         };
 
+        await SecureStore.setItemAsync(
+          SSO_INFO_STORAGE_KEY,
+          JSON.stringify(userInfoFromGoogle)
+        );
+        await SecureStore.setItemAsync("fromGoogle", "true");
+
+        logger.log('Navigating to createUserInfo');
         router.push({
           pathname: "/(auth)/signup/createUserInfo",
           params: { email },
         });
       } else {
+        logger.log('User already onboarded, navigating to home');
         router.replace("/(tabs)/(home)");
       }
 
     } catch (error) {
-      console.error("Error clearing storage before Google Sign-In:", error);
+      logger.error('Error during Google Sign-In', error);
+      Alert.alert("Error", "An unexpected error occurred. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -254,8 +263,10 @@ const [email, setEmail] = useState("");
   useEffect(() => {
     const loadSavedEmail = async () => {
       if (!isFirstMount) {
+        logger.debug('Loading saved email from storage');
         const savedEmail = await SecureStore.getItemAsync("signup_email");
         if (savedEmail) {
+          logger.log(`Loaded saved email: ${savedEmail}`);
           setEmail(savedEmail);
           const isValid = validateEmail(savedEmail);
           setIsEmailValid(isValid);
@@ -273,12 +284,14 @@ const [email, setEmail] = useState("");
   useFocusEffect(
     useCallback(() => {
       const backAction = () => {
+        logger.log('Back button pressed');
         Alert.alert("Go back?", "Your progress will be deleted and cleared.", [
           { text: "Cancel", style: "cancel" },
           {
             text: "Yes",
             style: "destructive",
             onPress: async () => {
+              logger.log('Clearing all storage and navigating back');
               await Promise.all(
                 STORAGE_KEYS.map((key) => SecureStore.deleteItemAsync(key))
               );
