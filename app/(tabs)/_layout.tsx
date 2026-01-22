@@ -1,5 +1,5 @@
 import { AddNewModal } from "@/components/modals/addNewModal";
-import { Tabs } from "expo-router";
+import { Tabs, useSegments } from "expo-router"; // Added useSegments
 import { useState } from "react";
 import { Image, TouchableOpacity } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
@@ -7,6 +7,10 @@ import "../globals.css";
 
 const Layout = () => {
   const [modalVisible, setModalVisible] = useState(false);
+
+  const segments = useSegments();
+
+  const hideTabBar = segments.length > 2;
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
@@ -18,6 +22,7 @@ const Layout = () => {
             height: 100,
             paddingBottom: 10,
             paddingTop: 15,
+            display: hideTabBar ? "none" : "flex",
           },
         }}
       >
@@ -55,10 +60,12 @@ const Layout = () => {
             ),
           }}
         />
+
         <Tabs.Screen
           name="(add_pages)"
           options={{
             title: "Add New",
+            tabBarStyle: { display: "none" },
             tabBarButton: () => (
               <TouchableOpacity
                 onPress={() => {
@@ -70,6 +77,7 @@ const Layout = () => {
                   justifyContent: "center",
                   alignItems: "center",
                   marginTop: -33,
+                  display: hideTabBar ? "none" : "flex",
                 }}
               >
                 <Image
@@ -81,6 +89,7 @@ const Layout = () => {
             ),
           }}
         />
+
         <Tabs.Screen
           name="(activity)"
           options={{

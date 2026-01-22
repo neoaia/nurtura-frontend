@@ -15,14 +15,12 @@ export default function UserInformationScreen() {
       className="bg-white"
     >
       <View className="px-6 mt-6">
-        {/* Username (full width) */}
         <TextInputField
           label="Username"
           value={username}
           onChangeText={setUsername}
         />
 
-        {/* First & Last Name (row) */}
         <View className="flex-row justify-between">
           <TextInputField
             label="First name"

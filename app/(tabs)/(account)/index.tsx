@@ -12,12 +12,12 @@ export default function AccountScreen() {
     {
       title: "User Information",
       icon: require("@/assets/images/user-info-icon.png"),
-      path: "/(tabs)/(account)/account_subpages/user-info",
+      path: "/(tabs)/(account)/user-info",
     },
     {
       title: "Account Security",
       icon: require("@/assets/images/security-icon.png"),
-      path: "/(tabs)/(account)/account_subpages/account-secu",
+      path: "/(tabs)/(account)/security",
     },
   ];
 
