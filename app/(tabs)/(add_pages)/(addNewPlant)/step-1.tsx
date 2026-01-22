@@ -7,7 +7,7 @@ import { ScrollView, Text, View } from "react-native";
 
 const AddNewPlant1 = () => {
   const handleNextPress = () => {
-    router.push("/(tabs)/(add_pages)/(addNewPlant)/addNewPlant2");
+    router.push("/(tabs)/(add_pages)/(addNewPlant)/step-2");
   };
 
   return (

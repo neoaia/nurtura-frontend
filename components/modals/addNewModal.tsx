@@ -84,7 +84,7 @@ export const AddNewModal: React.FC<AddNewModalProps> = ({
   );
 
   const handlePlantPress = () =>
-    handleNavigation("/(add_pages)/(addNewPlant)/addNewPlant1");
+    handleNavigation("/(add_pages)/(addNewPlant)/step-1");
   const handleRackPress = () =>
     handleNavigation("/(add_pages)/(addNewRack)/addNewRack1");
 

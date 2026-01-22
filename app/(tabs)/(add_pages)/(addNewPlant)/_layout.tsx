@@ -33,7 +33,7 @@ export default function AddNewPlantLayout() {
       }}
     >
       <Stack.Screen
-        name="addNewPlant1"
+        name="step-1"
         options={{
           headerTitle: () => (
             <Image
@@ -44,7 +44,7 @@ export default function AddNewPlantLayout() {
         }}
       />
       <Stack.Screen
-        name="addNewPlant2"
+        name="step-2"
         options={{
           headerTitle: () => (
             <Image

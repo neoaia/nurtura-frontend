@@ -7,7 +7,8 @@ import { ScrollView, Text, View } from "react-native";
 
 const addNewPlant2 = () => {
   const handleNextPress = () => {
-    router.push("/(tabs)/(home)");
+    router.dismissAll();
+    router.replace("/(tabs)/(home)");
   };
   return (
     <View className="flex-1 bg-white">
