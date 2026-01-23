@@ -1,20 +1,8 @@
 import { typography } from "@/assets/fonts/Text";
+import { GetRackInfoDTO } from "@/types/rack.dto";
 import React from "react";
 import { Image, Text, TouchableOpacity, View } from "react-native";
 import Svg, { Circle, Rect } from "react-native-svg";
-
-interface RackItemProps {
-  name: string;
-  plant: string;
-  image?: string;
-  leaves: number;
-  water: number;
-  humidity: number;
-  temperature: number;
-  hasAlert?: boolean;
-  onPress?: () => void;
-  onMorePress?: () => void;
-}
 
 const LeafIcon = ({ size = 18, color = "#86975A" }) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
@@ -48,7 +36,7 @@ const MoreIcon = () => (
   </Svg>
 );
 
-const RackItem: React.FC<RackItemProps> = ({
+const RackItem: React.FC<GetRackInfoDTO> = ({
   name,
   plant,
   image,
@@ -57,7 +45,7 @@ const RackItem: React.FC<RackItemProps> = ({
   humidity,
   temperature,
   hasAlert = false,
-  onPress, // Add this
+  onPress,
   onMorePress,
 }) => {
   return (

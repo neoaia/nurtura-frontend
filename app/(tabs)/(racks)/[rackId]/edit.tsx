@@ -1,9 +1,31 @@
-import React from "react";
+import React, { useState } from "react";
 import { ScrollView, View } from "react-native";
 
+import { ConfirmationModal } from "@/components/modals/confirmationModal";
 import { MenuCard } from "@/components/shared/menubtn";
 
 const EditRack = () => {
+  const [removePlantModal, setRemovePlantModal] = useState(false);
+  const [removeRackModal, setRemoveRackModal] = useState(false);
+
+  const handleRemovePlantPress = () => {
+    setRemovePlantModal(true);
+  };
+
+  const handleRemoveRackPress = () => {
+    setRemoveRackModal(true);
+  };
+
+  const handleRemovePlantConfirm = () => {
+    console.log("Plant removed!");
+    setRemovePlantModal(false);
+  };
+
+  const handleRemoveRackConfirm = () => {
+    console.log("Rack removed!");
+    setRemoveRackModal(false);
+  };
+
   const menuItems = [
     {
       title: "Edit Name",
@@ -15,32 +37,50 @@ const EditRack = () => {
       title: "Remove Plant",
       desc: "Remove the plant on your Nurtura Rack.",
       icon: require("@/assets/images/harvest-icon.png"),
-      path: "/(tabs)/(activity)/activity_subpages/harvest",
       type: "red",
+      onPress: handleRemovePlantPress,
     },
     {
       title: "Remove Nurtura Rack",
-      desc: "Remove this rack from your acount.",
+      desc: "Remove this rack from your account.",
       icon: require("@/assets/images/planting-icon.png"),
-      path: "/(tabs)/(activity)/activity_subpages/planting",
       type: "red",
+      onPress: handleRemoveRackPress,
     },
   ];
+
   return (
     <ScrollView showsVerticalScrollIndicator={false} className="bg-white">
       <View className="flex justify-center items-center px-4 bg-white">
-        {menuItems.map((item) => (
-          <View key={item.path} className="w-full mb-3">
+        {menuItems.map((item, index) => (
+          <View key={`${item.path}-${index}`} className="w-full mb-3">
             <MenuCard
               title={item.title}
               description={item.desc}
               iconSource={item.icon}
               route={item.path as any}
               type={item.type}
+              onPress={item.onPress}
             />
           </View>
         ))}
       </View>
+
+      <ConfirmationModal
+        isVisible={removePlantModal}
+        title="Remove Plant?"
+        message="This action cannot be undone."
+        onCancel={() => setRemovePlantModal(false)}
+        onConfirm={handleRemovePlantConfirm}
+      />
+
+      <ConfirmationModal
+        isVisible={removeRackModal}
+        title="Remove Nurtura Rack?"
+        message="This action cannot be undone."
+        onCancel={() => setRemoveRackModal(false)}
+        onConfirm={handleRemoveRackConfirm}
+      />
     </ScrollView>
   );
 };
