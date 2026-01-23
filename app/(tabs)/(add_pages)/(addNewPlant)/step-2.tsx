@@ -15,6 +15,13 @@ const plantsData = [
   { id: "6", name: "Kale", category: "Leafy Greens", type: "leafy" },
 ];
 
+const filterOptions = [
+  { id: "all", label: "All Types", value: "all" },
+  { id: "herbs", label: "Herbs", value: "herbs" },
+  { id: "fruit", label: "Fruit Vegetables", value: "fruit" },
+  { id: "leafy", label: "Leafy Greens", value: "leafy" },
+];
+
 const AddNewPlant2 = () => {
   const [selectedFilter, setSelectedFilter] = useState("all");
   const [selectedPlant, setSelectedPlant] = useState<any>(null);
@@ -24,11 +31,9 @@ const AddNewPlant2 = () => {
       router.push({
         pathname: "/(tabs)/(add_pages)/(addNewPlant)/step-3",
         params: {
-          // rack data
           rackId: rackId,
           rackName: rackName,
           rackValue: rackValue,
-          // plant data
           plantId: selectedPlant.id,
           plantName: selectedPlant.name,
           plantCategory: selectedPlant.category,
@@ -62,9 +67,9 @@ const AddNewPlant2 = () => {
   return (
     <View className="flex-1 bg-white">
       <ScrollView
-        className="flex-1 px-4 "
+        className="flex-1 px-4"
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 20 }}
+        contentContainerStyle={{ paddingBottom: 20, paddingTop: 20 }}
       >
         <Text style={typography["h1-bold"]} className="text-black mb-3 pl-2">
           Choose your Plant
@@ -87,22 +92,14 @@ const AddNewPlant2 = () => {
           contentContainerStyle={{ gap: 8, paddingHorizontal: 8 }}
           className="mb-6"
         >
-          <PlantFilterBtn
-            title="All Types"
-            onPress={() => handleFilterBtnPress("all")}
-          />
-          <PlantFilterBtn
-            title="Herbs"
-            onPress={() => handleFilterBtnPress("herbs")}
-          />
-          <PlantFilterBtn
-            title="Fruit Vegetables"
-            onPress={() => handleFilterBtnPress("fruit")}
-          />
-          <PlantFilterBtn
-            title="Leafy Greens"
-            onPress={() => handleFilterBtnPress("leafy")}
-          />
+          {filterOptions.map((filter) => (
+            <PlantFilterBtn
+              key={filter.id}
+              title={filter.label}
+              onPress={() => handleFilterBtnPress(filter.value)}
+              isActive={selectedFilter === filter.value}
+            />
+          ))}
         </ScrollView>
 
         <View className="flex-row flex-wrap justify-between">
@@ -121,7 +118,7 @@ const AddNewPlant2 = () => {
       <BottomButton
         title="Next"
         onPress={handleNextPress}
-        disabled={!selectedPlant} // Disable if no plant selected
+        disabled={!selectedPlant}
       />
     </View>
   );

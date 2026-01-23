@@ -7,6 +7,7 @@ interface HollowButtonProps {
   loading?: boolean;
   disabled?: boolean;
   title: string;
+  isActive?: boolean; // Add this prop
 }
 
 const PlantFilterBtn = ({
@@ -14,20 +15,26 @@ const PlantFilterBtn = ({
   loading,
   disabled,
   title,
+  isActive = false, // Default to false
 }: HollowButtonProps) => {
   const isDisabled = loading || disabled;
 
   return (
     <TouchableOpacity
-      className="px-4 py-3 rounded-xl bg-white border-[2px] border-primary"
+      className={`px-4 py-3 rounded-xl border-[2px] ${
+        isActive ? "bg-primary border-primary" : "bg-white border-primary"
+      }`}
       style={{ alignSelf: "flex-start" }}
       onPress={onPress}
       disabled={isDisabled}
     >
       {loading ? (
-        <ActivityIndicator color="#7DA544" />
+        <ActivityIndicator color={isActive ? "#FFFFFF" : "#7DA544"} />
       ) : (
-        <Text style={typography["subheader-bold"]} className="text-primary">
+        <Text
+          style={typography["subheader-bold"]}
+          className={isActive ? "text-white" : "text-primary"}
+        >
           {title}
         </Text>
       )}

@@ -1,11 +1,11 @@
 import { typography } from "@/assets/fonts/Text";
 import React from "react";
 import {
-    Image,
-    ImageSourcePropType,
-    Text,
-    TouchableOpacity,
-    View,
+  Image,
+  ImageSourcePropType,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 interface PlantCardProps {
@@ -29,7 +29,6 @@ const PlantCard = ({
       activeOpacity={0.7}
       className="w-[48%] mb-5"
     >
-      {/* Plant Image Container with conditional border */}
       <View
         className={`w-full aspect-square bg-[#E5EDCF] rounded-2xl items-center justify-center mb-3 p-4 ${
           isSelected ? "border-4 border-primary" : ""
@@ -48,12 +47,10 @@ const PlantCard = ({
         )}
       </View>
 
-      {/* Plant Name */}
       <Text style={typography["subheader-bold"]} className="text-black">
         {plantName}
       </Text>
 
-      {/* Category */}
       <Text style={typography["subheader"]} className="text-gray-600">
         {category}
       </Text>
