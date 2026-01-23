@@ -49,7 +49,7 @@ function useFetch<T = any>(url: string, options: UseFetchOptions = {}): UseFetch
                 const response = await axios(config);
                 setData(response.data);
                 
-                return { data: response.data, error: null };
+                return { data: response.data, error: null, status: response.status };
             } catch (err: any) {
                 const errorObj = {
                     message: err.response?.data?.message || err.message || 'Request failed',
@@ -59,7 +59,7 @@ function useFetch<T = any>(url: string, options: UseFetchOptions = {}): UseFetch
                 setError(errorObj);
                 setData(null);
                 
-                return { data: null, error: errorObj };
+                return { data: null, error: errorObj, status: err.response?.status };
             } finally {
                 setLoading(false);
             }

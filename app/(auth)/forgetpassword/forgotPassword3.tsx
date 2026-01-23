@@ -12,6 +12,7 @@ import {
 } from "react-native";
 import useFetch from '@/hooks/useFetch';
 import { validatePassword, cleanInput, isStrongPassword } from "@/utils/validation";
+import { authService } from '@/services/authService';
 
 const ForgotPassword3 = () => {
   const [password, setPassword] = useState("");
@@ -40,22 +41,6 @@ const ForgotPassword3 = () => {
     withAuth: false
   });
 
-  const resetPasswordSuccess = async (email: string): Promise<any> => {
-    try {
-      const response = await resetPassword({
-        body: { email, newPassword: password }
-      });
-
-      if (response.error) {
-        return { data: null, success: false };
-      }
-
-      return { data: response.data, success: true };
-    } catch(error) {
-      return { data: null, success: false };
-    }
-  }
-
   const handleNextPress = async () => {
     if (!email) {
       Alert.alert("Error", "Email is missing. Please restart the password reset process.");
@@ -67,10 +52,10 @@ const ForgotPassword3 = () => {
     if (!passwordsMatch) return Alert.alert("Error", "Passwords do not match.");
 
     try {
-      const { success } = await resetPasswordSuccess(email as string);
+      const resetResponse = await authService.resetPassword(resetPassword, email as string, password);
 
-      if (!success) {
-        Alert.alert("Error", "Failed to reset password. Please try again.");
+      if (!resetResponse.success) {
+        Alert.alert("Error", resetResponse.message || "Failed to reset password. Please try again.");
         setLoading(false);
         return;
       }

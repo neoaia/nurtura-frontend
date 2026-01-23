@@ -6,8 +6,11 @@ import { SettingsRow } from "@/components/settings/settingsTab";
 import React from "react";
 import { ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function AccountScreen() {
+  const { logout } = useAuth();
+
   const menuItems = [
     {
       title: "User Information",
@@ -56,7 +59,7 @@ export default function AccountScreen() {
             <LogOutRow
               iconSource={require("@/assets/images/logout-icon.png")}
               label="Log Out"
-              onPress={() => console.log("Pressed")}
+              onPress={() => logout()}
             />
           </View>
         </View>

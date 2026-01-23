@@ -6,25 +6,14 @@ import * as SecureStore from "expo-secure-store";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Alert, NativeSyntheticEvent, Text, TextInput, TextInputKeyPressEventData, View } from "react-native";
 import { OTPInput } from "../../../components/auth/otpInput";
+import { authService } from "@/services/authService";
 import "../../globals.css";
+import { createLogger } from "@/utils/logger";
+
+const logger = createLogger('EmailOTP');
 
 
 const EmailOTP = () => {
-  // const {
-  //   otp,
-  //   inputs,
-  //   savedEmail,
-  //   isOtpInvalid,
-  //   loading,
-  //   timer,
-  //   allFilled,
-  //   handleChange,
-  //   handleKeyPress,
-  //   handleFocus,
-  //   handleNextPress,
-  //   handleResendPress,
-  // } = useEmailOTP();
-
     const [otp, setOtp] = useState(["", "", "", "", ""]);
     const inputs = useRef<(TextInput | null)[]>([]);
     const [isOtpInvalid, setIsOtpInvalid] = useState(false);
@@ -53,26 +42,29 @@ const EmailOTP = () => {
     });
 
     const handleSendOtp = useCallback(async (isResend = false) => {
-        if (!email) return;
-    
-        setLoading(true);
-        try {
-          const response = await sendOtp({ body: { email } });
-    
-          if (response.error) {
-            Alert.alert("Error", response.error.message || "Failed to send OTP.");
-          } else {
-            if (isResend) {
-              Alert.alert("Success", "OTP has been resent to your email.");
-              setTimer(60); 
-            }
-          }
-        } catch (err: any) {
-            Alert.alert("Error", err.message || "An unexpected error occurred.");
-        } finally {
+      if (!email) return;
+  
+      setLoading(true);
+      try {
+        const response = await authService.sendOtp(sendOtp, email as string);
+  
+        if (!response.success) {
+          Alert.alert("Error", response.message || "Failed to send OTP. Please try again.");
           setLoading(false);
+          return;
         }
-      }, [email, sendOtp]);
+
+        if (isResend) {
+          Alert.alert("Success", "OTP has been resent to your email.");
+          setTimer(60);
+        }
+
+      } catch (err: any) {
+          Alert.alert("Error", err.message || "An unexpected error occurred.");
+      } finally {
+        setLoading(false);
+      }
+    }, [email, sendOtp]);
 
     const handleChange = (text: string, index: number) => { 
       if (!/^\d*$/.test(text)) return;
@@ -122,33 +114,24 @@ const EmailOTP = () => {
       setLoading(true);
 
       try {
-        const response = await verifyOtp({
-          body: {
-            email,
-            code: enteredOtp,
-            purpose: 'registration'
-          }
-        });
+        const response = await authService.verifyOtp(verifyOtp, email as string, enteredOtp, "registration");
 
-        if (response.error) {
+        if (!response.success) {
           setIsOtpInvalid(true);
-          Alert.alert("Invalid OTP", response.error.message || "The OTP is incorrect.");
-          setLoading(false); 
+          Alert.alert("Error", response.message || "OTP verification failed. Please try again.");
           return;
         }
 
-        console.log("OTP Verified");
         await SecureStore.setItemAsync("verified_email", email as string);
         router.push({
           pathname: "/(auth)/signup/createPassword",
           params: { email }
         });
 
-        
       } catch (error) {
         setIsOtpInvalid(true);
         Alert.alert("Error", "An unexpected error occurred. Please try again.");
-        console.log("OTP Verification Error:", error);
+        logger.log("OTP Verification Error:", error);
       } finally {
         setLoading(false);
       }
