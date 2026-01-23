@@ -1,29 +1,15 @@
 import { PasswordInput } from "@/components/auth/passwordInput";
 import { PrimaryButton } from "@/components/shared/primaryButton";
-import { Text, View, Alert } from "react-native";
-import { useState, useEffect } from "react";
-import useFetch from "@/hooks/useFetch";
-import * as SecureStore from "expo-secure-store";
-import { router, useLocalSearchParams } from "expo-router";
+import { createLogger } from "@/utils/logger";
 import { isStrongPassword, validatePassword } from "@/utils/validation";
+import { router, useLocalSearchParams } from "expo-router";
+import * as SecureStore from "expo-secure-store";
+import { useEffect, useState } from "react";
+import { Alert, Text, View } from "react-native";
 
+const logger = createLogger('CreatePassword');
 
 const CreatePassword = () => {
-  // const {
-  //   isPasswordVisible,
-  //   password,
-  //   confirmPassword,
-  //   isPasswordValid,
-  //   isConfirmPasswordValid,
-  //   passwordsMatch,
-  //   loading,
-  //   isNextButtonEnabled,
-  //   togglePasswordVisibility,
-  //   handlePasswordChange,
-  //   handleConfirmPasswordChange,
-  //   handleNextPress,
-  // } = useCreatePassword();
-
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -55,23 +41,28 @@ const CreatePassword = () => {
   }
 
   const handleNextPress = async () => {
-    console.log("Next button pressed!");
+    logger.log('Next button pressed');
     setLoading(true);
 
     if (passwordsMatch && isPasswordValid && isConfirmPasswordValid) {
       try {
-        console.log("Password set successfully.");
+        logger.log('Password validation passed, navigating to createUserInfo');
         router.push({
           pathname: "/(auth)/signup/createUserInfo",
           params: { email }
         });
       } catch (error: any) {
-        console.error("Error resetting password:", error);
+        logger.error('Error during navigation', error);
         Alert.alert("Error", "Unable to reset password. Please try again.");
       } finally {
         setLoading(false);
       }
     } else {
+      logger.warn('Password validation failed', { 
+        passwordsMatch, 
+        isPasswordValid, 
+        isConfirmPasswordValid 
+      });
       Alert.alert("Invalid Password", "Please check your inputs again.");
       setLoading(false);
     }
@@ -79,13 +70,15 @@ const CreatePassword = () => {
 
   useEffect(() => {
     const loadPasswords = async () => {
+      logger.debug('Loading saved passwords from storage');
       const savedPassword = await SecureStore.getItemAsync("signup_password");
-      const savedConfirm = await SecureStore.getItemAsync(
-        "signup_confirm_password"
-      );
+      const savedConfirm = await SecureStore.getItemAsync("signup_confirm_password");
 
-      if (savedPassword) setPassword(savedPassword);
-      if (savedConfirm) setConfirmPassword(savedConfirm);
+      if (savedPassword || savedConfirm) {
+        logger.log('Restored saved passwords from storage');
+        if (savedPassword) setPassword(savedPassword);
+        if (savedConfirm) setConfirmPassword(savedConfirm);
+      }
     };
     loadPasswords();
   }, []);
@@ -93,10 +86,7 @@ const CreatePassword = () => {
   useEffect(() => {
     const savePasswords = async () => {
       await SecureStore.setItemAsync("signup_password", password);
-      await SecureStore.setItemAsync(
-        "signup_confirm_password",
-        confirmPassword
-      );
+      await SecureStore.setItemAsync("signup_confirm_password", confirmPassword);
     };
     savePasswords();
   }, [password, confirmPassword]);

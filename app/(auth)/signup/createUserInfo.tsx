@@ -9,6 +9,7 @@ import * as SecureStore from "expo-secure-store";
 import { useEffect, useState } from "react";
 import { Alert, ScrollView, Text, View } from "react-native";
 import { getFirebaseIdToken } from "@/lib/firebaseAuth";
+import { authService } from "@/services/authService";
 
 const USER_INFO_STORAGE_KEY = "temp_user_info";
 const SSO_INFO_STORAGE_KEY = "sso_temp_user_info";
@@ -125,12 +126,21 @@ const CreateUserInfo = () => {
 
       console.log("Creating account with details:", userDetails);
 
-      const response = await createAccount({
-        body: { ...userDetails }
-      });
+      // const response = await createAccount({
+      //   body: { ...userDetails }
+      // });
 
-      if (response.error) {
-        console.error("Error creating account:", response.error);
+      // if (response.error) {
+      //   console.error("Error creating account:", response.error);
+      //   Alert.alert("Error", "Failed to create account.");
+      //   setLoading(false);
+      //   return;
+      // }
+
+      const response = await authService.createAccount(createAccount, userDetails);
+
+      if (!response.success) {
+        console.error("Error creating account:", response.message);
         Alert.alert("Error", "Failed to create account.");
         setLoading(false);
         return;

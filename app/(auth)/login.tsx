@@ -13,6 +13,7 @@ import * as SecureStore from "expo-secure-store";
 import { useState } from "react";
 import { Alert, Image, Text, TouchableOpacity, View } from "react-native";
 import "../globals.css";
+import { authService } from "@/services/authService";
 
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
@@ -101,17 +102,16 @@ export default function LoginScreen() {
 
       const email = userData.email.trim().toLowerCase();
 
-      const response = await checkNeedsOnboarding({
-        params: { email },
-      });
+      const onboardingResponse = await authService.onboardingStatus(checkNeedsOnboarding, email);
+      const needsOnboarding = onboardingResponse.needsOnboarding;
 
-      if (!response || response.error) {
-        console.error("Error checking onboarding status:", response?.error);
-        Alert.alert("Google Sign-In Failed", "Unable to verify your account status. Please try again.");
+      if (!onboardingResponse.success) {
+        Alert.alert("Unable to proceed with Google Sign-In. Please try again.");
+        console.log(onboardingResponse.message);
         return;
       }
 
-      const needsOnboarding = response?.data?.needsOnboarding;
+      console.log("Onboarding status response:", onboardingResponse); 
 
       if (needsOnboarding) {
         const userInfoFromGoogle = {

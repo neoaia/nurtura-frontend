@@ -12,6 +12,10 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { authService } from '@/services/authService';
+import { createLogger } from '@/utils/logger';
+
+const logger = createLogger('ForgotPassword2');
 
 const ForgotPassword2 = () => {
   const { email } = useLocalSearchParams();
@@ -43,19 +47,22 @@ const ForgotPassword2 = () => {
 
   const handleSendOtp = useCallback(async (isResend = false) => {
     if (!email) return;
-
+      
     setLoading(true);
     try {
-      const response = await sendOtp({ body: { email } });
+      const response = await authService.sendOtp(sendOtp, email as string);
 
-      if (response.error) {
-        Alert.alert("Error", response.error.message || "Failed to send OTP.");
-      } else {
-        if (isResend) {
-          Alert.alert("Success", "OTP has been resent to your email.");
-          setTimer(60); 
-        }
+      if (!response.success) {
+        Alert.alert("Error", response.message || "Failed to send OTP. Please try again.");
+        setLoading(false);
+        return;
       }
+
+      if (isResend) {
+        Alert.alert("Success", "OTP has been resent to your email.");
+        setTimer(60);
+      }
+
     } catch (err: any) {
         Alert.alert("Error", err.message || "An unexpected error occurred.");
     } finally {
@@ -112,20 +119,15 @@ const ForgotPassword2 = () => {
     setIsOtpInvalid(false);
 
     try {
-      console.log("Verifying OTP for:", email, "Code:", userCode);
-      
-      const response = await verifyOtp({
-        body: { email, code: userCode, purpose: "forgot-password" }
-      });
+      const response = await authService.verifyOtp(verifyOtp, email as string, userCode, "forgot-password");
 
-      if (response.error) {
+      if (!response.success) {
         setIsOtpInvalid(true);
-        Alert.alert("Invalid OTP", response.error.message || "The OTP is incorrect.");
-        setLoading(false); 
+        Alert.alert("Error", "Invalid OTP. Please try again.");
+        setLoading(false);
         return;
       }
 
-      console.log("OTP verified successfully. Navigating...");
       await SecureStore.setItemAsync("forgot_password_verified_email", email as string);
       
       router.push({
@@ -134,7 +136,7 @@ const ForgotPassword2 = () => {
       });
 
     } catch (error) {
-      console.error("Error verifying OTP:", error);
+      logger.error("Error verifying OTP:", error);
       Alert.alert("Error", "Failed to verify OTP. Please try again.");
       setLoading(false); 
     }
