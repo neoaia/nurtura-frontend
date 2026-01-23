@@ -1,13 +1,31 @@
 import { typography } from "@/assets/fonts/Text";
 import { BottomButton } from "@/components/shared/bottomButton";
-import Dropdown from "@/components/shared/dropdown";
+import Dropdown, { DropdownOption } from "@/components/shared/dropdown";
 import { router } from "expo-router";
-import React from "react";
+import React, { useState } from "react";
 import { ScrollView, Text, View } from "react-native";
 
+// mock data beybeh
+const RACK_OPTIONS = [
+  { id: "1", label: "Lettuce Rack", value: "lettuce" },
+  { id: "2", label: "Tomato Setup", value: "tomato" },
+  { id: "3", label: "Basil / Herbs", value: "basil" },
+];
+
 const AddNewPlant1 = () => {
+  const [selectedRack, setSelectedRack] = useState<DropdownOption | null>(null);
+
   const handleNextPress = () => {
-    router.push("/(tabs)/(add_pages)/(addNewPlant)/step-2");
+    if (!selectedRack) return;
+
+    router.push({
+      pathname: "/(tabs)/(add_pages)/(addNewPlant)/step-2",
+      params: {
+        rackId: selectedRack.id,
+        rackName: selectedRack.label,
+        rackValue: selectedRack.value,
+      },
+    });
   };
 
   return (
@@ -31,10 +49,19 @@ const AddNewPlant1 = () => {
           Choose which rack you want to add your plant to.
         </Text>
 
-        <Dropdown />
+        <Dropdown
+          placeholder="Select your device here"
+          options={RACK_OPTIONS}
+          value={selectedRack?.label}
+          onSelect={(item) => setSelectedRack(item)}
+        />
       </ScrollView>
 
-      <BottomButton title="Next" onPress={handleNextPress} />
+      <BottomButton
+        title="Next"
+        onPress={handleNextPress}
+        disabled={!selectedRack}
+      />
     </View>
   );
 };
