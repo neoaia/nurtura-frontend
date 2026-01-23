@@ -14,14 +14,14 @@ const SelectedRackCard: React.FC<SelectedRackCardProps> = ({ rackName }) => {
           <View className="w-14 h-14 bg-[#E5EDCF] rounded-xl items-center justify-center" />
 
           <View className="flex-1">
+            <Text style={typography["subheader"]} className="  text-grayText">
+              Selected Rack
+            </Text>
             <Text
               style={typography["button-bold"]}
               className="  text-black mb-1"
             >
               {rackName}
-            </Text>
-            <Text style={typography["subheader"]} className="  text-grayText">
-              Selected Rack
             </Text>
           </View>
         </View>

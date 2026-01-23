@@ -9,7 +9,7 @@ export default function AccountSecurityScreen() {
       title: "Change Password",
       desc: "Update your password to secure account.",
       icon: require("@/assets/images/key-icon.png"),
-      path: "/(tabs)/(account)/change-pass",
+      path: "/(tabs)/(account)/change-password",
     },
     {
       title: "Update E-mail",
