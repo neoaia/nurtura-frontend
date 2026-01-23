@@ -18,7 +18,7 @@ export const PrimaryButton = ({
 
   return (
     <TouchableOpacity
-      className={`w-full p-6 rounded-[12px] mt-2 flex items-center ${
+      className={`w-full p-6 rounded-xl mt-2 flex items-center ${
         isDisabled ? "bg-[#919191]" : "bg-primary"
       }`}
       onPress={onPress}

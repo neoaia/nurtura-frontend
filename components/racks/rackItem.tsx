@@ -12,11 +12,10 @@ interface RackItemProps {
   humidity: number;
   temperature: number;
   hasAlert?: boolean;
-  onPress?: () => void; // Add this for card press
+  onPress?: () => void;
   onMorePress?: () => void;
 }
 
-// SVG Icons
 const LeafIcon = ({ size = 18, color = "#86975A" }) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
     <Circle cx={12} cy={12} r={8} fill={color} />
@@ -83,52 +82,53 @@ const RackItem: React.FC<RackItemProps> = ({
 
           <View className="flex-1">
             <View className="flex-row items-center gap-2 mb-1">
-              <Text style={typography['h2-bold']} className=" text-black" numberOfLines={1}>
+              <Text
+                style={typography["h2-bold"]}
+                className=" text-black"
+                numberOfLines={1}
+              >
                 {name}
               </Text>
               {hasAlert && (
                 <View className="w-2.5 h-2.5 rounded-full bg-[#FF2121]" />
               )}
             </View>
-            <Text style={typography['subheader']} className=" text-[#73883C]" numberOfLines={1}>
+            <Text
+              style={typography["subheader"]}
+              className=" text-[#73883C]"
+              numberOfLines={1}
+            >
               {plant}
             </Text>
           </View>
         </View>
-
-        <TouchableOpacity
-          onPress={(e) => {
-            e.stopPropagation(); // Prevent card press when more is pressed
-            onMorePress?.();
-          }}
-          className="p-1"
-          activeOpacity={0.6}
-        >
-          <MoreIcon />
-        </TouchableOpacity>
       </View>
 
       <View className="flex-row justify-center items-center w-full gap-10">
         <View className="flex-row items-center gap-1.5">
           <LeafIcon size={18} />
-          <Text style={typography['label-bold']} className="text-black">{leaves}</Text>
+          <Text style={typography["label-bold"]} className="text-black">
+            {leaves}
+          </Text>
         </View>
 
         <View className="flex-row items-center gap-1.5">
           <DropletIcon size={18} />
-          <Text style={typography['label-bold']} className="text-black">
+          <Text style={typography["label-bold"]} className="text-black">
             {water.toFixed(2)}
           </Text>
         </View>
 
         <View className="flex-row items-center gap-1.5">
           <WaveIcon size={18} />
-          <Text style={typography['label-bold']} className="text-black">{humidity}%</Text>
+          <Text style={typography["label-bold"]} className="text-black">
+            {humidity}%
+          </Text>
         </View>
 
         <View className="flex-row items-center gap-1.5">
           <ThermometerIcon size={18} />
-          <Text style={typography['label-bold']} className="text-black">
+          <Text style={typography["label-bold"]} className="text-black">
             {temperature}°C
           </Text>
         </View>

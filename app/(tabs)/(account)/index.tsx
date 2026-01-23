@@ -17,7 +17,7 @@ export default function AccountScreen() {
     {
       title: "Account Security",
       icon: require("@/assets/images/security-icon.png"),
-      path: "/(tabs)/(account)/account-secu",
+      path: "/(tabs)/(account)/security",
     },
   ];
 

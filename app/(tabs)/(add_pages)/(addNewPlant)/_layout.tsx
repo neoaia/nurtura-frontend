@@ -1,6 +1,8 @@
+import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import { Stack, useNavigation } from "expo-router";
 import { useLayoutEffect } from "react";
 import { Image } from "react-native";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 import "../../../globals.css";
 
 export default function AddNewPlantLayout() {
@@ -22,38 +24,54 @@ export default function AddNewPlantLayout() {
       });
     };
   }, [navigation]);
+
   return (
-    <Stack
-      screenOptions={{
-        headerStyle: { backgroundColor: "#fafafa" },
-        headerBlurEffect: "light",
-        headerBackTitle: "Back",
-        headerShadowVisible: false,
-        headerTitleAlign: "center",
-      }}
-    >
-      <Stack.Screen
-        name="addNewPlant1"
-        options={{
-          headerTitle: () => (
-            <Image
-              source={require("@/assets/images/add-new-plant/progress-bar-1.png")}
-            />
-          ),
-          headerShown: true,
-        }}
-      />
-      <Stack.Screen
-        name="addNewPlant2"
-        options={{
-          headerTitle: () => (
-            <Image
-              source={require("@/assets/images/add-new-plant/progress-bar-2.png")}
-            />
-          ),
-          headerShown: true,
-        }}
-      />
-    </Stack>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <BottomSheetModalProvider>
+        <Stack
+          screenOptions={{
+            headerStyle: { backgroundColor: "#fafafa" },
+            headerBlurEffect: "light",
+            headerBackTitle: "Back",
+            headerShadowVisible: false,
+            headerTitleAlign: "center",
+          }}
+        >
+          <Stack.Screen
+            name="step-1"
+            options={{
+              headerTitle: () => (
+                <Image
+                  source={require("@/assets/images/add-new-plant/progress-bar-1.png")}
+                />
+              ),
+              headerShown: true,
+            }}
+          />
+          <Stack.Screen
+            name="step-2"
+            options={{
+              headerTitle: () => (
+                <Image
+                  source={require("@/assets/images/add-new-plant/progress-bar-2.png")}
+                />
+              ),
+              headerShown: true,
+            }}
+          />
+          <Stack.Screen
+            name="step-3"
+            options={{
+              headerTitle: () => (
+                <Image
+                  source={require("@/assets/images/add-new-plant/progress-bar-3.png")}
+                />
+              ),
+              headerShown: true,
+            }}
+          />
+        </Stack>
+      </BottomSheetModalProvider>
+    </GestureHandlerRootView>
   );
 }

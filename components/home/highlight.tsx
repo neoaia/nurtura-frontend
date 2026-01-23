@@ -17,7 +17,7 @@ export const Highlight: React.FC<HighlightProps> = ({
 }) => {
   return (
     <View className="mb-6">
-      <View className="bg-[#a8b88f] rounded-2xl p-6">
+      <View className="bg-[#a8b28e] rounded-2xl p-6">
         <Text style={typography["h2-bold"]} className="text-white mb-4">
           {title}
         </Text>
@@ -29,7 +29,7 @@ export const Highlight: React.FC<HighlightProps> = ({
         </Text>
         <TouchableOpacity
           onPress={onButtonPress}
-          className="bg-[#7a8f5e] rounded-lg py-3 px-6 self-start"
+          className="bg-primary rounded-lg py-3 px-6 self-start"
           activeOpacity={0.8}
         >
           <Text style={typography["label-bold"]} className="text-white">

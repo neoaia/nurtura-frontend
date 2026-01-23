@@ -1,5 +1,5 @@
 import { AddNewModal } from "@/components/modals/addNewModal";
-import { Tabs } from "expo-router";
+import { Tabs, useSegments } from "expo-router"; // Added useSegments
 import { useState } from "react";
 import { Image, TouchableOpacity } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
@@ -7,6 +7,10 @@ import "../globals.css";
 
 const Layout = () => {
   const [modalVisible, setModalVisible] = useState(false);
+
+  const segments = useSegments();
+
+  const hideTabBar = segments.length > 2;
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
@@ -18,6 +22,7 @@ const Layout = () => {
             height: 100,
             paddingBottom: 10,
             paddingTop: 15,
+            display: hideTabBar ? "none" : "flex",
           },
         }}
       >
@@ -32,7 +37,7 @@ const Layout = () => {
                     ? require("@/assets/images/bottom-nav/bm-home-active.png")
                     : require("@/assets/images/bottom-nav/bm-home-inactive.png")
                 }
-                style={{ width: 24, height: 24 }}
+                style={{ width: 22, height: 22 }}
                 resizeMode="contain"
               />
             ),
@@ -49,20 +54,21 @@ const Layout = () => {
                     ? require("@/assets/images/bottom-nav/bm-rack-active.png")
                     : require("@/assets/images/bottom-nav/bm-rack-inactive.png")
                 }
-                style={{ width: 24, height: 24 }}
+                style={{ width: 22, height: 22 }}
                 resizeMode="contain"
               />
             ),
           }}
         />
+
         <Tabs.Screen
           name="(add_pages)"
           options={{
             title: "Add New",
+            tabBarStyle: { display: "none" },
             tabBarButton: () => (
               <TouchableOpacity
                 onPress={() => {
-                  console.log("TANGINA NAPINDOT!!!");
                   setModalVisible(true);
                 }}
                 activeOpacity={0.7}
@@ -71,6 +77,7 @@ const Layout = () => {
                   justifyContent: "center",
                   alignItems: "center",
                   marginTop: -33,
+                  display: hideTabBar ? "none" : "flex",
                 }}
               >
                 <Image
@@ -82,6 +89,7 @@ const Layout = () => {
             ),
           }}
         />
+
         <Tabs.Screen
           name="(activity)"
           options={{
@@ -95,8 +103,8 @@ const Layout = () => {
                 }
                 style={
                   focused
-                    ? { width: 28, height: 28 }
-                    : { width: 24, height: 24 }
+                    ? { width: 26, height: 26 }
+                    : { width: 22, height: 22 }
                 }
                 resizeMode="contain"
               />
@@ -116,8 +124,8 @@ const Layout = () => {
                 }
                 style={
                   focused
-                    ? { width: 28, height: 28 }
-                    : { width: 24, height: 24 }
+                    ? { width: 26, height: 26 }
+                    : { width: 22, height: 22 }
                 }
                 resizeMode="contain"
               />

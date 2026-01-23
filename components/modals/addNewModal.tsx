@@ -19,7 +19,7 @@ interface OptionButtonProps {
 
 const OptionButton: React.FC<OptionButtonProps> = ({ label, onPress }) => (
   <TouchableOpacity
-    className="items-center"
+    className="items-center mb-5"
     onPress={onPress}
     activeOpacity={0.7}
   >
@@ -84,7 +84,7 @@ export const AddNewModal: React.FC<AddNewModalProps> = ({
   );
 
   const handlePlantPress = () =>
-    handleNavigation("/(add_pages)/(addNewPlant)/addNewPlant1");
+    handleNavigation("/(add_pages)/(addNewPlant)/step-1");
   const handleRackPress = () =>
     handleNavigation("/(add_pages)/(addNewRack)/addNewRack1");
 
