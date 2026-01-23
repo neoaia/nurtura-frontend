@@ -8,7 +8,7 @@ interface SelectedRackCardProps {
 
 const SelectedRackCard: React.FC<SelectedRackCardProps> = ({ rackName }) => {
   return (
-    <View className="bg-white rounded-2xl p-5 shadow-lg border border-gray-100 w-full">
+    <View className="bg-white rounded-2xl p-5 shadow-sm border-[2px] border-gray-100 w-full">
       <View className="flex-row justify-between items-center">
         <View className="flex-row items-center gap-4 flex-1">
           <View className="w-14 h-14 bg-[#E5EDCF] rounded-xl items-center justify-center" />

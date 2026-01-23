@@ -54,6 +54,7 @@ const AddNewPlant1 = () => {
           options={RACK_OPTIONS}
           value={selectedRack?.label}
           onSelect={(item) => setSelectedRack(item)}
+          label="Selected Rack"
         />
       </ScrollView>
 

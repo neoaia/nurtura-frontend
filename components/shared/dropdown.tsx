@@ -18,6 +18,7 @@ interface DropdownProps {
   value?: string;
   options: DropdownOption[];
   onSelect: (item: DropdownOption) => void;
+  label?: string; // Added label prop
 }
 
 const Dropdown: React.FC<DropdownProps> = ({
@@ -25,6 +26,7 @@ const Dropdown: React.FC<DropdownProps> = ({
   value,
   options,
   onSelect,
+  label = "Selected Rack", // Default label
 }) => {
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
 
@@ -55,18 +57,30 @@ const Dropdown: React.FC<DropdownProps> = ({
         <TouchableOpacity
           onPress={handlePresentModalPress}
           activeOpacity={0.7}
-          className="bg-white rounded-2xl p-5 shadow-lg border border-gray-100 w-full"
+          className="bg-white rounded-2xl p-5 shadow-sm border-[2px] border-gray-100 w-full"
         >
           <View className="flex-row justify-between items-center">
             <View className="flex-row items-center gap-4 flex-1">
               <View className="w-14 h-14 bg-[#E5EDCF] rounded-xl items-center justify-center" />
-              <Text
-                style={typography["subheader"]}
-                className={`flex-1 mr-2 ${value ? "text-black" : "text-grayText"}`}
-                numberOfLines={1}
-              >
-                {value || placeholder}
-              </Text>
+              <View className="flex-1">
+                {value && (
+                  <Text
+                    style={typography["subheader"]}
+                    className="text-grayText mb-1"
+                  >
+                    {label}
+                  </Text>
+                )}
+                <Text
+                  style={
+                    value ? typography["button-bold"] : typography["subheader"]
+                  }
+                  className={`${value ? "text-black" : "text-grayText"}`}
+                  numberOfLines={1}
+                >
+                  {value || placeholder}
+                </Text>
+              </View>
             </View>
           </View>
         </TouchableOpacity>
