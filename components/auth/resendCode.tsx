@@ -10,14 +10,14 @@ export const ResendCode = ({ onResend, timer }: ResendCodeProps) => {
   return (
     <View className="self-start pl-2 mb-[26px] flex-row items-center">
       <Text
-        style={typography.button}
-        className="  text-black leading-normal"
+        style={typography["subheader"]}
+        className="  text-grayText leading-normal"
       >
         Didn&apos;t receive the code?{" "}
       </Text>
       <TouchableOpacity onPress={onResend} disabled={timer > 0}>
         <Text
-          style={typography["button-bold"]}
+          style={typography["subheader-bold"]}
           className={` underline ${
             timer > 0 ? "text-grayText" : "text-primary"
           }`}
@@ -27,7 +27,9 @@ export const ResendCode = ({ onResend, timer }: ResendCodeProps) => {
       </TouchableOpacity>
 
       {timer > 0 && (
-        <Text style={typography.button} className="ml-2   text-grayText">({timer}s)</Text>
+        <Text style={typography["subheader"]} className="ml-2   text-grayText">
+          ({timer}s)
+        </Text>
       )}
     </View>
   );

@@ -15,7 +15,7 @@ export default function AccountSecurityScreen() {
       title: "Update E-mail",
       desc: "Update your e-mail to stay connected.",
       icon: require("@/assets/images/mail-icon.png"),
-      path: "/(tabs)/(account)/update-email",
+      path: "/(tabs)/(account)/update-email-1",
     },
   ];
 
