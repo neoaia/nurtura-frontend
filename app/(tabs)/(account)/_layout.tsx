@@ -42,10 +42,27 @@ export default function AccountLayout() {
           }}
         />
         <Stack.Screen
-          name="change-pass"
+          name="change-password-1"
           options={{
-            title: "Change Password",
-            headerTitleAlign: "left",
+            headerTitle: () => (
+              <Image
+                source={require("@/assets/images/account/progress-bar-1.png")}
+              />
+            ),
+            headerTitleAlign: "center",
+            headerShown: true,
+          }}
+        />
+        <Stack.Screen
+          name="change-password-2"
+          options={{
+            headerTitle: () => (
+              <Image
+                source={require("@/assets/images/account/progress-bar-2.png")}
+              />
+            ),
+            headerTitleAlign: "center",
+            headerShown: true,
           }}
         />
         <Stack.Screen
@@ -53,7 +70,7 @@ export default function AccountLayout() {
           options={{
             headerTitle: () => (
               <Image
-                source={require("@/assets/images/update-email/progress-bar-1.png")}
+                source={require("@/assets/images/account/progress-bar-1.png")}
               />
             ),
             headerTitleAlign: "center",
@@ -65,7 +82,7 @@ export default function AccountLayout() {
           options={{
             headerTitle: () => (
               <Image
-                source={require("@/assets/images/update-email/progress-bar-2.png")}
+                source={require("@/assets/images/account/progress-bar-2.png")}
               />
             ),
             headerTitleAlign: "center",
