@@ -1,14 +1,9 @@
 import { typography } from "@/assets/fonts/Text";
+import { HarvestSummaryDTO } from "@/types/activity.dto";
 import React from "react";
 import { Image, Text, View } from "react-native";
 
-interface SummaryCardProps {
-  value: string | number;
-  unit: string;
-  label: string;
-}
-
-export const HarvestSummaryCard: React.FC<SummaryCardProps> = ({
+export const HarvestSummaryCard: React.FC<HarvestSummaryDTO> = ({
   value,
   unit,
   label,
