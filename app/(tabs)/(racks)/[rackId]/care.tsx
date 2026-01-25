@@ -7,12 +7,23 @@ const care = () => {
     <ScrollView showsVerticalScrollIndicator={false} className="bg-white">
       <View className="px-4 py-4 bg-white">
         <CareItem
-          type="water"
-          plantName="Lettuce"
-          value="200 mL"
-          time="2h ago"
+          activity={{
+            id: "1",
+            type: "water",
+            plantName: "Lettuce",
+            value: "200 mL",
+            time: "2h ago",
+          }}
         />
-        <CareItem type="light" plantName="Tomato" value="80%" time="5m ago" />
+        <CareItem
+          activity={{
+            id: "2",
+            type: "light",
+            plantName: "Tomato",
+            value: "80%",
+            time: "5m ago",
+          }}
+        />
       </View>
     </ScrollView>
   );

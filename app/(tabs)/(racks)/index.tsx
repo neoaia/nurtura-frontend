@@ -5,12 +5,28 @@ import { router } from "expo-router";
 import { ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-const rackId = "1";
-
 export default function RacksScreen() {
-  const handleCardPress = () => {
+  const handleCardPress = (rackId: string) => {
     console.log("Card clicked!");
     router.push(`/(tabs)/(racks)/${rackId}` as any); // temporary lang for testing loveu
+  };
+
+  const handleAddRack = () => {
+    console.log("Add Rack clicked!");
+  };
+
+  const mockRack = {
+    id: "1",
+    name: "My First Rack",
+    plant: "Lettuce",
+    image: undefined,
+    leaves: 24,
+    water: 1.5,
+    humidity: 60,
+    temperature: 22,
+    hasAlert: true,
+    onPress: () => handleCardPress("1"),
+    onMorePress: () => console.log("More Pressed"),
   };
 
   return (
@@ -27,17 +43,7 @@ export default function RacksScreen() {
               </Text>
             </View>
 
-            <RackItem
-              name="My First Rack"
-              plant="Lettuce"
-              leaves={24}
-              water={1.5}
-              humidity={60}
-              temperature={22}
-              hasAlert={true}
-              onMorePress={() => console.log("More Pressed")}
-              onPress={() => handleCardPress()}
-            />
+            <RackItem rack={mockRack} />
 
             <AddRackButton onPress={() => console.log("Add Rack Pressed")} />
           </View>

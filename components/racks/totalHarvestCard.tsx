@@ -1,18 +1,15 @@
 import { typography } from "@/assets/fonts/Text";
+import { TotalHarvestDTO } from "@/types/rack.dto";
 import React from "react";
 import { Image, Text, View } from "react-native";
 
 interface TotalHarvestCardProps {
-  totalGrams: number;
-  sinceDate: string;
-  image?: string;
+  harvest: TotalHarvestDTO;
 }
 
-const TotalHarvestCard: React.FC<TotalHarvestCardProps> = ({
-  totalGrams,
-  sinceDate,
-  image,
-}) => {
+const TotalHarvestCard: React.FC<TotalHarvestCardProps> = ({ harvest }) => {
+  const { totalGrams = 0, sinceDate = "-", image } = harvest;
+
   return (
     <View className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 w-full">
       <View className="flex-row justify-between items-center">

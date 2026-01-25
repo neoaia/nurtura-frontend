@@ -1,11 +1,9 @@
 import React from "react";
 import { Text, TouchableOpacity, View } from "react-native";
 import { typography } from "../../assets/fonts/Text";
+import { HighlightDTO } from "../../types/home.dto";
 
-interface HighlightProps {
-  title: string;
-  description: string;
-  buttonText: string;
+interface HighlightProps extends HighlightDTO {
   onButtonPress: () => void;
 }
 
