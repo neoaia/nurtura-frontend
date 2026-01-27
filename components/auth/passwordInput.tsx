@@ -3,12 +3,12 @@ import { Image, Text, TextInput, TouchableOpacity, View } from "react-native";
 
 interface PasswordInputProps {
   value: string;
-  onChangeText: (text: string) => void;
-  isVisible: boolean;
-  onToggleVisibility: () => void;
+  onChangeText?: (text: string) => void;
+  isVisible?: boolean;
+  onToggleVisibility?: () => void;
   hasError?: boolean;
   label?: string;
-  type?: "login" | "signup"; 
+  type?: "login" | "signup";
 }
 
 export const PasswordInput = ({
@@ -18,16 +18,16 @@ export const PasswordInput = ({
   onToggleVisibility,
   hasError,
   label = "Password",
-  type = "login",  
+  type = "login",
 }: PasswordInputProps) => {
   const getBorderColor = () => {
     if (value.length === 0) return "border-[#919191]";
     if (hasError) return "border-[#E65656]";
- 
+
     if (type === "signup") {
       return "border-[#4CAF50]";
     }
- 
+
     return "border-[#919191]";
   };
 
@@ -40,7 +40,10 @@ export const PasswordInput = ({
           {label}
         </Text>
         <TextInput
-          style={[typography["button"], { padding: 0, margin: 0, minHeight: 22 }]}
+          style={[
+            typography["button"],
+            { padding: 0, margin: 0, minHeight: 22 },
+          ]}
           className="text-black pl-1 pr-10"
           secureTextEntry={!isVisible}
           keyboardType="default"

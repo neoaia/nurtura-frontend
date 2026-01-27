@@ -1,7 +1,7 @@
 import { typography } from "@/assets/fonts/Text";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { TextStyle } from "react-native";
+import { Image, TextStyle } from "react-native";
 
 export default function AccountLayout() {
   return (
@@ -13,7 +13,7 @@ export default function AccountLayout() {
           headerBlurEffect: "light",
           headerBackTitle: "Back",
           headerShadowVisible: false,
-          headerTitleAlign: "left",
+
           headerShown: true,
           headerTitleStyle: {
             ...(typography["h2-bold"] as TextStyle),
@@ -31,24 +31,62 @@ export default function AccountLayout() {
           name="user-info"
           options={{
             title: "User Information",
+            headerTitleAlign: "left",
           }}
         />
         <Stack.Screen
           name="security"
           options={{
             title: "Account Security",
+            headerTitleAlign: "left",
           }}
         />
         <Stack.Screen
-          name="change-pass"
+          name="change-password-1"
           options={{
-            title: "Change Password",
+            headerTitle: () => (
+              <Image
+                source={require("@/assets/images/account/progress-bar-1.png")}
+              />
+            ),
+            headerTitleAlign: "center",
+            headerShown: true,
           }}
         />
         <Stack.Screen
-          name="update-email"
+          name="change-password-2"
           options={{
-            title: "Update Email",
+            headerTitle: () => (
+              <Image
+                source={require("@/assets/images/account/progress-bar-2.png")}
+              />
+            ),
+            headerTitleAlign: "center",
+            headerShown: true,
+          }}
+        />
+        <Stack.Screen
+          name="update-email-1"
+          options={{
+            headerTitle: () => (
+              <Image
+                source={require("@/assets/images/account/progress-bar-1.png")}
+              />
+            ),
+            headerTitleAlign: "center",
+            headerShown: true,
+          }}
+        />
+        <Stack.Screen
+          name="update-email-2"
+          options={{
+            headerTitle: () => (
+              <Image
+                source={require("@/assets/images/account/progress-bar-2.png")}
+              />
+            ),
+            headerTitleAlign: "center",
+            headerShown: true,
           }}
         />
       </Stack>

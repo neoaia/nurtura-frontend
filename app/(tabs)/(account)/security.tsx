@@ -9,13 +9,13 @@ export default function AccountSecurityScreen() {
       title: "Change Password",
       desc: "Update your password to secure account.",
       icon: require("@/assets/images/key-icon.png"),
-      path: "/(tabs)/(account)/change-password",
+      path: "/(tabs)/(account)/change-password-1",
     },
     {
       title: "Update E-mail",
       desc: "Update your e-mail to stay connected.",
       icon: require("@/assets/images/mail-icon.png"),
-      path: "/(tabs)/(account)/update-email",
+      path: "/(tabs)/(account)/update-email-1",
     },
   ];
 

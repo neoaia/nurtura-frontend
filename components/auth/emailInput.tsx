@@ -2,8 +2,8 @@ import { typography } from "@/assets/fonts/Text";
 import { Text, TextInput, View } from "react-native";
 
 interface EmailInputProps {
-  value: string;
-  onChangeText: (text: string) => void;
+  value?: string;
+  onChangeText?: (text: string) => void;
   error?: string;
   hasError?: boolean;
 }
