@@ -1,15 +1,15 @@
 import { typography } from "@/assets/fonts/Text";
+import { CareActivityDTO } from "@/types/rack.dto";
 import React from "react";
 import { Text, View } from "react-native";
 
 interface CareItemProps {
-  type: "water" | "light";
-  plantName: string;
-  value: string;
-  time: string;
+  activity: CareActivityDTO;
 }
 
-const CareItem = ({ type, plantName, value, time }: CareItemProps) => {
+const CareItem: React.FC<CareItemProps> = ({ activity }) => {
+  const { type, plantName, value, time } = activity;
+
   const getActionText = () => {
     switch (type) {
       case "water":

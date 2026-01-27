@@ -4,24 +4,15 @@ import { typography } from "../../assets/fonts/Text";
 import ClockIcon from "../../assets/images/clockIcon.png";
 import LightIcon from "../../assets/images/lightUsedIcon.png";
 import WaterIcon from "../../assets/images/wateredIcon.png";
-
-interface Activity {
-  id: string;
-  type: "water" | "light";
-  action: string;
-  plant: string;
-  timestamp: string;
-  amount?: string;
-  duration?: string;
-}
+import { ActivityDTO } from "../../types/home.dto";
 
 interface RecentActivityBarProps {
-  activities: Activity[];
+  activities: ActivityDTO[];
 }
 
-const getIconConfig = (type: "water" | "light") => {
+const getIconConfig = (type: ActivityDTO["type"]) => {
   const configs: Record<
-    "water" | "light",
+    ActivityDTO["type"],
     { icon: any; bgColor: string; textColor: string }
   > = {
     water: { icon: WaterIcon, bgColor: "#CFE6ED", textColor: "#619AAC" },

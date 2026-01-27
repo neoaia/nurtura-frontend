@@ -36,18 +36,22 @@ const MoreIcon = () => (
   </Svg>
 );
 
-const RackItem: React.FC<GetRackInfoDTO> = ({
-  name,
-  plant,
-  image,
-  leaves,
-  water,
-  humidity,
-  temperature,
-  hasAlert = false,
-  onPress,
-  onMorePress,
-}) => {
+interface RackItemProps {
+  rack: GetRackInfoDTO;
+}
+
+const RackItem: React.FC<RackItemProps> = ({ rack }) => {
+  const {
+    name,
+    plant,
+    image,
+    leaves,
+    water,
+    humidity,
+    temperature,
+    hasAlert = false,
+    onPress,
+  } = rack;
   return (
     <TouchableOpacity
       onPress={onPress}

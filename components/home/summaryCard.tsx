@@ -11,14 +11,11 @@ import {
 import { typography } from "../../assets/fonts/Text";
 import PlantsIcon from "../../assets/images/plantIcon.png";
 import RacksIcon from "../../assets/images/rackIcon.png";
+import { SummaryCardDTO } from "../../types/home.dto";
 
 interface SummaryCardProps {
-  cards: {
-    id: string;
-    type: string;
-    value: number | null;
-  }[];
-  onCardPress: (type: string) => void;
+  cards: SummaryCardDTO[];
+  onCardPress: (cardType: string) => void;
 }
 
 const SUMMARY_CONFIG: Record<
