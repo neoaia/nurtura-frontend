@@ -1,16 +1,9 @@
 import { typography } from "@/assets/fonts/Text";
+import { BasePlantItemDTO } from "@/types/activity.dto";
 import React from "react";
-import { Image, ImageSourcePropType, Text, View } from "react-native";
+import { Image, Text, View } from "react-native";
 
-interface PlantItemProps {
-  plantName: string;
-  rackName: string;
-  time: string;
-  weight: string;
-  plantImage: ImageSourcePropType;
-}
-
-export const PlantItem: React.FC<PlantItemProps> = ({
+export const PlantItem: React.FC<BasePlantItemDTO> = ({
   plantName,
   rackName,
   time,

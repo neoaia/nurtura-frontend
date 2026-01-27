@@ -1,16 +1,9 @@
 import { typography } from "@/assets/fonts/Text";
+import { BasePlantItemDTO } from "@/types/activity.dto";
 import React from "react";
-import { Image, ImageSourcePropType, Text, View } from "react-native";
+import { Image, Text, View } from "react-native";
 
-interface HarvestItemProps {
-  plantName: string;
-  rackName: string;
-  time: string;
-  weight: string;
-  plantImage: ImageSourcePropType;
-}
-
-export const HarvestItem: React.FC<HarvestItemProps> = ({
+export const HarvestItem: React.FC<BasePlantItemDTO> = ({
   plantName,
   rackName,
   time,
