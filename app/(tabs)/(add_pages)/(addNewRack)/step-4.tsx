@@ -3,12 +3,17 @@ import { ScrollView, Text, View } from "react-native";
 
 import { typography } from "@/assets/fonts/Text";
 import { PrimaryButton } from "@/components/shared/primaryButton";
+import { TextInputField } from "@/components/shared/textInputField";
 import { router } from "expo-router";
 
 export default function AddNewRack3() {
   const handleNextPress = () => {
     router.dismissAll();
     router.push("/(tabs)/(home)");
+  };
+
+  const onChangeText = () => {
+    console.log("text changed");
   };
 
   return (
@@ -31,6 +36,13 @@ export default function AddNewRack3() {
         >
           Rename your rack based on your personal preference.
         </Text>
+
+        <View className="flex-col gap-2">
+          <TextInputField
+            label="Rack Name"
+            onChangeText={onChangeText}
+          ></TextInputField>
+        </View>
       </ScrollView>
       <View className="px-4 pb-9">
         <PrimaryButton title="Finish" onPress={handleNextPress}></PrimaryButton>

@@ -1,5 +1,5 @@
 import React from "react";
-import { ScrollView, Text, View } from "react-native";
+import { Image, ScrollView, Text, View } from "react-native";
 
 import { typography } from "@/assets/fonts/Text";
 import { PrimaryButton } from "@/components/shared/primaryButton";
@@ -17,6 +17,13 @@ export default function AddNewRack1() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingTop: 34 }}
       >
+        <View className="mb-9 ml-3">
+          <Image
+            source={require("@/assets/images/add-new-rack/plant-rack.png")}
+            className="w-40 h-40"
+          ></Image>
+        </View>
+
         <Text style={typography["h1-bold"]} className="text-black mb-3 pl-2">
           Connect to your{" "}
           <Text style={typography["h1-bold"]} className="text-primary">
