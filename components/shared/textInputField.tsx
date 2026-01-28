@@ -3,7 +3,7 @@ import { Text, TextInput, View } from "react-native";
 
 interface TextInputFieldProps {
   label: string;
-  value: string;
+  value?: string;
   onChangeText: (text: string) => void;
   placeholder?: string;
   width?: string;

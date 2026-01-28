@@ -12,7 +12,7 @@ export default function RacksScreen() {
   };
 
   const handleAddRack = () => {
-    console.log("Add Rack clicked!");
+    router.push("/(tabs)/(add_pages)/(addNewRack)");
   };
 
   const mockRack = {
@@ -20,7 +20,7 @@ export default function RacksScreen() {
     name: "My First Rack",
     plant: "Lettuce",
     image: undefined,
-    leaves: 24,
+    leaves: 1,
     water: 1.5,
     humidity: 60,
     temperature: 22,
@@ -45,7 +45,7 @@ export default function RacksScreen() {
 
             <RackItem rack={mockRack} />
 
-            <AddRackButton onPress={() => console.log("Add Rack Pressed")} />
+            <AddRackButton onPress={() => handleAddRack()} />
           </View>
         </ScrollView>
       </SafeAreaView>

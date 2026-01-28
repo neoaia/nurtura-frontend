@@ -1,11 +1,16 @@
+import { router } from "expo-router";
 import React from "react";
 import { Text, TouchableOpacity, View } from "react-native";
 import { typography } from "../../assets/fonts/Text";
 import { HighlightDTO } from "../../types/home.dto";
 
 interface HighlightProps extends HighlightDTO {
-  onButtonPress: () => void;
+  onButtonPress?: () => void;
 }
+
+const onAddRackPress = () => {
+  router.push("/(tabs)/(add_pages)/(addNewRack)");
+};
 
 export const Highlight: React.FC<HighlightProps> = ({
   title,
@@ -26,7 +31,7 @@ export const Highlight: React.FC<HighlightProps> = ({
           {description}
         </Text>
         <TouchableOpacity
-          onPress={onButtonPress}
+          onPress={onAddRackPress}
           className="bg-primary rounded-lg py-3 px-6 self-start"
           activeOpacity={0.8}
         >

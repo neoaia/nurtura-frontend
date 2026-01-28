@@ -8,7 +8,7 @@ interface TotalHarvestCardProps {
 }
 
 const TotalHarvestCard: React.FC<TotalHarvestCardProps> = ({ harvest }) => {
-  const { totalGrams = 0, sinceDate = "-", image } = harvest;
+  const { totalFrequency, sinceDate, image } = harvest;
 
   return (
     <View className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 w-full">
@@ -27,7 +27,7 @@ const TotalHarvestCard: React.FC<TotalHarvestCardProps> = ({ harvest }) => {
           </View>
 
           <View className="flex-1">
-            <Text style={typography["h2-bold"]} className="text-black mb-2">
+            <Text style={typography["h2-bold"]} className="text-black mb-1">
               Total Harvest
             </Text>
             <Text style={typography["subheader"]} className="text-grayText">
@@ -38,10 +38,10 @@ const TotalHarvestCard: React.FC<TotalHarvestCardProps> = ({ harvest }) => {
 
         <View className="items-center">
           <Text style={typography["title-2 bold"]} className="text-black">
-            {totalGrams}
+            {totalFrequency}
           </Text>
           <Text style={typography["subheader"]} className="text-grayText">
-            grams
+            times
           </Text>
         </View>
       </View>

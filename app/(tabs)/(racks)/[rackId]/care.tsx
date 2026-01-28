@@ -11,7 +11,7 @@ const care = () => {
             id: "1",
             type: "water",
             plantName: "Lettuce",
-            value: "200 mL",
+            duration: "2 minutes",
             time: "2h ago",
           }}
         />
@@ -20,7 +20,7 @@ const care = () => {
             id: "2",
             type: "light",
             plantName: "Tomato",
-            value: "80%",
+            duration: "2 mins",
             time: "5m ago",
           }}
         />
