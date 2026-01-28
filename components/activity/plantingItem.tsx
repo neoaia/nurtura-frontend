@@ -7,8 +7,8 @@ export const PlantItem: React.FC<BasePlantItemDTO> = ({
   plantName,
   rackName,
   time,
-  weight,
-  plantImage,
+  // weight,
+  // plantImage,
 }) => {
   return (
     <View className="bg-white rounded-2xl px-4 py-6 flex-row items-center shadow-md elevation-3 my-2">
@@ -43,7 +43,7 @@ export const PlantItem: React.FC<BasePlantItemDTO> = ({
             </Text>
           </View>
 
-          <View className="flex-row items-center" style={{ gap: 6 }}>
+          {/* <View className="flex-row items-center" style={{ gap: 6 }}>
             <Image
               source={require("@/assets/images/planting-icon.png")}
               className="w-[16px] h-[16px]"
@@ -53,7 +53,7 @@ export const PlantItem: React.FC<BasePlantItemDTO> = ({
             <Text style={typography["label"]} className="  text-[#919191] ">
               {weight}
             </Text>
-          </View>
+          </View> */}
         </View>
       </View>
     </View>

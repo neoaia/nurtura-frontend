@@ -22,7 +22,7 @@ export interface ActivityDTO {
   action: string;
   plant: string;
   timestamp: string;
-  amount?: string;
+  // amount?: string;
   duration?: string;
 }
 

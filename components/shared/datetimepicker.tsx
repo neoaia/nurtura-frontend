@@ -45,7 +45,7 @@ export const DateRangePicker = ({ value, onChange }: Props) => {
       >
         <View className="flex-row items-center">
           <Ionicons name="calendar-outline" size={20} color="#666" />
-          <Text style={typography["subheader"]} className="ml-3 text-black ">
+          <Text style={typography["label"]} className="ml-3 text-black ">
             {formatRange()}
           </Text>
         </View>

@@ -20,7 +20,7 @@ export default function RacksScreen() {
     name: "My First Rack",
     plant: "Lettuce",
     image: undefined,
-    leaves: 24,
+    leaves: 1,
     water: 1.5,
     humidity: 60,
     temperature: 22,

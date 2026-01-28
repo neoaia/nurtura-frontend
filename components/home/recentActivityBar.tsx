@@ -103,7 +103,7 @@ export const RecentActivityBar: React.FC<RecentActivityBarProps> = ({
                         resizeMode="contain"
                       />
                       <Text style={typography.label} className="text-gray-600">
-                        {activity.amount || activity.duration}
+                        {activity.duration}
                       </Text>
                     </View>
                   </View>

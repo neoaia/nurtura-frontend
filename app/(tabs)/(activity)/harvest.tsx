@@ -1,4 +1,3 @@
-import { HarvestSummaryCard } from "@/components/activity/harvestCard";
 import { HarvestItem } from "@/components/activity/harvestItem";
 import { DateRangePicker } from "@/components/shared/datetimepicker";
 
@@ -39,7 +38,7 @@ export default function PlantCareScreen() {
       </View>
 
       {/* harvest card na sliding */}
-      <ScrollView
+      {/* <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={{ paddingHorizontal: 24 }}
@@ -57,7 +56,7 @@ export default function PlantCareScreen() {
             label="Total harvest"
           />
         </View>
-      </ScrollView>
+      </ScrollView> */}
 
       {/* harvest itemss */}
       <View className="px-6 mt-6">
@@ -72,29 +71,29 @@ export default function PlantCareScreen() {
           plantName="Radish"
           rackName="Greens Rack"
           time="9:18 AM"
-          weight="750 g"
-          plantImage={require("@/assets/images/plant-sample.png")}
+          // weight="750 g"
+          // plantImage={require("@/assets/images/plant-sample.png")}
         />
         <HarvestItem
           plantName="Radish"
           rackName="Greens Rack"
           time="9:18 AM"
-          weight="750 g"
-          plantImage={require("@/assets/images/plant-sample.png")}
+          // weight="750 g"
+          // plantImage={require("@/assets/images/plant-sample.png")}
         />
         <HarvestItem
           plantName="Radish"
           rackName="Greens Rack"
           time="9:18 AM"
-          weight="750 g"
-          plantImage={require("@/assets/images/plant-sample.png")}
+          // weight="750 g"
+          // plantImage={require("@/assets/images/plant-sample.png")}
         />
         <HarvestItem
           plantName="Radish"
           rackName="Greens Rack"
           time="9:18 AM"
-          weight="750 g"
-          plantImage={require("@/assets/images/plant-sample.png")}
+          // weight="750 g"
+          // plantImage={require("@/assets/images/plant-sample.png")}
         />
       </View>
     </ScrollView>

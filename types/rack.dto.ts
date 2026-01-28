@@ -22,19 +22,18 @@ export interface CareActivityDTO {
   id: string;
   type: "water" | "light";
   plantName: string;
-  value: string;
+  duration: string;
   time: string;
 }
 
 export interface HarvestHistoryDTO {
   id: string;
-  value: number;
   plantName: string;
   time: string;
 }
 
 export interface TotalHarvestDTO {
-  totalGrams: number;
+  totalFrequency: number;
   sinceDate: string;
   image?: string;
 }

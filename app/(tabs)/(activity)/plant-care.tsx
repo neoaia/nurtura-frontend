@@ -63,7 +63,6 @@ export default function PlantCareScreen() {
           type={activeTab}
           plantName="Cherry Tomato"
           rackName="Greens Rack"
-          location="Lily Pod Garden"
           time="9:00 AM"
           duration="2 mins"
         />

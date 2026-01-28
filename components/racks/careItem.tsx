@@ -8,14 +8,14 @@ interface CareItemProps {
 }
 
 const CareItem: React.FC<CareItemProps> = ({ activity }) => {
-  const { type, plantName, value, time } = activity;
+  const { type, plantName, duration, time } = activity;
 
   const getActionText = () => {
     switch (type) {
       case "water":
-        return "has been watered automatically by";
+        return "has been watered automatically for";
       case "light":
-        return "light level adjusted to";
+        return "light has been turned on for";
       default:
         return "notification for";
     }
@@ -38,7 +38,7 @@ const CareItem: React.FC<CareItemProps> = ({ activity }) => {
           </Text>{" "}
           {getActionText()}{" "}
           <Text style={typography["subheader-bold"]} className=" text-black">
-            {value}
+            {duration}
           </Text>
           .{" "}
           <Text style={typography["subheader"]} className="text-grayText">
