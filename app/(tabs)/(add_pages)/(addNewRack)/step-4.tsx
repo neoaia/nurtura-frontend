@@ -9,7 +9,15 @@ import { router } from "expo-router";
 export default function AddNewRack3() {
   const handleNextPress = () => {
     router.dismissAll();
-    router.push("/(tabs)/(home)");
+    router.push({
+      pathname: "/(tabs)/(add_pages)/(addNewPlant)/successScreen",
+      params: {
+        type: "other",
+        title: "E-mail updated!",
+        subtitle: "You can now proceed back to making your account safe.",
+        finishTitle: "Finish"
+      }
+    });
   };
 
   const onChangeText = () => {

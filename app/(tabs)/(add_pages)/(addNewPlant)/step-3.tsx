@@ -46,7 +46,15 @@ const AddNewPlant3 = () => {
     console.log("plant category: " + plantCategory);
     console.log("plant type: " + plantType);
     router.dismissAll();
-    router.push("/(tabs)/(home)");
+    router.push({
+      pathname: "/(tabs)/(add_pages)/(addNewPlant)/successScreen",
+      params: {
+        type: "other",
+        title: "E-mail updated!",
+        subtitle: "You can now proceed back to making your account safe.",
+        finishTitle: "Finish"
+      }
+    });
   };
 
   return (

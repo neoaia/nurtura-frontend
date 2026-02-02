@@ -24,7 +24,15 @@ export default function UpdateEmailScreen2() {
   };
   const handleNextPress = () => {
     router.dismissAll();
-    router.push("/(tabs)/(home)");
+    router.push({
+      pathname: "/(tabs)/(account)/successScreen",
+      params: {
+        type: "other",
+        title: "E-mail updated!",
+        subtitle: "You can now proceed back to making your account safe.",
+        finishTitle: "Finish"
+      }
+    });
   };
   const handleKeyPress = (
     e: NativeSyntheticEvent<TextInputKeyPressEventData>,

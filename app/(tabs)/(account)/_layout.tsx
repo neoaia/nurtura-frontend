@@ -89,6 +89,12 @@ export default function AccountLayout() {
             headerShown: true,
           }}
         />
+        <Stack.Screen
+          name="successScreen"
+          options={{
+            headerShown: false,
+          }}
+        />
       </Stack>
     </>
   );
