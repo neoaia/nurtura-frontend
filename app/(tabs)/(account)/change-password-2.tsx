@@ -9,7 +9,15 @@ import { router } from "expo-router";
 export default function ChangePassword2() {
   const handleNextPress = () => {
     router.dismissAll();
-    router.push("/(tabs)/(home)");
+    router.push({
+          pathname: "/(tabs)/(account)/successScreen",
+          params: {
+            type: "other",
+            title: "Password updated!",
+            subtitle: "You can now proceed back to making your account safe.",
+            finishTitle: "Finish"
+          }
+        });
   };
 
   return (
