@@ -10,12 +10,13 @@ export default function AddNewRack3() {
   const handleNextPress = () => {
     router.dismissAll();
     router.push({
-      pathname: "/(tabs)/(add_pages)/(addNewPlant)/successScreen",
+      pathname: "/(tabs)/(add_pages)/(addNewRack)/successScreen",
       params: {
-        type: "other",
-        title: "E-mail updated!",
+        type: "rack",
+        title: "Rack added successfully!",
         subtitle: "You can now proceed back to making your account safe.",
-        finishTitle: "Finish"
+        finishTitle: "Finish",
+        addAnotherTitle: "Add another Rack"
       }
     });
   };

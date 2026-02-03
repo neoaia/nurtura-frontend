@@ -41,9 +41,7 @@ export default function AddNewRackLayout() {
             name="step-1"
             options={{
               headerTitle: () => (
-                <Image
-                  source={require("@/assets/images/add-new-rack/progress-bar-1.png")}
-                />
+                <Image source={require("@/assets/images/add-new-rack/progress-bar-1.png")} />
               ),
               headerShown: true,
             }}
@@ -52,9 +50,7 @@ export default function AddNewRackLayout() {
             name="step-2"
             options={{
               headerTitle: () => (
-                <Image
-                  source={require("@/assets/images/add-new-rack/progress-bar-2.png")}
-                />
+                <Image source={require("@/assets/images/add-new-rack/progress-bar-2.png")} />
               ),
               headerShown: true,
             }}
@@ -63,9 +59,7 @@ export default function AddNewRackLayout() {
             name="step-3"
             options={{
               headerTitle: () => (
-                <Image
-                  source={require("@/assets/images/add-new-rack/progress-bar-3.png")}
-                />
+                <Image source={require("@/assets/images/add-new-rack/progress-bar-3.png")} />
               ),
               headerShown: true,
             }}
@@ -74,11 +68,15 @@ export default function AddNewRackLayout() {
             name="step-4"
             options={{
               headerTitle: () => (
-                <Image
-                  source={require("@/assets/images/add-new-rack/progress-bar-4.png")}
-                />
+                <Image source={require("@/assets/images/add-new-rack/progress-bar-4.png")} />
               ),
               headerShown: true,
+            }}
+          />
+          <Stack.Screen
+            name="successScreen"
+            options={{
+              headerShown: false,
             }}
           />
         </Stack>
