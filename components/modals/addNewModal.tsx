@@ -3,7 +3,7 @@ import BottomSheet, {
   BottomSheetView,
 } from "@gorhom/bottom-sheet";
 import { router } from "expo-router";
-import React, { useCallback, useEffect, useMemo, useRef } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Text, TouchableOpacity, View } from "react-native";
 import { typography } from "../../assets/fonts/Text";
 
@@ -14,44 +14,57 @@ interface AddNewModalProps {
 
 interface OptionButtonProps {
   label: string;
-  onPress: () => void;
+  onPress: () => void | Promise<void>;
 }
 
-const OptionButton: React.FC<OptionButtonProps> = ({ label, onPress }) => (
-  <TouchableOpacity
-    className="items-center mb-5"
-    onPress={onPress}
-    activeOpacity={0.7}
-  >
-    <View className="w-20 h-20 bg-[#E5EDCF] rounded-2xl justify-center items-center mb-3"></View>
-    <Text style={typography["subheader"]} className="text-[#86975A]">
-      {label}
-    </Text>
-  </TouchableOpacity>
-);
+// Updated OptionButton with anti-spam logic!
+const OptionButton: React.FC<OptionButtonProps> = ({ label, onPress }) => {
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handlePress = async () => {
+    if (isLoading) return;
+    setIsLoading(true);
+    
+    await onPress();
+    
+    // Reset after a short delay to keep things snappy but safe
+    setTimeout(() => setIsLoading(false), 500);
+  };
+
+  return (
+    <TouchableOpacity
+      className={`items-center mb-5 ${isLoading ? "opacity-50" : ""}`}
+      onPress={handlePress}
+      disabled={isLoading}
+      activeOpacity={0.7}
+    >
+      <View className="w-20 h-20 bg-[#E5EDCF] rounded-2xl justify-center items-center mb-3">
+        {/* You could put a small ActivityIndicator here if you're feeling fancy! */}
+      </View>
+      <Text style={typography["subheader"]} className="text-[#86975A]">
+        {label}
+      </Text>
+    </TouchableOpacity>
+  );
+};
 
 export const AddNewModal: React.FC<AddNewModalProps> = ({
   isVisible,
   onClose,
 }) => {
   const bottomSheetRef = useRef<BottomSheet>(null);
-
   const snapPoints = useMemo(() => ["30%"], []);
 
   useEffect(() => {
-    console.log("Modal isVisible:", isVisible);
     if (isVisible) {
-      console.log("Attempting to open...");
       bottomSheetRef.current?.snapToIndex(0);
     } else {
-      console.log("Attempting to close...");
       bottomSheetRef.current?.close();
     }
   }, [isVisible]);
 
   const handleSheetChanges = useCallback(
     (index: number) => {
-      console.log("Sheet index changed to:", index);
       if (index === -1) {
         onClose();
       }
@@ -76,17 +89,13 @@ export const AddNewModal: React.FC<AddNewModalProps> = ({
     (route: string) => {
       bottomSheetRef.current?.close();
       onClose();
+      // Keep the slight delay to allow the modal to animate out first
       setTimeout(() => {
         router.push(route as any);
       }, 100);
     },
     [onClose],
   );
-
-  const handlePlantPress = () =>
-    handleNavigation("/(add_pages)/(addNewPlant)/step-1");
-  const handleRackPress = () =>
-    handleNavigation("/(add_pages)/(addNewRack)/step-1");
 
   return (
     <BottomSheet
@@ -116,8 +125,14 @@ export const AddNewModal: React.FC<AddNewModalProps> = ({
         </Text>
 
         <View className="flex-row gap-6 justify-center w-full">
-          <OptionButton label="Plant" onPress={handlePlantPress} />
-          <OptionButton label="Rack" onPress={handleRackPress} />
+          <OptionButton 
+            label="Plant" 
+            onPress={() => handleNavigation("/(add_pages)/(addNewPlant)/step-1")} 
+          />
+          <OptionButton 
+            label="Rack" 
+            onPress={() => handleNavigation("/(add_pages)/(addNewRack)/step-1")} 
+          />
         </View>
       </BottomSheetView>
     </BottomSheet>

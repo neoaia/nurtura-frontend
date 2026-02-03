@@ -1,13 +1,13 @@
 import { typography } from "@/assets/fonts/Text";
-import React from "react";
+import React, { useState } from "react";
 import { ActivityIndicator, Text, TouchableOpacity } from "react-native";
 
 interface HollowButtonProps {
-  onPress: () => void;
+  onPress: () => void | Promise<void>;
   loading?: boolean;
   disabled?: boolean;
   title: string;
-  isActive?: boolean; // Add this prop
+  isActive?: boolean;
 }
 
 const PlantFilterBtn = ({
@@ -15,20 +15,34 @@ const PlantFilterBtn = ({
   loading,
   disabled,
   title,
-  isActive = false, // Default to false
+  isActive = false,
 }: HollowButtonProps) => {
-  const isDisabled = loading || disabled;
+  const [isDebouncing, setIsDebouncing] = useState(false);
+  
+  const isDisabled = loading || disabled || isDebouncing;
+
+  const handlePress = async () => {
+    if (isDisabled) return;
+
+    setIsDebouncing(true);
+    try {
+      await onPress();
+    } finally {
+      
+      setTimeout(() => setIsDebouncing(false), 400);
+    }
+  };
 
   return (
     <TouchableOpacity
       className={`px-4 py-3 rounded-xl border-[2px] ${
         isActive ? "bg-primary border-primary" : "bg-white border-primary"
-      }`}
+      } ${isDisabled ? "opacity-60" : ""}`}
       style={{ alignSelf: "flex-start" }}
-      onPress={onPress}
+      onPress={handlePress}
       disabled={isDisabled}
     >
-      {loading ? (
+      {loading || isDebouncing ? (
         <ActivityIndicator color={isActive ? "#FFFFFF" : "#7DA544"} />
       ) : (
         <Text

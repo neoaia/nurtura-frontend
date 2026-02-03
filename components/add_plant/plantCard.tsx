@@ -1,5 +1,5 @@
 import { typography } from "@/assets/fonts/Text";
-import React from "react";
+import React, { useState } from "react";
 import {
   Image,
   ImageSourcePropType,
@@ -12,7 +12,7 @@ interface PlantCardProps {
   plantName: string;
   category: string;
   image?: ImageSourcePropType;
-  onPress: () => void;
+  onPress: () => void | Promise<void>; 
   isSelected?: boolean;
 }
 
@@ -23,11 +23,26 @@ const PlantCard = ({
   onPress,
   isSelected,
 }: PlantCardProps) => {
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handlePress = async () => {
+    if (isLoading) return;
+
+    setIsLoading(true);
+    try {
+      await onPress();
+    } finally {
+      
+      setTimeout(() => setIsLoading(false), 500);
+    }
+  };
+
   return (
     <TouchableOpacity
-      onPress={onPress}
+      onPress={handlePress}
+      disabled={isLoading}
       activeOpacity={0.7}
-      className="w-[48%] mb-5"
+      className={`w-[48%] mb-5 ${isLoading ? "opacity-70" : ""}`}
     >
       <View
         className={`w-full aspect-square bg-[#E5EDCF] rounded-2xl items-center justify-center mb-3 p-4 ${
