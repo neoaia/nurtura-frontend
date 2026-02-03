@@ -3,9 +3,17 @@ import BottomSheet, {
   BottomSheetView,
 } from "@gorhom/bottom-sheet";
 import { router } from "expo-router";
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { Text, TouchableOpacity, View } from "react-native";
 import { typography } from "../../assets/fonts/Text";
+import PlantIcon from "../../assets/images/icons/plant(Add).svg";
+import RackIcon from "../../assets/images/icons/rack(Add).svg";
 
 interface AddNewModalProps {
   isVisible: boolean;
@@ -17,17 +25,22 @@ interface OptionButtonProps {
   onPress: () => void | Promise<void>;
 }
 
-// Updated OptionButton with anti-spam logic!
+const getIconByLabel = (label: string) => {
+  if (label === "Plant") return PlantIcon;
+  if (label === "Rack") return RackIcon;
+  return null;
+};
+
 const OptionButton: React.FC<OptionButtonProps> = ({ label, onPress }) => {
   const [isLoading, setIsLoading] = useState(false);
+  const Icon = getIconByLabel(label);
 
   const handlePress = async () => {
     if (isLoading) return;
     setIsLoading(true);
-    
+
     await onPress();
-    
-    // Reset after a short delay to keep things snappy but safe
+
     setTimeout(() => setIsLoading(false), 500);
   };
 
@@ -39,7 +52,7 @@ const OptionButton: React.FC<OptionButtonProps> = ({ label, onPress }) => {
       activeOpacity={0.7}
     >
       <View className="w-20 h-20 bg-[#E5EDCF] rounded-2xl justify-center items-center mb-3">
-        {/* You could put a small ActivityIndicator here if you're feeling fancy! */}
+        {Icon && <Icon width={21} height={21} />}
       </View>
       <Text style={typography["subheader"]} className="text-[#86975A]">
         {label}
@@ -89,7 +102,6 @@ export const AddNewModal: React.FC<AddNewModalProps> = ({
     (route: string) => {
       bottomSheetRef.current?.close();
       onClose();
-      // Keep the slight delay to allow the modal to animate out first
       setTimeout(() => {
         router.push(route as any);
       }, 100);
@@ -125,13 +137,15 @@ export const AddNewModal: React.FC<AddNewModalProps> = ({
         </Text>
 
         <View className="flex-row gap-6 justify-center w-full">
-          <OptionButton 
-            label="Plant" 
-            onPress={() => handleNavigation("/(add_pages)/(addNewPlant)/step-1")} 
+          <OptionButton
+            label="Plant"
+            onPress={() =>
+              handleNavigation("/(add_pages)/(addNewPlant)/step-1")
+            }
           />
-          <OptionButton 
-            label="Rack" 
-            onPress={() => handleNavigation("/(add_pages)/(addNewRack)/step-1")} 
+          <OptionButton
+            label="Rack"
+            onPress={() => handleNavigation("/(add_pages)/(addNewRack)/step-1")}
           />
         </View>
       </BottomSheetView>

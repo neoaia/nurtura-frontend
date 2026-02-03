@@ -4,6 +4,7 @@ import Dropdown, { DropdownOption } from "@/components/shared/dropdown";
 import { router } from "expo-router";
 import React, { useState } from "react";
 import { ScrollView, Text, View } from "react-native";
+import RackIcon from "../../../../assets/images/icons/rack(Add).svg";
 
 // mock data beybeh
 const RACK_OPTIONS = [
@@ -55,6 +56,7 @@ const AddNewPlant1 = () => {
           value={selectedRack?.label}
           onSelect={(item) => setSelectedRack(item)}
           label="Selected Rack"
+          Icon={RackIcon}
         />
       </ScrollView>
 
