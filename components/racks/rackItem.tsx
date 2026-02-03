@@ -1,6 +1,6 @@
 import { typography } from "@/assets/fonts/Text";
 import { GetRackInfoDTO } from "@/types/rack.dto";
-import React from "react";
+import React, { useState } from "react";
 import { Image, Text, TouchableOpacity, View } from "react-native";
 import Svg, { Circle, Rect } from "react-native-svg";
 
@@ -41,6 +41,8 @@ interface RackItemProps {
 }
 
 const RackItem: React.FC<RackItemProps> = ({ rack }) => {
+  const [isLoading, setIsLoading] = useState(false); // New anti-spam state!
+
   const {
     name,
     plant,
@@ -52,12 +54,28 @@ const RackItem: React.FC<RackItemProps> = ({ rack }) => {
     hasAlert = false,
     onPress,
   } = rack;
+
+  const handlePress = async () => {
+    if (isLoading || !onPress) return;
+
+    setIsLoading(true);
+    try {
+      await onPress();
+    } finally {
+      // Cooldown to ensure navigation or action finishes smoothly
+      setTimeout(() => setIsLoading(false), 500);
+    }
+  };
+
   return (
     <TouchableOpacity
-      onPress={onPress}
+      onPress={handlePress}
+      disabled={isLoading}
       activeOpacity={0.7}
-      className="bg-white rounded-2xl p-5 shadow-md border border-gray-100 w-full mb-5"
-    >
+      className={`bg-white rounded-2xl p-5 shadow-md border border-gray-100 w-full mb-5 ${
+        isLoading ? "opacity-70" : ""
+      }`}
+      >
       <View className="flex-row justify-between items-center mb-7">
         <View className="flex-row items-center gap-5 flex-1">
           <View className="w-14 h-14 bg-[#E5EDCF] rounded-xl items-center justify-center">
