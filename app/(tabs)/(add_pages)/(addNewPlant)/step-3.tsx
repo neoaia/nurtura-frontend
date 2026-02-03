@@ -5,6 +5,8 @@ import SmallDescription from "@/components/shared/smallDescription";
 import { router, useLocalSearchParams } from "expo-router";
 import React from "react";
 import { Image, ScrollView, Text, View } from "react-native";
+import RackIcon from "../../../../assets/images/icons/rack(Add).svg";
+import SoilIcon from "../../../../assets/images/icons/soil.svg";
 
 const AddNewPlant3 = () => {
   const [confirmation, setConfirmation] = React.useState(false);
@@ -53,8 +55,8 @@ const AddNewPlant3 = () => {
         title: "Plant added successfully!",
         subtitle: "You can now proceed back to making your account safe.",
         finishTitle: "Finish",
-        addAnotherTitle: "Add another Plant"
-      }
+        addAnotherTitle: "Add another Plant",
+      },
     });
   };
 
@@ -88,8 +90,13 @@ const AddNewPlant3 = () => {
           <SmallDescription
             label="Recommended Soil"
             value="Loam + Compost + Perlite"
+            Icon={SoilIcon}
           />
-          <SmallDescription label="Selected Rack" value={rackName} />
+          <SmallDescription
+            label="Selected Rack"
+            value={rackName}
+            Icon={RackIcon}
+          />
         </View>
       </ScrollView>
 

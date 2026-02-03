@@ -6,6 +6,8 @@ import { MenuCard } from "@/components/shared/menubtn";
 import SmallDescription from "@/components/shared/smallDescription";
 import React, { useState } from "react";
 import { Image, ScrollView, Text, View } from "react-native";
+import DateIcon from "../../../../assets/images/icons/date.svg";
+import SoilIcon from "../../../../assets/images/icons/soil.svg";
 
 const RackInfo = () => {
   const [showModal, setShowModal] = useState(false);
@@ -66,14 +68,15 @@ const RackInfo = () => {
           </View>
 
           <View className="flex-col gap-8 mt-6 mb-8 pl-2">
-            <SmallDescription label="Date Planted" value="July 23, 2025" />
+            <SmallDescription
+              label="Date Planted"
+              value="July 23, 2025"
+              Icon={DateIcon}
+            />
             <SmallDescription
               label="Recommended Soil"
               value="Loam + Compost + Perlite"
-            />
-            <SmallDescription
-              label="Estimated Yield (per seed)"
-              value="150-500 grams"
+              Icon={SoilIcon}
             />
           </View>
           <View className="flex-col gap-3 mb-8">
