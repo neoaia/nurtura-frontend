@@ -32,7 +32,6 @@ const AddRackButton: React.FC<AddRackButtonProps> = ({
     try {
       await onPress();
     } finally {
-      // Re-enable after 500ms to ensure the action/navigation completes
       setTimeout(() => setIsLoading(false), 500);
     }
   };

@@ -1,9 +1,25 @@
 import { typography } from "@/assets/fonts/Text";
 import { Stack, router, useGlobalSearchParams } from "expo-router";
+import React, { useState } from "react";
 import { Image, TextStyle, TouchableOpacity, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function RackIDLayout() {
   const params = useGlobalSearchParams();
+  const insets = useSafeAreaInsets();
+  const [isLoading, setIsLoading] = useState(false);
+  
+  const handleNavigation = async (pathname: string) => {
+    if (isLoading) return;
+
+    setIsLoading(true);
+    router.push({
+      pathname: pathname as any,
+      params: { rackId: rackId },
+    });
+
+    setTimeout(() => setIsLoading(false), 500);
+  };
 
   // temporary id lang for testing loveu
   const rackId = params.rackId || "1";
@@ -29,15 +45,13 @@ export default function RackIDLayout() {
           title: `Rack ${rackId}`,
           headerTitleAlign: "left",
           headerRight: () => (
-            <View className="flex-row items-center pr-2">
+            <View className="flex-row items-center pr-2 gap-1">
+              {/* Connection Button */}
               <TouchableOpacity
-                onPress={() =>
-                  router.push({
-                    pathname: "/(tabs)/(racks)/[rackId]/connection",
-                    params: { rackId: rackId },
-                  })
-                }
-                className="py-2 px-2 mr-1"
+                onPress={() => handleNavigation("/(tabs)/(racks)/[rackId]/connection")}
+                disabled={isLoading}
+                activeOpacity={0.7}
+                className={`p-2 rounded-lg ${isLoading ? "opacity-50" : ""}`}
               >
                 <Image
                   source={require("@/assets/images/racks/connection.png")}
@@ -46,18 +60,17 @@ export default function RackIDLayout() {
                 />
               </TouchableOpacity>
 
+              {/* Edit Button */}
               <TouchableOpacity
-                onPress={() =>
-                  router.push({
-                    pathname: "/(tabs)/(racks)/[rackId]/edit",
-                    params: { rackId: rackId },
-                  })
-                }
-                className="p-2"
+                onPress={() => handleNavigation("/(tabs)/(racks)/[rackId]/edit")}
+                disabled={isLoading}
+                activeOpacity={0.7}
+                className={`p-2 rounded-lg ${isLoading ? "opacity-50" : ""}`}
               >
                 <Image
                   source={require("@/assets/images/racks/edit.png")}
                   className="w-5 h-5"
+                  resizeMode="contain"
                 />
               </TouchableOpacity>
             </View>
@@ -69,22 +82,18 @@ export default function RackIDLayout() {
         name="care"
         options={{ title: "Plant Care Activity", headerTitleAlign: "left" }}
       />
-
       <Stack.Screen
         name="harvest-history"
         options={{ title: "Harvest History", headerTitleAlign: "left" }}
       />
-
       <Stack.Screen
         name="edit"
         options={{ title: "Edit Rack", headerTitleAlign: "left" }}
       />
-
       <Stack.Screen
         name="connection"
         options={{ title: "Rack Connection", headerTitleAlign: "left" }}
       />
-
       <Stack.Screen
         name="edit-rack-name"
         options={{ title: "Rack Connection", headerTitleAlign: "left" }}

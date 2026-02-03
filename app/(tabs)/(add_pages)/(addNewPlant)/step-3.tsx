@@ -49,10 +49,11 @@ const AddNewPlant3 = () => {
     router.push({
       pathname: "/(tabs)/(add_pages)/(addNewPlant)/successScreen",
       params: {
-        type: "other",
-        title: "E-mail updated!",
+        type: "plant",
+        title: "Plant added successfully!",
         subtitle: "You can now proceed back to making your account safe.",
-        finishTitle: "Finish"
+        finishTitle: "Finish",
+        addAnotherTitle: "Add another Plant"
       }
     });
   };

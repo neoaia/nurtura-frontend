@@ -52,7 +52,7 @@ export default function SuccessPage() {
         {(params.type === "plant" || params.type === "rack") && (
           <HollowButton 
             title={params.addAnotherTitle || "Add another"} 
-            onPress={() => router.back()} 
+            onPress={() => router.replace("/(tabs)/(addNewRack)/step-1")} 
           />
         )}
       </View>
