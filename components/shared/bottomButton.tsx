@@ -1,12 +1,12 @@
 // components/shared/BottomButton.tsx
 import { typography } from "@/assets/fonts/Text";
-import React from "react";
+import React, { useState } from "react";
 import { Text, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 interface BottomButtonProps {
   title: string;
-  onPress: () => void;
+  onPress: () => void | Promise<void>;
   disabled?: boolean;
 }
 
@@ -16,6 +16,20 @@ export const BottomButton: React.FC<BottomButtonProps> = ({
   disabled = false,
 }) => {
   const insets = useSafeAreaInsets();
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handlePress = async () => {
+    if (isLoading || disabled) return;
+
+    setIsLoading(true);
+    try {
+      await onPress();
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const isInteractionDisabled = disabled || isLoading;
 
   return (
     <View
@@ -30,18 +44,20 @@ export const BottomButton: React.FC<BottomButtonProps> = ({
       }}
     >
       <TouchableOpacity
-        onPress={onPress}
-        disabled={disabled}
+        onPress={handlePress}
+        disabled={isInteractionDisabled}
         activeOpacity={0.7}
         className={`w-full py-6 rounded-xl ${
-          disabled ? "bg-gray-300" : "bg-primary"
-        }`}
+          isInteractionDisabled ? "bg-gray-300" : "bg-primary"
+        } ${isLoading ? "opacity-70" : ""}`}
       >
         <Text
           style={typography["button-bold"]}
-          className={`text-center ${disabled ? "text-gray-500" : "text-white"}`}
+          className={`text-center ${
+            isInteractionDisabled ? "text-gray-500" : "text-white"
+          }`}
         >
-          {title}
+          {isLoading ? "Loading..." : title}
         </Text>
       </TouchableOpacity>
     </View>

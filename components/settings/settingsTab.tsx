@@ -1,6 +1,6 @@
 import { typography } from "@/assets/fonts/Text";
 import { router } from "expo-router";
-import React from "react";
+import React, { useState } from "react";
 import {
   Image,
   ImageSourcePropType,
@@ -20,10 +20,24 @@ export const SettingsRow: React.FC<SettingsTabProps> = ({
   label,
   route,
 }) => {
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handlePress = () => {
+    if (isLoading) return;
+
+    setIsLoading(true);
+    router.push(route as any);
+
+    setTimeout(() => setIsLoading(false), 500);
+  };
+
   return (
     <TouchableOpacity
-      className="w-full flex-row items-center justify-between py-3 px-5 bg-white"
-      onPress={() => router.push(route as any)}
+      className={`w-full flex-row items-center justify-between py-3 px-5 bg-white ${
+        isLoading ? "opacity-50" : ""
+      }`}
+      onPress={handlePress}
+      disabled={isLoading}
       activeOpacity={0.6}
     >
       <View className="flex-row items-center" style={{ gap: 32 }}>
