@@ -1,15 +1,19 @@
+import { typography } from "@/assets/fonts/Text";
 import { PrimaryButton } from "@/components/shared/primaryButton";
 import { TextInputField } from "@/components/shared/textInputField";
 import { useAuth } from "@/contexts/AuthContext";
 import { auth } from "@/firebase";
 import useFetch from "@/hooks/useFetch";
-import { cleanAlphaInput, cleanAlphanumericInput, cleanNameInput } from "@/utils/validation";
+import { authService } from "@/services/authService";
+import {
+  cleanAlphaInput,
+  cleanAlphanumericInput,
+  cleanNameInput,
+} from "@/utils/validation";
 import { useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { useEffect, useState } from "react";
 import { Alert, ScrollView, Text, View } from "react-native";
-import { getFirebaseIdToken } from "@/lib/firebaseAuth";
-import { authService } from "@/services/authService";
 
 const USER_INFO_STORAGE_KEY = "temp_user_info";
 const SSO_INFO_STORAGE_KEY = "sso_temp_user_info";
@@ -27,7 +31,7 @@ const CLEAR_STORAGE_KEYS = [
 
 const clearAllSecureStore = async () => {
   await Promise.all(
-    CLEAR_STORAGE_KEYS.map((key) => SecureStore.deleteItemAsync(key))
+    CLEAR_STORAGE_KEYS.map((key) => SecureStore.deleteItemAsync(key)),
   );
 };
 
@@ -61,12 +65,10 @@ const CreateUserInfo = () => {
     checkIfLastNameHasValue &&
     checkIfAddressHasValue;
 
-  const {
-    refetch: createAccount
-  } = useFetch('/api/users', {
-    method: 'POST',
+  const { refetch: createAccount } = useFetch("/api/users", {
+    method: "POST",
     autoFetch: false,
-    withAuth: true
+    withAuth: true,
   });
 
   const handleSubmitUserInfo = async () => {
@@ -90,7 +92,7 @@ const CreateUserInfo = () => {
       if (fromGoogle === "false") {
         const verifiedEmail = await SecureStore.getItemAsync("verified_email");
         const verifiedPassword = await SecureStore.getItemAsync(
-          "signup_confirm_password"
+          "signup_confirm_password",
         );
 
         if (!verifiedEmail || !verifiedPassword) {
@@ -137,7 +139,10 @@ const CreateUserInfo = () => {
       //   return;
       // }
 
-      const response = await authService.createAccount(createAccount, userDetails);
+      const response = await authService.createAccount(
+        createAccount,
+        userDetails,
+      );
 
       if (!response.success) {
         console.error("Error creating account:", response.message);
@@ -149,7 +154,6 @@ const CreateUserInfo = () => {
       console.log("User info submitted successfully.");
       await clearAllSecureStore();
       router.replace("/(tabs)/(home)");
-      
     } catch (error) {
       console.error("Error submitting user info:", error);
       Alert.alert("Error", "Failed to submit user info.");
@@ -157,11 +161,11 @@ const CreateUserInfo = () => {
       setLoading(false);
     }
   };
-  
+
   const handleFirstNameChange = (text: string) => {
     setFirstName(cleanNameInput(text));
   };
-  
+
   const handleMiddleNameChange = (text: string) => {
     setMiddleName(cleanNameInput(text));
   };
@@ -177,19 +181,19 @@ const CreateUserInfo = () => {
   const handleBlockChange = (text: string) => {
     setBlock(cleanAlphanumericInput(text));
   };
-  
+
   const handleStreetChange = (text: string) => {
     setStreet(cleanAlphanumericInput(text));
   };
-  
+
   const handleBarangayChange = (text: string) => {
     setBarangay(cleanAlphanumericInput(text));
   };
-  
+
   const handleCityChange = (text: string) => {
     setCity(cleanAlphanumericInput(text));
   };
-  
+
   useEffect(() => {
     (async () => {
       try {
@@ -198,7 +202,9 @@ const CreateUserInfo = () => {
 
         setFromGoogle(isFromGoogle ? "true" : "false");
 
-        const storageKey = isFromGoogle ? SSO_INFO_STORAGE_KEY : USER_INFO_STORAGE_KEY;
+        const storageKey = isFromGoogle
+          ? SSO_INFO_STORAGE_KEY
+          : USER_INFO_STORAGE_KEY;
         const savedData = await SecureStore.getItemAsync(storageKey);
 
         if (savedData) {
@@ -239,7 +245,7 @@ const CreateUserInfo = () => {
         };
         await SecureStore.setItemAsync(
           USER_INFO_STORAGE_KEY,
-          JSON.stringify(dataToSave)
+          JSON.stringify(dataToSave),
         );
       } catch (err) {
         console.error("Error saving user info:", err);
@@ -255,18 +261,24 @@ const CreateUserInfo = () => {
         contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 34 }}
         showsVerticalScrollIndicator={false}
       >
-        <Text className="text-black font-bold text-3xl mb-3 pl-2">
+        <Text style={typography["h1-bold"]} className="text-black mb-3 pl-2">
           Let us know you!
         </Text>
 
-        <Text className="text-base text-gray-700 mb-6 pl-2 leading-normal">
+        <Text
+          style={typography["subheader"]}
+          className=" text-black mb-6 pl-2 leading-normal"
+        >
           {fromGoogle === "true"
             ? "We've pre-filled your info from Google. Please complete the missing fields."
             : "Fill in your information to complete your registration."}
         </Text>
- 
+
         <View className="mb-2">
-          <Text className="text-gray-700 text-base font-semibold tracking-wide mb-3 pl-2">
+          <Text
+            style={typography["button-bold"]}
+            className="text-black tracking-wide mb-3 pl-2"
+          >
             Personal Information
           </Text>
 
@@ -299,9 +311,12 @@ const CreateUserInfo = () => {
             </View>
           </View>
         </View>
- 
+
         <View className="mb-6">
-          <Text className="text-gray-500 text-base font-semibold uppercase tracking-wide mb-3 pl-2">
+          <Text
+            style={typography["button-bold"]}
+            className="text-black tracking-wide mb-3 pl-2"
+          >
             Address
           </Text>
 

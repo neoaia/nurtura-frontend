@@ -1,19 +1,20 @@
 /* eslint-disable react/no-unescaped-entities */
 
+import { typography } from "@/assets/fonts/Text";
 import { EmailInput } from "@/components/auth/emailInput";
 import { GoogleSignInButton } from "@/components/auth/googleSignInButton";
 import { PasswordInput } from "@/components/auth/passwordInput";
 import { Divider } from "@/components/shared/divider";
 import { PrimaryButton } from "@/components/shared/primaryButton";
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from "@/contexts/AuthContext";
 import useFetch from "@/hooks/useFetch";
-import { cleanInput, validateEmail } from '@/utils/validation';
+import { authService } from "@/services/authService";
+import { cleanInput, validateEmail } from "@/utils/validation";
 import { router, useNavigation } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { useState } from "react";
 import { Alert, Image, Text, TouchableOpacity, View } from "react-native";
 import "../globals.css";
-import { authService } from "@/services/authService";
 
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
@@ -26,13 +27,14 @@ export default function LoginScreen() {
   const { signIn, googleSignInAndVerify } = useAuth();
   const navigation = useNavigation();
 
-  const {
-    refetch: checkNeedsOnboarding,
-  } = useFetch('/api/auth/onboarding-status', {
-    method: 'GET',
-    autoFetch: false,
-    withAuth: false,
-  });
+  const { refetch: checkNeedsOnboarding } = useFetch(
+    "/api/auth/onboarding-status",
+    {
+      method: "GET",
+      autoFetch: false,
+      withAuth: false,
+    },
+  );
 
   const handleEmailChange = (value: string) => {
     setEmail(value);
@@ -43,7 +45,7 @@ export default function LoginScreen() {
       setEmailError("");
       setIsLoginInvalid(false);
       return;
-    } 
+    }
 
     if (validateEmail(trimmedEmail)) {
       setEmailError("");
@@ -81,28 +83,37 @@ export default function LoginScreen() {
       router.replace("/(tabs)/(home)");
     } catch (error) {
       setIsLoginInvalid(true);
-      Alert.alert("Login Failed", "Invalid email or password. Please try again.");
+      Alert.alert(
+        "Login Failed",
+        "Invalid email or password. Please try again.",
+      );
       console.log("Login error:", error);
     } finally {
       setLoading(false);
-    };
-  }
+    }
+  };
 
   const handleGoogleSignIn = async () => {
     setIsLoginInvalid(false);
     setLoading(true);
 
     try {
-      const { userData  } = await googleSignInAndVerify();
+      const { userData } = await googleSignInAndVerify();
 
       if (!userData?.email) {
-        Alert.alert("Google Sign-In Failed", "Unable to retrieve your email from Google.");
+        Alert.alert(
+          "Google Sign-In Failed",
+          "Unable to retrieve your email from Google.",
+        );
         return;
       }
 
       const email = userData.email.trim().toLowerCase();
 
-      const onboardingResponse = await authService.onboardingStatus(checkNeedsOnboarding, email);
+      const onboardingResponse = await authService.onboardingStatus(
+        checkNeedsOnboarding,
+        email,
+      );
       const needsOnboarding = onboardingResponse.needsOnboarding;
 
       if (!onboardingResponse.success) {
@@ -111,7 +122,7 @@ export default function LoginScreen() {
         return;
       }
 
-      console.log("Onboarding status response:", onboardingResponse); 
+      console.log("Onboarding status response:", onboardingResponse);
 
       if (needsOnboarding) {
         const userInfoFromGoogle = {
@@ -123,7 +134,7 @@ export default function LoginScreen() {
 
         await SecureStore.setItemAsync(
           "sso_temp_user_info",
-          JSON.stringify(userInfoFromGoogle)
+          JSON.stringify(userInfoFromGoogle),
         );
 
         await SecureStore.setItemAsync("fromGoogle", "true");
@@ -136,23 +147,25 @@ export default function LoginScreen() {
         router.replace("/(tabs)/(home)");
       }
     } catch (error) {
-      Alert.alert("Google Sign-In Failed", "Unable to sign in with Google. Please try again.");
+      Alert.alert(
+        "Google Sign-In Failed",
+        "Unable to sign in with Google. Please try again.",
+      );
       console.log("Google Sign-In error:", error);
     } finally {
       setLoading(false);
     }
-  }
+  };
 
   const handleForgotPassword = () => {
     router.push("/(auth)/forgetpassword/forgotPassword1");
   };
-  
 
   return (
     <View className="flex-1 bg-white px-[16px] pb-[34px] w-screen justify-between h-screen items-center">
       <Image
         source={require("@/assets/images/nurtura_logo.png")}
-        className="w-[250px] h-[250px] mt-20"
+        className="w-48 h-48 mt-20"
         resizeMode="contain"
       />
 
@@ -174,15 +187,22 @@ export default function LoginScreen() {
         />
 
         {isLoginInvalid && (
-          <Text className="text-[#E65656] text-base mb-[10px] pl-2">
+          <Text
+            style={typography["subheader"]}
+            className="text-[#E65656] mb-[10px] pl-2"
+          >
             Invalid login. Please try again.
           </Text>
         )}
 
-        <Text className="ml-2 mt-2 text-base">
+        <Text
+          style={typography["subheader"]}
+          className="ml-2 mt-2 text-grayText"
+        >
           Forgot password?{" "}
           <Text
-            className="text-primary underline font-bold text-base"
+            style={typography["subheader-bold"]}
+            className="text-primary underline"
             onPress={handleForgotPassword}
           >
             Reset here.
@@ -200,9 +220,15 @@ export default function LoginScreen() {
           className="mt-4 mb-5"
           disabled={loading}
         >
-          <Text className="text-center text-gray-600 text-base">
+          <Text
+            className="text-center text-grayText"
+            style={typography["subheader"]}
+          >
             Don't have an account?{" "}
-            <Text className="text-primary font-semibold underline text-base">
+            <Text
+              style={typography["subheader-bold"]}
+              className="text-primary underline"
+            >
               Create one here.
             </Text>
           </Text>
