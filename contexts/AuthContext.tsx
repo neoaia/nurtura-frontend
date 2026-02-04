@@ -64,7 +64,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     GoogleSignin.configure({
-      webClientId: '871389551301-8d4an920eclthuah35lobfiqum80bnri.apps.googleusercontent.com', 
+      webClientId: `${process.env.EXPO_PUBLIC_WEB_CLIENT_ID}`, 
       offlineAccess: true, 
       forceCodeForRefreshToken: true, 
       scopes: ['profile', 'email'],
