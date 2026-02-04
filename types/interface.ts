@@ -21,60 +21,7 @@ export interface UseFetchResult<T> {
   data: T | null;
   error: Error | null;
   loading: boolean;
-  refetch: (overrideOptions?: UseFetchOptions) => Promise<{ data: T | null; error: any }>;
-}
-
-// for createAccount
-export interface EmailCheckResponse {
-  exists: boolean;
-}
-
-export interface SendOTPRequest {
-  email: string;
-  code: number;
-  time: string;
-}
-
-export interface SendOTPResponse {
-  success: boolean;
-  message: string;
-}
-
-export interface SSOUserCheckResponse {
-  isNewUser: boolean;
-}
-
-// for emailOTP
-export interface VerifyOTPRequest {
-  email: string;
-  code: string;
-  purpose: string;
-}
-
-export interface VerifyOTPResponse {
-  success: boolean;
-  message: string;
-}
-
-// for createUserInfo
-export interface UserDetails {
-  firstName: string;
-  middleName?: string;
-  lastName: string;
-  suffix?: string;
-  block: string;
-  street: string;
-  barangay: string;
-  city: string;
-}
-
-export interface RegisterUserRequest {
-  userDetails: UserDetails;
-  token: string;
-}
-
-export interface RegisterUserResponse {
-  success: boolean;
-  email: string;
-  message: string;
+  refetch: (
+    overrideOptions?: UseFetchOptions,
+  ) => Promise<{ data: T | null; error: any }>;
 }

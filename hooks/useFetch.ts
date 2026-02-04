@@ -17,7 +17,7 @@ function useFetch<T = any>(url: string, options: UseFetchOptions = {}): UseFetch
     const [error, setError] = useState<any>(null);
     const [loading, setLoading] = useState<boolean>(false);
 
-    const apiUrl = `http://${process.env.EXPO_PUBLIC_URL}` || '';
+    const apiUrl = process.env.EXPO_PUBLIC_URL ? `http://${process.env.EXPO_PUBLIC_URL}` : `http://${process.env.EXPO_PUBLIC_LOCAL_IP_ADDRESS}:3000`;
     const fullUrl = `${apiUrl}${url}`;
 
     const fetchData = useCallback(
