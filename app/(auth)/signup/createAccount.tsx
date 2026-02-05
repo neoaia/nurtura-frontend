@@ -1,5 +1,6 @@
 /* eslint-disable react/no-unescaped-entities */
 
+import { typography } from "@/assets/fonts/Text";
 import { EmailInput } from "@/components/auth/emailInput";
 import { GoogleSignInButton } from "@/components/auth/googleSignInButton";
 import { ConsentModal } from "@/components/auth/modal/consentModal";
@@ -329,9 +330,9 @@ const CreateAccount = () => {
   );
 
   return (
-    <View className="flex-1 bg-white px-[16px] pb-[34px] w-screen justify-between h-screen">
+    <View className="flex-1 bg-white px-4 pb-8 w-screen justify-between h-screen">
       <View className="mt-[34px] flex-1 items-start">
-        <Text className="text-black font-bold text-3xl mb-6 pl-2">
+        <Text style={typography["h1-bold"]} className="text-black mb-6 pl-2">
           Create your account
         </Text>
 
@@ -354,7 +355,10 @@ const CreateAccount = () => {
           checked={isCheckedTS}
           onPress={handleCheckboxToggleTS}
           label={
-            <Text className="text-base text-black leading-[20px]">
+            <Text
+              style={typography["label"]}
+              className="text-black text-justify"
+            >
               I have read and agreed to all terms and conditions set with
               Nurtura's{" "}
               <Text
@@ -362,10 +366,12 @@ const CreateAccount = () => {
                   setCurrentConsentType("TS");
                   setShowConsentModal(true);
                 }}
-                className="text-base font-semibold text-primary"
+                style={typography["label-bold"]}
+                className=" text-primary"
               >
                 Terms of Service
               </Text>
+              .
             </Text>
           }
         />
@@ -376,14 +382,18 @@ const CreateAccount = () => {
             onPress={handleCheckboxTogglePP}
             label={
               <>
-                <Text className="text-base text-black leading-normal">
+                <Text
+                  style={typography["label"]}
+                  className=" text-black text-justify"
+                >
                   I acknowledge and agree to Nurtura's{" "}
                   <Text
                     onPress={() => {
                       setCurrentConsentType("PP");
                       setShowConsentModal(true);
                     }}
-                    className="text-base font-semibold text-primary"
+                    style={typography["label-bold"]}
+                    className=" text-primary"
                   >
                     Privacy Policy
                   </Text>
