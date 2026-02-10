@@ -56,7 +56,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const {
     refetch: checkEmail
-  } = useFetch('/api/users', {
+  } = useFetch('/api/users/exists', {
     method: 'GET',
     autoFetch: false,
     withAuth: false,

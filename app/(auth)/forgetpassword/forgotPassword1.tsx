@@ -29,7 +29,7 @@ const ForgotPassword1 = () => {
 
   const {
     refetch: checkEmailExists
-  } = useFetch('/api/users', {
+  } = useFetch('/api/users/exists', {
     method: 'GET',
     autoFetch: false,
     withAuth: false
