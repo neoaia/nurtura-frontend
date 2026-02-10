@@ -277,7 +277,7 @@ describe('authService', () => {
       mockRefetch.mockResolvedValue({ data: { message: 'Reset initiated' } });
       const result = await authService.resetPassword(mockRefetch, 'test@example.com', 'newPass123!');
       expect(result).toEqual({ success: true, message: 'Reset initiated' });
-      expect(mockRefetch).toHaveBeenCalledWith({ body: { email: 'test@example.com', password: 'newPass123!' } });
+      expect(mockRefetch).toHaveBeenCalledWith({ body: { email: 'test@example.com', newPassword: 'newPass123!' } });
     });
 
     it('handles non-200 status', async () => {
@@ -307,7 +307,7 @@ describe('authService', () => {
     it('handles empty email', async () => {
       mockRefetch.mockResolvedValue({ data: { message: 'Reset initiated' } });
       const result = await authService.resetPassword(mockRefetch, '', '');
-      expect(mockRefetch).toHaveBeenCalledWith({ body: { email: '', password: '' } });
+      expect(mockRefetch).toHaveBeenCalledWith({ body: { email: '', newPassword: '' } });
       expect(result.success).toBe(true);
     });
 
