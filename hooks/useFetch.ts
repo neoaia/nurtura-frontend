@@ -22,7 +22,7 @@ function useFetch<T = any>(
 
   const apiUrl = process.env.EXPO_PUBLIC_URL
     ? `https://${process.env.EXPO_PUBLIC_URL}`
-    : `https://${process.env.EXPO_PUBLIC_LOCAL_IP_ADDRESS}:3000`;
+    : `http://${process.env.EXPO_PUBLIC_LOCAL_IP_ADDRESS}:3000`;
   const fullUrl = `${apiUrl}${url}`;
 
   const fetchData = useCallback(
