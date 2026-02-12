@@ -1,6 +1,7 @@
 import { typography } from "@/assets/fonts/Text";
 import { ConfirmationModal } from "@/components/modals/confirmationModal";
 import { BottomButton } from "@/components/shared/bottomButton";
+import { QuantityPicker } from "@/components/shared/quantityPicker";
 import SmallDescription from "@/components/shared/smallDescription";
 import { router, useLocalSearchParams } from "expo-router";
 import React from "react";
@@ -60,6 +61,20 @@ const AddNewPlant3 = () => {
     });
   };
 
+  const [seedQuantity, setSeedQuantity] = React.useState(0);
+
+  const handleSubtractPress = () => {
+    if (seedQuantity > 0) {
+      setSeedQuantity(seedQuantity - 1);
+    }
+  };
+
+  const handleAddPress = () => {
+    if (seedQuantity < 4) {
+      setSeedQuantity(seedQuantity + 1);
+    }
+  };
+
   return (
     <View className="flex-1 bg-white">
       <ScrollView
@@ -97,6 +112,12 @@ const AddNewPlant3 = () => {
             value={rackName}
             Icon={RackIcon}
           />
+          <QuantityPicker
+            title="Seeds"
+            quantity={seedQuantity}
+            onAddPress={handleAddPress}
+            onSubtractPress={handleSubtractPress}
+          ></QuantityPicker>
         </View>
       </ScrollView>
 

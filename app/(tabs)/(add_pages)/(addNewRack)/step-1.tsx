@@ -2,7 +2,7 @@ import React from "react";
 import { Image, ScrollView, Text, View } from "react-native";
 
 import { typography } from "@/assets/fonts/Text";
-import { PrimaryButton } from "@/components/shared/primaryButton";
+import { BottomButton } from "@/components/shared/bottomButton";
 import { router } from "expo-router";
 
 export default function AddNewRack1() {
@@ -43,8 +43,8 @@ export default function AddNewRack1() {
           <Text className="text-primary font-bold"></Text>
         </Text>
       </ScrollView>
-      <View className="px-4 pb-9">
-        <PrimaryButton title="Next" onPress={handleNextPress}></PrimaryButton>
+      <View>
+        <BottomButton title="Next" onPress={handleNextPress}></BottomButton>
       </View>
     </View>
   );

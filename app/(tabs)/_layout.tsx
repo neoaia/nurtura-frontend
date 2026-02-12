@@ -19,7 +19,7 @@ const Layout = () => {
           headerShown: false,
           tabBarShowLabel: false,
           tabBarStyle: {
-            height: 100,
+            height: 110,
             paddingBottom: 10,
             paddingTop: 15,
             display: hideTabBar ? "none" : "flex",
@@ -76,7 +76,7 @@ const Layout = () => {
                   flex: 1,
                   justifyContent: "center",
                   alignItems: "center",
-                  marginTop: -33,
+                  marginTop: -45,
                   display: hideTabBar ? "none" : "flex",
                 }}
               >
