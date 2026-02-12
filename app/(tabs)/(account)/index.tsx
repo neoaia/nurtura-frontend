@@ -4,6 +4,7 @@ import { ProfileCard } from "@/components/settings/profileCard";
 import { SettingsRow } from "@/components/settings/settingsTab";
 
 import { useAuth } from "@/contexts/AuthContext";
+import useFetch from "@/hooks/useFetch";
 import { useRouter } from "expo-router";
 import React from "react";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
@@ -13,6 +14,14 @@ export default function AccountScreen() {
   const { logout } = useAuth();
   const router = useRouter();
 
+  const {
+    refetch: getUserInfo
+  } = useFetch('/api/users', {
+    method: 'GET',
+    autoFetch: false,
+    withAuth: true
+  });
+
   const menuItems = [
     {
       title: "Account Security",
@@ -20,6 +29,15 @@ export default function AccountScreen() {
       path: "/(tabs)/(account)/security",
     },
   ];
+
+  const getUserInfoData = async () => {
+    try {
+      const response = await getUserInfo();
+      
+    } catch (error) {
+      console.error("Failed to fetch user info:", error);
+    }
+  };
 
   return (
     <SafeAreaView className="bg-white flex-1">

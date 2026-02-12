@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 
 import { typography } from "@/assets/fonts/Text";
@@ -6,56 +6,91 @@ import CloseIcon from "@/assets/images/icons/closeIcon.svg";
 import EditIcon from "@/assets/images/icons/editIcon.svg";
 import { PrimaryButton } from "@/components/shared/primaryButton";
 import { TextInputField } from "@/components/shared/textInputField";
+import { userService } from "../../../services/userService";
+import useFetch from "@/hooks/useFetch";
+import { UserDetails } from "@/types/interface";
 
 export default function UserInformationScreen() {
-  const [savedValues, setSavedValues] = useState({
-    firstName: "Juan",
-    middleName: "",
-    lastName: "Dela Cruz",
-    suffix: "",
-    block: "",
-    street: "",
-    barangay: "",
-    city: "",
-  });
-
-  const [formValues, setFormValues] = useState(savedValues);
-
+  const [savedValues, setSavedValues] = useState<Partial<UserDetails>>({});
+  const [formValues, setFormValues] = useState<Partial<UserDetails>>({});
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  const {
+    refetch: getUserInfo
+  } = useFetch('/api/users', {
+    method: 'GET',
+    autoFetch: false,
+    withAuth: true
+  });
+
+  const {
+    refetch: updateUserInfo
+  } = useFetch('/api/users', {
+    method: 'PATCH',
+    autoFetch: false,
+    withAuth: true
+  });
+
+  const getUserInfoData = async () => {
+    try {
+      const response = await userService.getUser(getUserInfo);
+      if (response?.userInfo) {
+        const data = {
+          firstName: response.userInfo.firstName || "",
+          middleName: response.userInfo.middleName || "",
+          lastName: response.userInfo.lastName || "",
+          suffix: response.userInfo.suffix || "",
+          block: response.userInfo.block || "",
+          street: response.userInfo.street || "",
+          barangay: response.userInfo.barangay || "",
+          city: response.userInfo.city || "",
+        };
+        setSavedValues(data);
+      }
+    } catch (error) {
+      console.error("Failed to fetch user info:", error);
+    }
+  };
+
+  useEffect(() => {
+    getUserInfoData();
+  }, []);
+
+  useEffect(() => {
+    setFormValues(savedValues);
+  }, [savedValues]);
+
   const hasChanges = useMemo(() => {
     return Object.keys(savedValues).some(
-      (key) =>
-        savedValues[key as keyof typeof savedValues] !==
-        formValues[key as keyof typeof formValues],
+      (key) => savedValues[key as keyof UserDetails] !== formValues[key as keyof UserDetails]
     );
   }, [formValues, savedValues]);
 
-  const handleChange = (field: keyof typeof formValues, value: string) => {
-    setFormValues((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
+  const handleChange = (field: keyof UserDetails, value: string) => {
+    setFormValues((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleToggleEdit = () => {
     if (isEditing) {
       setFormValues(savedValues);
-      setIsEditing(false);
-    } else {
-      setIsEditing(true);
     }
+    setIsEditing(!isEditing);
   };
 
-  const handleSubmitUserInfo = () => {
+  const handleSubmitUserInfo = async () => {
     setLoading(true);
-    setTimeout(() => {
-      setSavedValues(formValues);
-      setIsEditing(false);
+    try {
+      const response = await userService.updateUser(updateUserInfo, formValues);
+      if (response) {
+        setSavedValues(formValues);
+        setIsEditing(false);
+      }
+    } catch (error) {
+      console.error("Failed to update user info:", error);
+    } finally {
       setLoading(false);
-      console.log("Updated!");
-    }, 1000);
+    }
   };
 
   return (
@@ -158,7 +193,7 @@ export default function UserInformationScreen() {
       </ScrollView>
 
       {isEditing && hasChanges && (
-        <View className="px-4 pb-20  bg-white border-t border-gray-100">
+        <View className="px-4 pb-20 bg-white border-t border-gray-100">
           <PrimaryButton
             onPress={handleSubmitUserInfo}
             loading={loading}

@@ -21,11 +21,15 @@ export async function handleRequest<T>(
       throw new Error("No data received");
     }
 
+    if (response.status !== 200) {
+      logger.warn(`Unexpected status code: ${response.status}`);
+      throw new Error(`Unexpected status code: ${response.status}`);
+    }
+
     logger.log(`${operation} - Success`);
     return response.data as T;
   } catch (error) {
     logger.error(`${operation} - Failed`, error);
-    // ✅ Re-throw original error to preserve stack trace
     throw error instanceof Error ? error : new Error(String(error));
   }
 }
