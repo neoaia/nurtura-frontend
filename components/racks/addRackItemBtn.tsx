@@ -49,7 +49,7 @@ const AddRackButton: React.FC<AddRackButtonProps> = ({
         <View className="px-2 py-2 sm:w-12 sm:h-12 bg-[#D9D9D9] rounded-xl items-center justify-center">
           <PlusIcon />
         </View>
-        <Text style={typography['h2-bold']} className="text-black">
+        <Text style={typography["button-bold"]} className="text-black">
           {isLoading ? "Wait..." : label}
         </Text>
       </View>

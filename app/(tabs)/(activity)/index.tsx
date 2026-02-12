@@ -40,7 +40,7 @@ export default function ActivityScreen() {
           </View>
 
           {menuItems.map((item) => (
-            <View key={item.path} className="w-full mb-3">
+            <View key={item.path} className="w-full mb-5">
               <MenuCard
                 title={item.title}
                 description={item.desc}

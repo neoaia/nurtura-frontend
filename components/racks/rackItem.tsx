@@ -75,7 +75,7 @@ const RackItem: React.FC<RackItemProps> = ({ rack }) => {
       className={`bg-white rounded-2xl p-5 shadow-md border border-gray-100 w-full mb-5 ${
         isLoading ? "opacity-70" : ""
       }`}
-      >
+    >
       <View className="flex-row justify-between items-center mb-7">
         <View className="flex-row items-center gap-5 flex-1">
           <View className="w-14 h-14 bg-[#E5EDCF] rounded-xl items-center justify-center">
@@ -93,7 +93,7 @@ const RackItem: React.FC<RackItemProps> = ({ rack }) => {
           <View className="flex-1">
             <View className="flex-row items-center gap-2 mb-1">
               <Text
-                style={typography["h2-bold"]}
+                style={typography["button-bold"]}
                 className=" text-black"
                 numberOfLines={1}
               >
