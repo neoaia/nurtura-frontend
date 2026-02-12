@@ -2,7 +2,7 @@ import React from "react";
 import { ScrollView, Text, View } from "react-native";
 
 import { typography } from "@/assets/fonts/Text";
-import { PrimaryButton } from "@/components/shared/primaryButton";
+import { BottomButton } from "@/components/shared/bottomButton";
 import { TextInputField } from "@/components/shared/textInputField";
 import { router } from "expo-router";
 
@@ -16,8 +16,8 @@ export default function AddNewRack3() {
         title: "Rack added successfully!",
         subtitle: "You can now proceed back to making your account safe.",
         finishTitle: "Finish",
-        addAnotherTitle: "Add another Rack"
-      }
+        addAnotherTitle: "Add another Rack",
+      },
     });
   };
 
@@ -53,8 +53,8 @@ export default function AddNewRack3() {
           ></TextInputField>
         </View>
       </ScrollView>
-      <View className="px-4 pb-9">
-        <PrimaryButton title="Finish" onPress={handleNextPress}></PrimaryButton>
+      <View>
+        <BottomButton title="Finish" onPress={handleNextPress}></BottomButton>
       </View>
     </View>
   );

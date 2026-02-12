@@ -128,9 +128,9 @@ export const AddNewModal: React.FC<AddNewModalProps> = ({
         height: 4,
       }}
     >
-      <BottomSheetView className="flex-1 px-6 pt-4 pb-8 items-center">
+      <BottomSheetView className="flex-1 px-6 pt-4 pb-10 items-center">
         <Text
-          style={typography["h2-bold"]}
+          style={typography["button-bold"]}
           className="text-[#86975A] mb-8 text-center"
         >
           Add to your Nurtura Farm
