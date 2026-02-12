@@ -38,7 +38,6 @@ const mockApiResponse: DashboardResponseDTO = {
       action: "Watered the",
       plant: "Cherry Tomato",
       timestamp: "9:18 AM",
-      amount: "76 mL",
     },
     {
       id: "2",
