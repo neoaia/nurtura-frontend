@@ -3,7 +3,6 @@ import { ActivityButton } from "@/components/activity/sensorToggle";
 import { DateRangePicker } from "@/components/shared/datetimepicker";
 
 import { typography } from "@/assets/fonts/Text";
-import { Ionicons } from "@expo/vector-icons";
 import React, { useState } from "react";
 import { ScrollView, Text, View } from "react-native";
 
@@ -56,7 +55,7 @@ export default function PlantCareScreen() {
           <Text style={typography["button-bold"]} className=" text-black">
             {formatDate(dateToday)}
           </Text>
-          <Ionicons name="swap-vertical" size={20} color="#619AAC" />
+          {/* <Ionicons name="swap-vertical" size={20} color="#619AAC" /> */}
         </View>
 
         <ActivityItem
@@ -64,7 +63,7 @@ export default function PlantCareScreen() {
           plantName="Cherry Tomato"
           rackName="Greens Rack"
           time="9:00 AM"
-          duration="2 mins"
+          amount={23}
         />
       </View>
     </ScrollView>

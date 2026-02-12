@@ -2,7 +2,6 @@ import { HarvestItem } from "@/components/activity/harvestItem";
 import { DateRangePicker } from "@/components/shared/datetimepicker";
 
 import { typography } from "@/assets/fonts/Text";
-import { Ionicons } from "@expo/vector-icons";
 import React, { useState } from "react";
 import { ScrollView, Text, View } from "react-native";
 
@@ -64,7 +63,7 @@ export default function PlantCareScreen() {
           <Text style={typography["button-bold"]} className=" text-black">
             {formatDate(dateToday)}
           </Text>
-          <Ionicons name="swap-vertical" size={20} color="#86975A" />
+          {/* <Ionicons name="swap-vertical" size={20} color="#86975A" /> */}
         </View>
 
         <HarvestItem

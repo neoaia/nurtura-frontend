@@ -4,7 +4,7 @@ import { Text, TouchableOpacity, View } from "react-native";
 import Svg, { Path } from "react-native-svg";
 
 interface AddPlantButtonProps {
-  onPress?: () => void | Promise<void>; 
+  onPress?: () => void | Promise<void>;
   label?: string;
 }
 
@@ -32,7 +32,6 @@ const AddPlantButton: React.FC<AddPlantButtonProps> = ({
     try {
       await onPress();
     } finally {
-      
       setTimeout(() => setIsLoading(false), 500);
     }
   };
@@ -50,7 +49,7 @@ const AddPlantButton: React.FC<AddPlantButtonProps> = ({
         <View className="px-2 py-2 sm:w-12 sm:h-12 bg-[#D9D9D9] rounded-xl items-center justify-center">
           <PlusIcon />
         </View>
-        <Text style={typography["h2-bold"]} className="text-black">
+        <Text style={typography["button-bold"]} className="text-black">
           {isLoading ? "Loading..." : label}
         </Text>
       </View>

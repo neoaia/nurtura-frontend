@@ -46,27 +46,9 @@ export default function PlantCareScreen() {
           <Ionicons name="swap-vertical" size={20} color="#86975A" />
         </View>
 
-        <PlantItem
-          plantName="Lettuce"
-          rackName="Greens Rack"
-          time="9:18 AM"
-          weight="3"
-          plantImage={require("@/assets/images/plant-sample.png")}
-        />
-        <PlantItem
-          plantName="Lettuce"
-          rackName="Greens Rack"
-          time="9:18 AM"
-          weight="3"
-          plantImage={require("@/assets/images/plant-sample.png")}
-        />
-        <PlantItem
-          plantName="Lettuce"
-          rackName="Greens Rack"
-          time="9:18 AM"
-          weight="3"
-          plantImage={require("@/assets/images/plant-sample.png")}
-        />
+        <PlantItem plantName="Lettuce" rackName="Greens Rack" time="9:18 AM" />
+        <PlantItem plantName="Lettuce" rackName="Greens Rack" time="9:18 AM" />
+        <PlantItem plantName="Lettuce" rackName="Greens Rack" time="9:18 AM" />
       </View>
     </ScrollView>
   );

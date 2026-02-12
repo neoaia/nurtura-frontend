@@ -18,7 +18,7 @@ export const DateRangePicker = ({ value, onChange }: Props) => {
   const [mode, setMode] = useState<"start" | "end" | null>(null);
 
   const handleOpenPicker = () => {
-    if (mode !== null) return; 
+    if (mode !== null) return;
     setMode("start");
   };
 
@@ -46,14 +46,14 @@ export const DateRangePicker = ({ value, onChange }: Props) => {
     <View>
       <TouchableOpacity
         onPress={handleOpenPicker} // Use the guarded function
-        disabled={mode !== null}   // Disable button while picker is active
+        disabled={mode !== null} // Disable button while picker is active
         className={`flex-row items-center justify-between border-[2px] border-grayText rounded-xl py-3 px-4 bg-white ${
           mode !== null ? "opacity-70" : ""
         }`}
       >
         <View className="flex-row items-center">
           <Ionicons name="calendar-outline" size={20} color="#666" />
-          <Text style={typography["label"]} className="ml-3 text-black ">
+          <Text style={typography["subheader"]} className="ml-3 text-black ">
             {formatRange()}
           </Text>
         </View>

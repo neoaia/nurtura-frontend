@@ -20,5 +20,5 @@ export interface ActivityDTO {
   plantName: string;
   rackName: string;
   time: string;
-  duration: string;
+  amount: number;
 }

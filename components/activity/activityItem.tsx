@@ -25,7 +25,7 @@ export const ActivityItem: React.FC<ActivityItemProps> = ({
   plantName,
   rackName,
   time,
-  duration,
+  amount,
 }) => {
   const config = activityCategory[type];
 
@@ -34,12 +34,13 @@ export const ActivityItem: React.FC<ActivityItemProps> = ({
       <View className="flex-row items-center">
         <View className="m-3 flex-1 gap-5">
           <View>
-            <Text style={typography["label"]} className="text-black">
-              {config.actionText}
-              <Text style={{ color: config.plantcolor }} className="font-bold">
-                {" "}
-                {plantName}
-              </Text>
+            <Text
+              style={[
+                typography["subheader-bold"],
+                { color: config.plantcolor },
+              ]}
+            >
+              {plantName}
             </Text>
 
             <Text
@@ -69,7 +70,7 @@ export const ActivityItem: React.FC<ActivityItemProps> = ({
                 resizeMode="contain"
               />
               <Text style={typography["label"]} className="text-[#919191]">
-                {duration}
+                {amount} mL
               </Text>
             </View>
           </View>
