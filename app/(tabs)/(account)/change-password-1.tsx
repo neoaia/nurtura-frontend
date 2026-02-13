@@ -11,10 +11,13 @@ import {
 
 import { OTPInput } from "@/components/auth/otpInput";
 import { ResendCode } from "@/components/auth/resendCode";
+import { ConfirmationModal } from "@/components/modals/confirmationModal";
 import { PrimaryButton } from "@/components/shared/primaryButton";
+import { useBackWarning } from "@/hooks/shared/useBackWarning";
 import { router } from "expo-router";
 
 export default function ChangePassword1() {
+  const { showModal, handleConfirm, handleCancel } = useBackWarning();
   const [otp, setOtp] = useState(["", "", "", "", ""]);
   const inputs = useRef<(TextInput | null)[]>([]);
   const [isOtpInvalid, setIsOtpInvalid] = useState(false);
@@ -79,6 +82,15 @@ export default function ChangePassword1() {
       </ScrollView>
       <View className="px-4 pb-9">
         <PrimaryButton title="Next" onPress={handleNextPress}></PrimaryButton>
+        <ConfirmationModal
+          isVisible={showModal}
+          onConfirm={handleConfirm}
+          title="Go Back"
+          message="All details you have entered will be restarted and gone."
+          confirmText="Continue"
+          cancelText="Cancel"
+          onCancel={handleCancel}
+        />
       </View>
     </View>
   );

@@ -4,32 +4,31 @@ import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { typography } from "@/assets/fonts/Text";
 import CloseIcon from "@/assets/images/icons/closeIcon.svg";
 import EditIcon from "@/assets/images/icons/editIcon.svg";
+import { ConfirmationModal } from "@/components/modals/confirmationModal";
 import { PrimaryButton } from "@/components/shared/primaryButton";
 import { TextInputField } from "@/components/shared/textInputField";
-import { userService } from "../../../services/userService";
+import { useBackWarning } from "@/hooks/shared/useBackWarning";
 import useFetch from "@/hooks/useFetch";
 import { UserDetails } from "@/types/interface";
+import { userService } from "../../../services/userService";
 
 export default function UserInformationScreen() {
+  const { showModal, handleConfirm, handleCancel } = useBackWarning();
   const [savedValues, setSavedValues] = useState<Partial<UserDetails>>({});
   const [formValues, setFormValues] = useState<Partial<UserDetails>>({});
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const {
-    refetch: getUserInfo
-  } = useFetch('/api/users', {
-    method: 'GET',
+  const { refetch: getUserInfo } = useFetch("/api/users", {
+    method: "GET",
     autoFetch: false,
-    withAuth: true
+    withAuth: true,
   });
 
-  const {
-    refetch: updateUserInfo
-  } = useFetch('/api/users', {
-    method: 'PATCH',
+  const { refetch: updateUserInfo } = useFetch("/api/users", {
+    method: "PATCH",
     autoFetch: false,
-    withAuth: true
+    withAuth: true,
   });
 
   const getUserInfoData = async () => {
@@ -63,7 +62,9 @@ export default function UserInformationScreen() {
 
   const hasChanges = useMemo(() => {
     return Object.keys(savedValues).some(
-      (key) => savedValues[key as keyof UserDetails] !== formValues[key as keyof UserDetails]
+      (key) =>
+        savedValues[key as keyof UserDetails] !==
+        formValues[key as keyof UserDetails],
     );
   }, [formValues, savedValues]);
 
@@ -201,6 +202,16 @@ export default function UserInformationScreen() {
           />
         </View>
       )}
+
+      <ConfirmationModal
+        isVisible={showModal}
+        onConfirm={handleConfirm}
+        title="Go Back"
+        message="All details you have entered will be restarted and gone."
+        confirmText="Continue"
+        cancelText="Cancel"
+        onCancel={handleCancel}
+      />
     </View>
   );
 }

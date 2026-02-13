@@ -1,7 +1,9 @@
 import { typography } from "@/assets/fonts/Text";
 import PlantCard from "@/components/add_plant/plantCard";
 import PlantFilterBtn from "@/components/add_plant/plantFilterBtn";
+import { ConfirmationModal } from "@/components/modals/confirmationModal";
 import { BottomButton } from "@/components/shared/bottomButton";
+import { useBackWarning } from "@/hooks/shared/useBackWarning";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useState } from "react";
 import { ScrollView, Text, View } from "react-native";
@@ -25,7 +27,7 @@ const filterOptions = [
 const AddNewPlant2 = () => {
   const [selectedFilter, setSelectedFilter] = useState("all");
   const [selectedPlant, setSelectedPlant] = useState<any>(null);
-
+  const { showModal, handleConfirm, handleCancel } = useBackWarning();
   const handleNextPress = () => {
     if (selectedPlant) {
       router.push({
@@ -119,6 +121,15 @@ const AddNewPlant2 = () => {
         title="Next"
         onPress={handleNextPress}
         disabled={!selectedPlant}
+      />
+      <ConfirmationModal
+        isVisible={showModal}
+        onConfirm={handleConfirm}
+        title="Go Back"
+        message="All details you have entered will be restarted and gone."
+        confirmText="Continue"
+        cancelText="Cancel"
+        onCancel={handleCancel}
       />
     </View>
   );

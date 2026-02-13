@@ -2,11 +2,14 @@ import React from "react";
 import { ScrollView, Text, View } from "react-native";
 
 import { typography } from "@/assets/fonts/Text";
+import { ConfirmationModal } from "@/components/modals/confirmationModal";
 import { BottomButton } from "@/components/shared/bottomButton";
 import { TextInputField } from "@/components/shared/textInputField";
+import { useBackWarning } from "@/hooks/shared/useBackWarning";
 import { router } from "expo-router";
 
 export default function AddNewRack3() {
+  const { showModal, handleConfirm, handleCancel } = useBackWarning();
   const handleNextPress = () => {
     router.push("/(tabs)/(add_pages)/(addNewRack)/step-4");
   };
@@ -46,6 +49,15 @@ export default function AddNewRack3() {
       </ScrollView>
       <View>
         <BottomButton title="Next" onPress={handleNextPress}></BottomButton>
+        <ConfirmationModal
+          isVisible={showModal}
+          onConfirm={handleConfirm}
+          title="Go Back"
+          message="All details you have entered will be restarted and gone."
+          confirmText="Continue"
+          cancelText="Cancel"
+          onCancel={handleCancel}
+        />
       </View>
     </View>
   );
