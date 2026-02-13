@@ -31,6 +31,7 @@ export const useBackWarning = () => {
   // Header Back Arrow
   useEffect(() => {
     navigation.setOptions({
+      headerBackVisible: false,
       headerLeft: () => (
         <Ionicons 
           name="chevron-back" 
