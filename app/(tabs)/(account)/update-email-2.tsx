@@ -1,7 +1,9 @@
 import { typography } from "@/assets/fonts/Text";
+import { ConfirmationModal } from "@/components/modals/confirmationModal";
 import { PrimaryButton } from "@/components/shared/primaryButton";
+import { useBackWarning } from "@/hooks/shared/useBackWarning";
 import { router } from "expo-router";
-import React, { useRef, useState } from "react";
+import { useRef, useState } from "react";
 import {
   NativeSyntheticEvent,
   ScrollView,
@@ -14,6 +16,7 @@ import { OTPInput } from "../../../components/auth/otpInput";
 import { ResendCode } from "../../../components/auth/resendCode";
 
 export default function UpdateEmailScreen2() {
+  const { showModal, handleConfirm, handleCancel } = useBackWarning();
   const [otp, setOtp] = useState(["", "", "", "", ""]);
   const inputs = useRef<(TextInput | null)[]>([]);
   const [isOtpInvalid, setIsOtpInvalid] = useState(false);
@@ -30,8 +33,8 @@ export default function UpdateEmailScreen2() {
         type: "other",
         title: "E-mail updated!",
         subtitle: "You can now proceed back to making your account safe.",
-        finishTitle: "Finish"
-      }
+        finishTitle: "Finish",
+      },
     });
   };
   const handleKeyPress = (
@@ -87,6 +90,15 @@ export default function UpdateEmailScreen2() {
       </ScrollView>
       <View className="px-4 pb-9">
         <PrimaryButton title="Finish" onPress={handleNextPress}></PrimaryButton>
+        <ConfirmationModal
+          isVisible={showModal}
+          onConfirm={handleConfirm}
+          title="Go Back"
+          message="All details you have entered will be restarted and gone."
+          confirmText="Continue"
+          cancelText="Cancel"
+          onCancel={handleCancel}
+        />
       </View>
     </View>
   );

@@ -1,4 +1,7 @@
-import { Ionicons } from "@expo/vector-icons";
+import {
+  HeaderBackButton,
+  HeaderBackButtonProps,
+} from "@react-navigation/elements";
 import { useFocusEffect } from "@react-navigation/native";
 import { useNavigation, useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
@@ -23,21 +26,23 @@ export const useBackWarning = () => {
         setShowModal(true);
         return true;
       };
-      const subscription = BackHandler.addEventListener("hardwareBackPress", onBackPress);
+      const subscription = BackHandler.addEventListener(
+        "hardwareBackPress",
+        onBackPress,
+      );
       return () => subscription.remove();
-    }, [])
+    }, []),
   );
 
   // Header Back Arrow
   useEffect(() => {
     navigation.setOptions({
-      headerBackVisible: false,
-      headerLeft: () => (
-        <Ionicons 
-          name="chevron-back" 
-          size={24} 
-          onPress={() => setShowModal(true)} 
-          style={{ marginLeft: 10 }}
+      headerLeft: (props: HeaderBackButtonProps) => (
+        <HeaderBackButton
+          {...props}
+          onPress={() => {
+            setShowModal(true);
+          }}
         />
       ),
     });
