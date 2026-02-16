@@ -1,12 +1,13 @@
 import { typography } from "@/assets/fonts/Text";
-import { BasePlantItemDTO } from "@/types/activity.dto";
+import { PlantedItemDTO } from "@/types/activity.dto";
 import React from "react";
 import { Image, Text, View } from "react-native";
 
-export const PlantItem: React.FC<BasePlantItemDTO> = ({
+export const PlantItem: React.FC<PlantedItemDTO> = ({
   plantName,
   rackName,
   time,
+  quantity,
   // weight,
   // plantImage,
 }) => {
@@ -43,7 +44,7 @@ export const PlantItem: React.FC<BasePlantItemDTO> = ({
             </Text>
           </View>
 
-          {/* <View className="flex-row items-center" style={{ gap: 6 }}>
+          <View className="flex-row items-center" style={{ gap: 6 }}>
             <Image
               source={require("@/assets/images/planting-icon.png")}
               className="w-[16px] h-[16px]"
@@ -51,9 +52,9 @@ export const PlantItem: React.FC<BasePlantItemDTO> = ({
               resizeMode="contain"
             />
             <Text style={typography["label"]} className="  text-[#919191] ">
-              {weight}
+              {quantity}
             </Text>
-          </View> */}
+          </View>
         </View>
       </View>
     </View>

@@ -3,8 +3,13 @@ export interface BasePlantItemDTO {
   plantName: string;
   rackName: string;
   time: string;
-  // weight: string;
-  // plantImage?: ImageSourcePropType;
+}
+
+export interface PlantedItemDTO {
+  plantName: string;
+  rackName: string;
+  time: string;
+  quantity: string;
 }
 
 // For Havrest Summary Cards
@@ -19,6 +24,7 @@ export interface ActivityDTO {
   type: "water" | "light";
   plantName: string;
   rackName: string;
-  time: string;
-  amount: number;
+  time: string; // time of the activity
+  amount?: number; // for water amount
+  duration?: string; // for light duration
 }
