@@ -1,11 +1,17 @@
 import { typography } from "@/assets/fonts/Text";
 import React, { useState } from "react";
-import { Image, ImageSourcePropType, Text, TouchableOpacity, View } from "react-native";
+import {
+  Image,
+  ImageSourcePropType,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
 interface LogOutTabProps {
   iconSource: ImageSourcePropType;
   label: string;
-  onPress?: () => void | Promise<void>; 
+  onPress?: () => void | Promise<void>;
 }
 
 export const LogOutRow: React.FC<LogOutTabProps> = ({
@@ -35,9 +41,9 @@ export const LogOutRow: React.FC<LogOutTabProps> = ({
       disabled={isLoading}
       activeOpacity={0.6}
     >
-      <View className="flex-row items-center w-full" style={{ gap: 32 }}>
+      <View className="flex-row items-center w-full" style={{ gap: 24 }}>
         <Image source={iconSource} className="w-6 h-6" resizeMode="contain" />
-        <Text style={typography['subheader']} className="text-[#D34545]">
+        <Text style={typography["button"]} className="text-[#D34545]">
           {isLoading ? "Logging out..." : label}
         </Text>
       </View>

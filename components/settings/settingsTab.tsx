@@ -40,9 +40,11 @@ export const SettingsRow: React.FC<SettingsTabProps> = ({
       disabled={isLoading}
       activeOpacity={0.6}
     >
-      <View className="flex-row items-center" style={{ gap: 32 }}>
+      <View className="flex-row items-center" style={{ gap: 24 }}>
         <Image source={iconSource} className="w-5 h-5" resizeMode="contain" />
-        <Text style={typography['subheader']} className="text-black">{label}</Text>
+        <Text style={typography["button"]} className="text-black">
+          {label}
+        </Text>
       </View>
 
       <Image
