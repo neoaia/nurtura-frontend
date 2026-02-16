@@ -91,7 +91,7 @@ const RackInfo = () => {
                 />
                 <PlantStatusIndicators
                   type="soil-moisture"
-                  value={reading.soilMoisture}
+                  value={reading.moisture}
                 />
               </>
             )}

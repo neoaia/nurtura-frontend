@@ -1,4 +1,5 @@
 import { typography } from "@/assets/fonts/Text";
+import { NotificationItemDTO } from "@/types/home.dto";
 import React from "react";
 import { Text, View } from "react-native";
 
@@ -9,18 +10,7 @@ import HarvestIcon from "../../assets/images/icons/plant(Add).svg";
 import WarningIcon from "../../assets/images/icons/warning(notif).svg";
 import WaterIcon from "../../assets/images/icons/watered(Activity).svg";
 
-interface NotificationItemProps {
-  type: "water" | "light" | "harvest" | "sensor" | "environment" | "info";
-  plantName?: string;
-  location?: string;
-  value?: string;
-  time: string;
-  rackName?: string;
-  metric?: "temperature" | "moisture";
-  component?: string;
-}
-
-export const NotificationItem: React.FC<NotificationItemProps> = ({
+export const NotificationItem: React.FC<NotificationItemDTO> = ({
   type,
   plantName,
   location,
@@ -198,4 +188,3 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({
 };
 
 export default NotificationItem;
-0;
