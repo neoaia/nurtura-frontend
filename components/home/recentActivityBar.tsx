@@ -26,7 +26,7 @@ export const RecentActivityBar: React.FC<RecentActivityBarProps> = ({
 }) => {
   return (
     <>
-      <View className=" pb-4 px-4">
+      <View className="pb-4 px-4">
         <Text style={typography["h2-bold"]} className="text-black">
           Recent Activity
         </Text>
@@ -40,21 +40,13 @@ export const RecentActivityBar: React.FC<RecentActivityBarProps> = ({
             </Text>
           </View>
         ) : (
-          activities.map((activity, index) => {
+          activities.map((activity) => {
             const iconConfig = getIconConfig(activity.type);
-            const isFirst = index === 0;
-            const isLast = index === activities.length - 1;
 
             return (
               <View
                 key={activity.id}
-                className={`
-                  px-3 py-5 flex-row items-center
-                  border border-gray-200
-                  ${!isLast ? "border-b-0" : ""}
-                  ${isFirst ? "rounded-t-xl" : ""}
-                  ${isLast ? "rounded-b-xl" : ""}
-                `}
+                className="p-3 bg-white mb-2 py-5 pr-3 pl-3 w-full flex-row items-center rounded-xl shadow-sm border border-gray-100"
               >
                 <View
                   style={{ backgroundColor: iconConfig.bgColor }}
@@ -78,7 +70,6 @@ export const RecentActivityBar: React.FC<RecentActivityBarProps> = ({
                         ...typography["subheader-bold"],
                         color: iconConfig.textColor,
                       }}
-                      className="mb-6"
                     >
                       {activity.plant}
                     </Text>

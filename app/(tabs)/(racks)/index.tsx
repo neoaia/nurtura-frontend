@@ -2,6 +2,7 @@ import { typography } from "@/assets/fonts/Text";
 import AddRackButton from "@/components/racks/addRackItemBtn";
 import RackItem from "@/components/racks/rackItem";
 import useFetch from "@/hooks/useFetch";
+import { rackService } from "@/services/rackService";
 import { GetRackInfoDTO } from "@/types/rack.dto";
 import { router } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
@@ -10,6 +11,7 @@ import {
   FlatList,
   RefreshControl,
   Text,
+  TouchableOpacity,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -18,8 +20,8 @@ export default function RacksScreen() {
   const [racks, setRacks] = useState<GetRackInfoDTO[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  //#region TEMPORARY SERVICE/HOOK
   const { refetch: getAllRacks } = useFetch("/api/racks", {
     method: "GET",
     autoFetch: false,
@@ -29,52 +31,37 @@ export default function RacksScreen() {
   const fetchRacks = async () => {
     try {
       setLoading(true);
+      setError(null);
 
-      // TODO: Replace with real API call, mock data for now
-      const mockRacks: GetRackInfoDTO[] = [
-        {
-          id: "1",
-          name: "Living Room Rack",
-          plant: "Lettuce",
-          image: undefined,
-          leaves: 12,
-          water: 1.5,
-          humidity: 60,
-          temperature: 22,
-          hasAlert: true,
-        },
-        {
-          id: "2",
-          name: "Kitchen Garden",
-          plant: "Basil",
-          image: undefined,
-          leaves: 8,
-          water: 2.1,
-          humidity: 65,
-          temperature: 24,
-          hasAlert: false,
-        },
-        {
-          id: "3",
-          name: "Balcony Setup",
-          plant: "Tomato",
-          image: undefined,
-          leaves: 15,
-          water: 3.2,
-          humidity: 58,
-          temperature: 26,
-          hasAlert: true,
-        },
-      ];
+      // ✅ Use real API
+      const response = await rackService.getAllUserRack(getAllRacks);
 
-      setRacks(mockRacks);
-    } catch (error) {
-      console.error("Failed to fetch racks:", error);
+      if (response?.data) {
+        // ✅ Map API response to GetRackInfoDTO format
+        const mappedRacks: GetRackInfoDTO[] = response.data.map((rack) => ({
+          id: rack.id,
+          name: rack.name,
+          plant: "Lettuce", // ❌ Not in API, using default
+          image: undefined,
+          seeds: 12, // ❌ Not in API, using default
+          water: 0, // Will be populated by useRackSensor in RackItem
+          humidity: 0, // Will be populated by useRackSensor in RackItem
+          temperature: 0, // Will be populated by useRackSensor in RackItem
+          hasAlert: rack.status === "offline" || rack.status === "error",
+        }));
+
+        setRacks(mappedRacks);
+      } else {
+        setRacks([]);
+      }
+    } catch (err) {
+      console.error("Failed to fetch racks:", err);
+      setError(err instanceof Error ? err.message : "Failed to load racks");
+      setRacks([]);
     } finally {
       setLoading(false);
     }
   };
-  //#endregion
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -95,7 +82,6 @@ export default function RacksScreen() {
     router.push("/(tabs)/(add_pages)/(addNewRack)");
   };
 
-  // header renderer
   const renderHeader = () => (
     <View className="flex justify-start items-start w-full mb-2 mt-8 pl-3">
       <Text
@@ -107,8 +93,13 @@ export default function RacksScreen() {
     </View>
   );
 
-  // rack item renderer
-  const renderRackItem = ({ item }: { item: GetRackInfoDTO }) => (
+  const renderRackItem = ({
+    item,
+    index,
+  }: {
+    item: GetRackInfoDTO;
+    index: number;
+  }) => (
     <RackItem
       rack={{
         ...item,
@@ -118,17 +109,54 @@ export default function RacksScreen() {
     />
   );
 
-  // footer renderer
+  const renderEmpty = () => (
+    <View className="flex-1 justify-center items-center py-20">
+      <Text style={typography["h2-bold"]} className="text-gray-400 mb-2">
+        No racks yet
+      </Text>
+      <Text style={typography["subheader"]} className="text-gray-400">
+        Add your first rack to get started
+      </Text>
+    </View>
+  );
+
   const renderFooter = () => <AddRackButton onPress={handleAddRack} />;
 
   if (loading) {
     return (
       <SafeAreaView className="bg-white flex-1">
         <View className="flex-1 justify-center items-center">
-          <ActivityIndicator size="large" color="#000" />
+          <ActivityIndicator size="large" color="#86975A" />
           <Text style={typography["button"]} className="text-grayText mt-4">
             Loading racks...
           </Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (error) {
+    return (
+      <SafeAreaView className="bg-white flex-1">
+        <View className="flex-1 justify-center items-center px-6">
+          <Text style={typography["h2-bold"]} className="text-red-500 mb-4">
+            Error Loading Racks
+          </Text>
+          <Text
+            style={typography["subheader"]}
+            className="text-gray-600 mb-6 text-center"
+          >
+            {error}
+          </Text>
+          <TouchableOpacity
+            onPress={fetchRacks}
+            className="bg-primary px-6 py-3 rounded-xl"
+            activeOpacity={0.8}
+          >
+            <Text style={typography["button"]} className="text-white">
+              Retry
+            </Text>
+          </TouchableOpacity>
         </View>
       </SafeAreaView>
     );
@@ -139,10 +167,10 @@ export default function RacksScreen() {
       <FlatList
         data={racks}
         renderItem={renderRackItem}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item, index) => `${item.id}-${index}`}
         ListHeaderComponent={renderHeader}
         ListFooterComponent={renderFooter}
-        // ListEmptyComponent={renderEmpty}
+        ListEmptyComponent={renderEmpty}
         contentContainerStyle={{
           paddingHorizontal: 16,
           paddingBottom: 20,
@@ -153,7 +181,7 @@ export default function RacksScreen() {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor="#000"
+            tintColor="#86975A"
           />
         }
       />
