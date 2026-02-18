@@ -4,16 +4,13 @@ import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { typography } from "@/assets/fonts/Text";
 import CloseIcon from "@/assets/images/icons/closeIcon.svg";
 import EditIcon from "@/assets/images/icons/editIcon.svg";
-import { ConfirmationModal } from "@/components/modals/confirmationModal";
 import { PrimaryButton } from "@/components/shared/primaryButton";
 import { TextInputField } from "@/components/shared/textInputField";
-import { useBackWarning } from "@/hooks/shared/useBackWarning";
 import useFetch from "@/hooks/useFetch";
 import { UserDetails } from "@/types/interface";
 import { userService } from "../../../services/userService";
 
 export default function UserInformationScreen() {
-  const { showModal, handleConfirm, handleCancel } = useBackWarning();
   const [savedValues, setSavedValues] = useState<Partial<UserDetails>>({});
   const [formValues, setFormValues] = useState<Partial<UserDetails>>({});
   const [isEditing, setIsEditing] = useState(false);
@@ -202,16 +199,6 @@ export default function UserInformationScreen() {
           />
         </View>
       )}
-
-      <ConfirmationModal
-        isVisible={showModal}
-        onConfirm={handleConfirm}
-        title="Go Back"
-        message="All details you have entered will be restarted and gone."
-        confirmText="Continue"
-        cancelText="Cancel"
-        onCancel={handleCancel}
-      />
     </View>
   );
 }

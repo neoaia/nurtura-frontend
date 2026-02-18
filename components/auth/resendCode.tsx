@@ -4,9 +4,10 @@ import { Text, TouchableOpacity, View } from "react-native";
 interface ResendCodeProps {
   onResend: () => void;
   timer: number;
+  loading?: boolean;
 }
 
-export const ResendCode = ({ onResend, timer }: ResendCodeProps) => {
+export const ResendCode = ({ onResend, timer, loading }: ResendCodeProps) => {
   return (
     <View className="self-start pl-2 mb-[26px] flex-row items-center">
       <Text
@@ -15,7 +16,7 @@ export const ResendCode = ({ onResend, timer }: ResendCodeProps) => {
       >
         Didn&apos;t receive the code?{" "}
       </Text>
-      <TouchableOpacity onPress={onResend} disabled={timer > 0}>
+      <TouchableOpacity onPress={onResend} disabled={timer > 0 || loading}>
         <Text
           style={typography["subheader-bold"]}
           className={` underline ${
