@@ -27,7 +27,8 @@ const filterOptions = [
 const AddNewPlant2 = () => {
   const [selectedFilter, setSelectedFilter] = useState("all");
   const [selectedPlant, setSelectedPlant] = useState<any>(null);
-  const { showModal, handleConfirm, handleCancel } = useBackWarning();
+  const { showModal, handleConfirm, handleCancel } =
+    useBackWarning(!!selectedPlant);
   const handleNextPress = () => {
     if (selectedPlant) {
       router.push({

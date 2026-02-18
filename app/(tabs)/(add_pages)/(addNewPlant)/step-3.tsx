@@ -12,7 +12,9 @@ import SoilIcon from "../../../../assets/images/icons/soil.svg";
 
 const AddNewPlant3 = () => {
   const [confirmation, setConfirmation] = React.useState(false);
-  const { showModal, handleConfirm, handleCancel } = useBackWarning();
+  const [seedQuantity, setSeedQuantity] = React.useState(0);
+  const { showModal, handleConfirm, handleCancel } =
+    useBackWarning(!!seedQuantity);
   // recieve params from step-2
   const {
     rackId,
@@ -61,8 +63,6 @@ const AddNewPlant3 = () => {
       },
     });
   };
-
-  const [seedQuantity, setSeedQuantity] = React.useState(0);
 
   const handleSubtractPress = () => {
     if (seedQuantity > 0) {
