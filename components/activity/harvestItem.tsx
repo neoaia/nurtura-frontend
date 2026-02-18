@@ -12,7 +12,8 @@ export const HarvestItem: React.FC<BasePlantItemDTO> = ({
 }) => {
   return (
     <View className="bg-white rounded-2xl px-4 py-6 flex-row items-center shadow-md border-gray-100 elevation-3 my-2">
-      <View className=" bg-[#e9f2d9] rounded-2xl justify-center items-center">
+      {/* Image Container */}
+      <View className="bg-[#e9f2d9] rounded-2xl justify-center items-center">
         <Image
           // source={plantImage}
           className="w-20 h-20"
@@ -20,12 +21,13 @@ export const HarvestItem: React.FC<BasePlantItemDTO> = ({
         />
       </View>
 
+      {/* Content Container */}
       <View className="ml-5 flex-1 gap-5">
         <View>
-          <Text style={typography["subheader-bold"]} className="  text-primary">
+          <Text style={typography["subheader-bold"]} className="text-primary">
             {plantName}
           </Text>
-          <Text style={typography["subheader"]} className="  text-[#919191]">
+          <Text style={typography["subheader"]} className="text-[#919191]">
             at {rackName}
           </Text>
         </View>
@@ -38,7 +40,7 @@ export const HarvestItem: React.FC<BasePlantItemDTO> = ({
               style={{ tintColor: "#7a904a" }}
               resizeMode="contain"
             />
-            <Text style={typography["label"]} className=" text-grayText">
+            <Text style={typography["label"]} className="text-grayText">
               {time}
             </Text>
           </View>
@@ -50,7 +52,7 @@ export const HarvestItem: React.FC<BasePlantItemDTO> = ({
               style={{ tintColor: "#7a904a" }}
               resizeMode="contain"
             />
-            <Text style={typography["label"]} className=" text-grayText">
+            <Text style={typography["label"]} className="text-grayText">
               {weight}
             </Text>
           </View> */}
