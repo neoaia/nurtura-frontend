@@ -80,6 +80,8 @@ export default function LoginScreen() {
 
     try {
       await signIn(trimmedEmail, password);
+      await SecureStore.setItemAsync("user_email", trimmedEmail);
+      await SecureStore.setItemAsync("auth_provider", "password");
       router.replace("/(tabs)/(home)");
     } catch (error) {
       setIsLoginInvalid(true);
@@ -109,6 +111,9 @@ export default function LoginScreen() {
       }
 
       const email = userData.email.trim().toLowerCase();
+
+      await SecureStore.setItemAsync("user_email", email);
+      await SecureStore.setItemAsync("auth_provider", "google");
 
       const onboardingResponse = await authService.onboardingStatus(
         checkNeedsOnboarding,

@@ -12,11 +12,12 @@ interface OTPInputProps {
   onChangeOtp: (text: string, index: number) => void;
   onKeyPress: (
     e: NativeSyntheticEvent<TextInputKeyPressEventData>,
-    index: number
+    index: number,
   ) => void;
-  onFocus: () => void;
+  onFocus: (index: number) => void;
   inputRefs: React.MutableRefObject<(TextInput | null)[]>;
   isInvalid?: boolean;
+  disabled?: boolean;
 }
 
 export const OTPInput = ({
@@ -26,6 +27,7 @@ export const OTPInput = ({
   onFocus,
   inputRefs,
   isInvalid,
+  disabled = false,
 }: OTPInputProps) => {
   return (
     <View className="flex-row justify-between w-[100%] self-center mb-[10px]">
@@ -38,10 +40,11 @@ export const OTPInput = ({
           value={value}
           onChangeText={(text) => onChangeOtp(text, index)}
           onKeyPress={(e) => onKeyPress(e, index)}
-          onFocus={onFocus}
+          onFocus={() => onFocus(index)}
           keyboardType="number-pad"
           maxLength={1}
-          style={typography['h2-bold']}
+          editable={!disabled}
+          style={typography["h2-bold"]}
           className={`h-[60px] w-[60px] border-[2px] rounded-xl text-black text-center   ${
             isInvalid ? "border-[#E65656]" : "border-grayText"
           }`}

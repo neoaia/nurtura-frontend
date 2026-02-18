@@ -5,21 +5,28 @@ import { SettingsRow } from "@/components/settings/settingsTab";
 
 import { useAuth } from "@/contexts/AuthContext";
 import useFetch from "@/hooks/useFetch";
+import { createLogger } from "@/utils/logger";
 import { useRouter } from "expo-router";
-import React from "react";
+import * as SecureStore from "expo-secure-store";
+import React, { useEffect, useState } from "react";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { userService } from "../../../services/userService";
+import { UserDetails } from "../../../types/interface";
+
+const logger = createLogger("AccountScreen");
 
 export default function AccountScreen() {
+  const [savedValues, setSavedValues] = useState<Partial<UserDetails>>({});
+  const [formValues, setFormValues] = useState<Partial<UserDetails>>({});
+  const [isGoogleUser, setIsGoogleUser] = useState<boolean>(false);
   const { logout } = useAuth();
   const router = useRouter();
 
-  const {
-    refetch: getUserInfo
-  } = useFetch('/api/users', {
-    method: 'GET',
+  const { refetch: getUserInfo } = useFetch("/api/users", {
+    method: "GET",
     autoFetch: false,
-    withAuth: true
+    withAuth: true,
   });
 
   const menuItems = [
@@ -27,17 +34,61 @@ export default function AccountScreen() {
       title: "Account Security",
       icon: require("@/assets/images/security-icon.png"),
       path: "/(tabs)/(account)/security",
+      showCondition: !isGoogleUser,
     },
   ];
 
+  const visibleMenuItems = menuItems.filter((item) => item.showCondition);
+
+  const checkUserProvider = async () => {
+    try {
+      logger.log("Checking auth provider from storage...");
+
+      const authProvider = await SecureStore.getItemAsync("auth_provider");
+      logger.log("Auth provider:", authProvider);
+
+      if (authProvider === "google") {
+        setIsGoogleUser(true);
+        logger.log("✓ User is Google-only - hiding Account Security");
+      } else {
+        setIsGoogleUser(false);
+        logger.log("✓ User has password auth - showing Account Security");
+      }
+    } catch (error) {
+      logger.error("Error checking auth provider:", error);
+      setIsGoogleUser(false);
+    }
+  };
+
   const getUserInfoData = async () => {
     try {
-      const response = await getUserInfo();
-      
+      const response = await userService.getUser(getUserInfo);
+      if (response?.userInfo) {
+        const data = {
+          firstName: response.userInfo.firstName || "",
+          middleName: response.userInfo.middleName || "",
+          lastName: response.userInfo.lastName || "",
+          suffix: response.userInfo.suffix || "",
+          block: response.userInfo.block || "",
+          street: response.userInfo.street || "",
+          barangay: response.userInfo.barangay || "",
+          city: response.userInfo.city || "",
+        };
+        setSavedValues(data);
+      }
     } catch (error) {
       console.error("Failed to fetch user info:", error);
     }
   };
+
+  useEffect(() => {
+    getUserInfoData();
+    checkUserProvider();
+  }, []);
+
+  useEffect(() => {
+    setFormValues(savedValues);
+  }, [savedValues]);
 
   return (
     <SafeAreaView className="bg-white flex-1">
@@ -57,16 +108,17 @@ export default function AccountScreen() {
               onPress={() => router.push("/(tabs)/(account)/user-info")}
             >
               <ProfileCard
-                name="Juan Dela Cruz"
-                username="JuanMasipag"
+                name="Profile"
+                username={
+                  formValues.firstName + " " + formValues.lastName || " "
+                }
                 iconSource={require("@/assets/images/user-icon-settings.png")}
               />
             </TouchableOpacity>
           </View>
 
           <View className="flex justify-center items-center bg-white">
-            {/* Mapped Items */}
-            {menuItems.map((item) => (
+            {visibleMenuItems.map((item) => (
               <View key={item.title} className="w-full mb-3">
                 <SettingsRow
                   iconSource={item.icon}
