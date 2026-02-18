@@ -32,3 +32,18 @@ export interface ActivityDTO {
   amount?: number;
   duration?: string;
 }
+
+// For Charts
+export interface ChartDataPoint {
+  timestamp: number; 
+  value: number;     
+}
+
+export interface PlantChartDTO {
+  title: string;
+  data: ChartDataPoint[];
+  yLabels: string[];
+  tooltipLabel: string;
+  chartWidth?: number; 
+  chartColor?: string;
+}

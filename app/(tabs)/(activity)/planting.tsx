@@ -1,34 +1,48 @@
 import { typography } from "@/assets/fonts/Text";
+import { PlantChart } from "@/components/activity/plantChart";
 import { PlantItem } from "@/components/activity/plantingItem";
 import { DateRangePicker } from "@/components/shared/datetimepicker";
 import { PlantedItemDTO } from "@/types/activity.dto";
 import React, { useCallback, useEffect, useState } from "react";
 import { FlatList, RefreshControl, Text, View } from "react-native";
 
-// calendar and sensor toggle sa header
 interface ListHeaderProps {
   dateRange: { start: Date | null; end: Date | null };
   setDateRange: (range: { start: Date | null; end: Date | null }) => void;
   dateToday: Date;
   formatDate: (date: Date) => string;
+  plantingChartData: { timestamp: number; value: number }[];
 }
 
 const ListHeader: React.FC<ListHeaderProps> = ({ 
   dateRange, 
   setDateRange, 
   dateToday, 
-  formatDate 
+  formatDate,
+  plantingChartData 
 }) => (
   <View className="bg-white">
     <View className="mt-4">
       <DateRangePicker 
         value={dateRange} 
-        onChange={(range) => setDateRange(range)} 
+        onChange={setDateRange} 
+      />
+    </View>
+
+    {/* Centered Chart Section */}
+    <View className="flex-row justify-center w-full py-3">
+      <PlantChart 
+        title="Planting"
+        data={plantingChartData}
+        yLabels={['15', '10', '5', '0']}
+        tooltipLabel="seeds"
+        chartWidth={280} 
+        chartColor="#86975A"
       />
     </View>
 
     <View className="mt-6 mb-4 flex-row justify-between items-center">
-      <Text style={typography["button-bold"]} className="text-black">
+      <Text style={typography["button-bold"]} className="text-black text-lg">
         {formatDate(dateToday)}
       </Text>
     </View>
@@ -36,30 +50,31 @@ const ListHeader: React.FC<ListHeaderProps> = ({
 );
 
 export default function PlantingScreen() {
-  const dateToday = new Date()
-  
-  // calendar range
+  const dateToday = new Date();
   const [dateRange, setDateRange] = useState<{ start: Date | null; end: Date | null }>({
     start: null,
     end: null,
   });
 
-  // mock datas
   const [plants, setPlants] = useState<PlantedItemDTO[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
+  // Map mock data to Chart format
+  const plantingChartData = plants.map((item, index) => ({
+    timestamp: index,
+    value: parseInt(item.quantity) || 0,
+  }));
+
   const fetchPlants = async () => {
     try {
       setLoading(true);
-      //mock datas
       const mockPlanting: (PlantedItemDTO & { date: Date })[] = [
         { id: "1", plantName: "Lettuce", rackName: "Rack A", time: "08:00 AM", quantity: "10", date: new Date('2026-02-10') },
         { id: "2", plantName: "Basil", rackName: "Rack B", time: "09:30 AM", quantity: "5", date: new Date('2026-02-18') },
         { id: "3", plantName: "Mint", rackName: "Rack A", time: "11:00 AM", quantity: "12", date: new Date('2026-02-20') },
       ];
 
-      // filter data with calendar
       if (dateRange.start && dateRange.end) {
         const filtered = mockPlanting.filter((item) => {
           const itemDate = new Date(item.date);
@@ -76,9 +91,7 @@ export default function PlantingScreen() {
     }
   };
 
-  useEffect(() => {
-    fetchPlants();
-  }, [dateRange]);
+  useEffect(() => { fetchPlants(); }, [dateRange]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -87,17 +100,13 @@ export default function PlantingScreen() {
   }, [dateRange]);
 
   const formatDate = (date: Date) => {
-    return date.toLocaleDateString("en-US", {
-      month: "long",
-      day: "numeric",
-      year: "numeric",
-    });
+    return date.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
   };
 
   return (
     <FlatList
       data={plants}
-      keyExtractor={(item, index) => item.id || index.toString()}
+      keyExtractor={(item) => item.id}
       renderItem={({ item }) => <PlantItem plants={item} />}
       ListHeaderComponent={
         <ListHeader 
@@ -105,14 +114,13 @@ export default function PlantingScreen() {
           setDateRange={setDateRange}
           dateToday={dateToday}
           formatDate={formatDate}
+          plantingChartData={plantingChartData}
         />
       }
       contentContainerStyle={{ paddingBottom: 20, paddingHorizontal: 24 }}
       className="bg-white flex-1"
       showsVerticalScrollIndicator={false}
-      refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-      }
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       ListEmptyComponent={() => (
         <View className="items-center mt-10">
           <Text style={typography["label"]} className="text-gray-400">

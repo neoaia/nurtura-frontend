@@ -11,14 +11,14 @@ const activityCategory = {
     time: require("@/assets/images/watered-time-icon.png"),
     plantcolor: "#2596be",
     actionText: "Watered the",
-    bgColor: "#e3f2fd", // Soft blue for water
+    bgColor: "#e3f2fd",
   },
   light: {
     icon: require("@/assets/images/light-icon.png"),
     time: require("@/assets/images/light-time-icon.png"),
     plantcolor: "#d6c125",
     actionText: "Provided light to",
-    bgColor: "#fffde7", // Soft yellow for light
+    bgColor: "#fffde7",
   },
 };
 
@@ -35,7 +35,6 @@ export const ActivityItem: React.FC<ActivityItemProps> = ({
   const handlePress = async () => {
     setIsLoading(true);
     try {
-      // Logic here
     } finally {
       setTimeout(() => setIsLoading(false), 500);
     }
