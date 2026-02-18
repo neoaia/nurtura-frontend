@@ -1,59 +1,31 @@
 import { typography } from "@/assets/fonts/Text";
+import { useRackSensor } from "@/hooks/useRackSensor";
 import { GetRackInfoDTO } from "@/types/rack.dto";
 import React, { useState } from "react";
-import { Image, Text, TouchableOpacity, View } from "react-native";
-import Svg, { Circle, Rect } from "react-native-svg";
-
-const LeafIcon = ({ size = 18, color = "#86975A" }) => (
-  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-    <Circle cx={12} cy={12} r={8} fill={color} />
-  </Svg>
-);
-
-const DropletIcon = ({ size = 18, color = "#86975A" }) => (
-  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-    <Circle cx={12} cy={12} r={8} fill={color} />
-  </Svg>
-);
-
-const WaveIcon = ({ size = 18, color = "#86975A" }) => (
-  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-    <Rect x={4} y={8} width={16} height={8} rx={2} fill={color} />
-  </Svg>
-);
-
-const ThermometerIcon = ({ size = 18, color = "#F0A877" }) => (
-  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-    <Rect x={8} y={4} width={8} height={16} rx={4} fill={color} />
-  </Svg>
-);
-
-const MoreIcon = () => (
-  <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
-    <Circle cx={12} cy={6} r={2} fill="#666" />
-    <Circle cx={12} cy={12} r={2} fill="#666" />
-    <Circle cx={12} cy={18} r={2} fill="#666" />
-  </Svg>
-);
+import {
+  ActivityIndicator,
+  Alert,
+  Image,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import HumidityIcon from "../../assets/images/icons/rackItem/humidity.svg";
+import MoistureIcon from "../../assets/images/icons/rackItem/moisture.svg";
+import SeedIcon from "../../assets/images/icons/rackItem/seed.svg";
+import TemperatureIcon from "../../assets/images/icons/rackItem/temperature.svg";
 
 interface RackItemProps {
   rack: GetRackInfoDTO;
 }
 
 const RackItem: React.FC<RackItemProps> = ({ rack }) => {
-  const [isLoading, setIsLoading] = useState(false); // New anti-spam state!
+  const [isLoading, setIsLoading] = useState(false);
 
-  const {
-    name,
-    plant,
-    image,
-    leaves,
-    water,
-    humidity,
-    temperature,
-    hasAlert = false,
-    onPress,
-  } = rack;
+  const { id, name, plant, image, seeds, hasAlert = false, onPress } = rack;
+
+  // Get real-time sensor data via websocket
+  const { reading, deviceStatus, error } = useRackSensor(id);
 
   const handlePress = async () => {
     if (isLoading || !onPress) return;
@@ -62,9 +34,107 @@ const RackItem: React.FC<RackItemProps> = ({ rack }) => {
     try {
       await onPress();
     } finally {
-      // Cooldown to ensure navigation or action finishes smoothly
       setTimeout(() => setIsLoading(false), 500);
     }
+  };
+
+  // Determine connection status
+  const getConnectionStatus = () => {
+    if (error) {
+      return {
+        type: "error" as const,
+        message: "Cannot connect to device",
+        details: error,
+      };
+    }
+    if (deviceStatus === "disconnected") {
+      return {
+        type: "error" as const,
+        message: "Device is offline",
+        details: "The rack is not connected to the network",
+      };
+    }
+    if (!reading) {
+      return {
+        type: "connecting" as const,
+        message: "Connecting to device...",
+        details: "Please wait while we establish connection",
+      };
+    }
+
+    // Calculate last update time
+    const now = new Date();
+    const lastUpdate = new Date(reading.timestamp || now);
+    const diffMs = now.getTime() - lastUpdate.getTime();
+    const diffSecs = Math.floor(diffMs / 1000);
+
+    let timeText = "";
+    if (diffSecs < 60) timeText = "just now";
+    else if (diffSecs < 3600)
+      timeText = `${Math.floor(diffSecs / 60)} minutes ago`;
+    else timeText = `${Math.floor(diffSecs / 3600)} hours ago`;
+
+    return {
+      type: "connected" as const,
+      message: "Connected",
+      details: `Last updated ${timeText}`,
+    };
+  };
+
+  const connectionStatus = getConnectionStatus();
+
+  // Handle status indicator press
+  const handleStatusPress = () => {
+    Alert.alert(connectionStatus.message, connectionStatus.details, [
+      { text: "OK" },
+    ]);
+  };
+
+  // Use real-time data if available, fallback to 0
+  const displayData = {
+    moisture: reading?.moisture ?? 0,
+    humidity: reading?.humidity ?? 0,
+    temperature: reading?.temperature ?? 0,
+  };
+
+  const isConnected = connectionStatus.type === "connected";
+
+  // Render connection status indicator
+  const renderStatusIndicator = () => {
+    if (connectionStatus.type === "connecting") {
+      return (
+        <TouchableOpacity
+          onPress={handleStatusPress}
+          activeOpacity={0.7}
+          className="w-5 h-5 items-center justify-center"
+        >
+          <ActivityIndicator size="small" color="#86975A" />
+        </TouchableOpacity>
+      );
+    }
+
+    if (connectionStatus.type === "error") {
+      return (
+        <TouchableOpacity
+          onPress={handleStatusPress}
+          activeOpacity={0.7}
+          className="w-5 h-5 bg-red-500 rounded-full items-center justify-center"
+        >
+          <Text style={{ fontSize: 12, fontWeight: "bold", color: "white" }}>
+            !
+          </Text>
+        </TouchableOpacity>
+      );
+    }
+
+    // Connected - show green dot
+    return (
+      <TouchableOpacity
+        onPress={handleStatusPress}
+        activeOpacity={0.7}
+        className="w-3 h-3 bg-green-500 rounded-full"
+      />
+    );
   };
 
   return (
@@ -72,7 +142,7 @@ const RackItem: React.FC<RackItemProps> = ({ rack }) => {
       onPress={handlePress}
       disabled={isLoading}
       activeOpacity={0.7}
-      className={`bg-white rounded-2xl p-5 shadow-md border border-gray-100 w-full mb-5 ${
+      className={`bg-white rounded-2xl py-6 px-5 shadow-md border border-gray-100 w-full mb-5 ${
         isLoading ? "opacity-70" : ""
       }`}
     >
@@ -94,7 +164,7 @@ const RackItem: React.FC<RackItemProps> = ({ rack }) => {
             <View className="flex-row items-center gap-2 mb-1">
               <Text
                 style={typography["button-bold"]}
-                className=" text-black"
+                className="text-black"
                 numberOfLines={1}
               >
                 {name}
@@ -105,41 +175,53 @@ const RackItem: React.FC<RackItemProps> = ({ rack }) => {
             </View>
             <Text
               style={typography["subheader"]}
-              className=" text-[#73883C]"
+              className="text-[#73883C]"
               numberOfLines={1}
             >
               {plant}
             </Text>
           </View>
         </View>
+
+        {/* Connection Status Indicator */}
+        <View className="ml-2">{renderStatusIndicator()}</View>
       </View>
 
       <View className="flex-row justify-center items-center w-full gap-10">
         <View className="flex-row items-center gap-1.5">
-          <LeafIcon size={18} />
+          <SeedIcon width={15} height={15} />
           <Text style={typography["label-bold"]} className="text-black">
-            {leaves}
+            {seeds}
           </Text>
         </View>
 
         <View className="flex-row items-center gap-1.5">
-          <DropletIcon size={18} />
-          <Text style={typography["label-bold"]} className="text-black">
-            {water.toFixed(2)}
+          <MoistureIcon width={15} height={15} />
+          <Text
+            style={typography["label-bold"]}
+            className={`${isConnected ? "text-black" : "text-gray-400"}`}
+          >
+            {displayData.moisture.toFixed(1)}%
           </Text>
         </View>
 
         <View className="flex-row items-center gap-1.5">
-          <WaveIcon size={18} />
-          <Text style={typography["label-bold"]} className="text-black">
-            {humidity}%
+          <HumidityIcon width={15} height={15} />
+          <Text
+            style={typography["label-bold"]}
+            className={`${isConnected ? "text-black" : "text-gray-400"}`}
+          >
+            {displayData.humidity.toFixed(0)}%
           </Text>
         </View>
 
         <View className="flex-row items-center gap-1.5">
-          <ThermometerIcon size={18} />
-          <Text style={typography["label-bold"]} className="text-black">
-            {temperature}°C
+          <TemperatureIcon width={15} height={15} />
+          <Text
+            style={typography["label-bold"]}
+            className={`${isConnected ? "text-black" : "text-gray-400"}`}
+          >
+            {displayData.temperature.toFixed(1)}°C
           </Text>
         </View>
       </View>

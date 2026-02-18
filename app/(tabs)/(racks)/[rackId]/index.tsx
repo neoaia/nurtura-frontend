@@ -15,7 +15,9 @@ const RackInfo = () => {
   const [showModal, setShowModal] = useState(false);
 
   // temporary hardcoded rack macAddress, will be determined by gelo if macAddress or rackId
-  const { reading, deviceStatus, error } = useRackSensor("AA:BB:CC:DD:EE:FF");
+  const { reading, deviceStatus, error } = useRackSensor(
+    "0d814ddd-3529-4032-893d-80603936f9f6",
+  );
 
   const handleSubmit = (val: number) => {
     console.log("Final Yield:", val);

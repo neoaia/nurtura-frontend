@@ -41,7 +41,7 @@ const AddRackButton: React.FC<AddRackButtonProps> = ({
       onPress={handlePress}
       disabled={isLoading}
       activeOpacity={0.5}
-      className={`w-full bg-[#EDEDED] active:bg-gray-300 rounded-2xl p-11 sm:p-8 ${
+      className={`w-full bg-[#EDEDED] active:bg-gray-300 rounded-2xl px-11 py-12 sm:p-8 ${
         isLoading ? "opacity-60" : ""
       }`}
     >

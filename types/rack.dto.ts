@@ -3,7 +3,7 @@ export interface GetRackInfoDTO {
   name: string;
   plant: string;
   image?: string;
-  leaves: number;
+  seeds: number;
   water: number;
   humidity: number;
   temperature: number;
