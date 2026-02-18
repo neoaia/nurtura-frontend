@@ -31,7 +31,7 @@ export default function ChangePassword1() {
 
   const allFilled = otp.every((digit) => digit !== "");
 
-  const { refetch: sendOtp } = useFetch("/api/auth/otp/email-reset", {
+  const { refetch: sendOtp } = useFetch("/api/auth/otp/password-reset", {
     method: "POST",
     autoFetch: false,
     withAuth: true,
@@ -169,7 +169,7 @@ export default function ChangePassword1() {
         verifyOtp,
         userEmail,
         userCode,
-        "email-reset",
+        "password-reset",
       );
 
       if (!response.success) {

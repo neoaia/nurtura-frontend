@@ -9,13 +9,13 @@ import { useBackWarning } from "@/hooks/shared/useBackWarning";
 import { router } from "expo-router";
 
 export default function AddNewRack3() {
-  const { showModal, handleConfirm, handleCancel } = useBackWarning();
-  const handleNextPress = () => {
-    router.push("/(tabs)/(add_pages)/(addNewRack)/step-4");
-  };
-
   const onChangeText = () => {
     console.log("text changed");
+  };
+  const { showModal, handleConfirm, handleCancel } =
+    useBackWarning(!!onChangeText);
+  const handleNextPress = () => {
+    router.push("/(tabs)/(add_pages)/(addNewRack)/step-4");
   };
 
   return (
