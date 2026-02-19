@@ -1,45 +1,54 @@
-import React, { useState, useEffect } from "react";
-import { 
-  View, 
-  Text, 
-  FlatList, 
-  TouchableOpacity, 
-  ActivityIndicator, 
-  Alert,
-  Platform,
-  PermissionsAndroid 
-} from "react-native";
-import { bleManager } from "@/utils/bluetooth/bleManager"; // FIXED: was 'manager'
-import { router } from "expo-router";
 import { typography } from "@/assets/fonts/Text";
+import { useBackWarning } from "@/hooks/shared/useBackWarning";
+import { bleManager } from "@/utils/bluetooth/bleManager";
+import { router, useFocusEffect } from "expo-router";
+import React, { useCallback, useEffect, useState } from "react";
+import {
+  ActivityIndicator,
+  Alert,
+  FlatList,
+  PermissionsAndroid,
+  Platform,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { State } from "react-native-ble-plx";
 
 const SERVICE_UUID = "4fafc201-1fb5-459e-8fcc-c5c9c331914b";
 
-
 export default function AddNewRack1() {
   const [devices, setDevices] = useState<any[]>([]);
   const [isScanning, setIsScanning] = useState(false);
+  const { showModal, handleConfirm, handleCancel } = useBackWarning(false);
+
+  useFocusEffect(
+    useCallback(() => {
+      handleCancel();
+    }, []),
+  );
 
   const requestPermissions = async () => {
-    if (Platform.OS === 'ios') return true;
-    
-    if (Platform.Version < 31) {
+    if (Platform.OS === "ios") return true;
+
+    if (Number(Platform.Version) < 31) {
       const granted = await PermissionsAndroid.request(
-        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION
+        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
       );
       return granted === PermissionsAndroid.RESULTS.GRANTED;
     }
-    
+
     const result = await PermissionsAndroid.requestMultiple([
       PermissionsAndroid.PERMISSIONS.BLUETOOTH_SCAN,
       PermissionsAndroid.PERMISSIONS.BLUETOOTH_CONNECT,
       PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
     ]);
-    
+
     return (
-      result['android.permission.BLUETOOTH_CONNECT'] === PermissionsAndroid.RESULTS.GRANTED &&
-      result['android.permission.BLUETOOTH_SCAN'] === PermissionsAndroid.RESULTS.GRANTED
+      result["android.permission.BLUETOOTH_CONNECT"] ===
+        PermissionsAndroid.RESULTS.GRANTED &&
+      result["android.permission.BLUETOOTH_SCAN"] ===
+        PermissionsAndroid.RESULTS.GRANTED
     );
   };
 
@@ -52,7 +61,10 @@ export default function AddNewRack1() {
 
     const hasPermission = await requestPermissions();
     if (!hasPermission) {
-      Alert.alert("Permissions Required", "Please grant Bluetooth permissions.");
+      Alert.alert(
+        "Permissions Required",
+        "Please grant Bluetooth permissions.",
+      );
       return;
     }
 
@@ -60,7 +72,7 @@ export default function AddNewRack1() {
     setIsScanning(true);
 
     bleManager.startDeviceScan(
-      [SERVICE_UUID], 
+      [SERVICE_UUID],
       { allowDuplicates: false },
       (error, device) => {
         if (error) {
@@ -68,7 +80,7 @@ export default function AddNewRack1() {
           setIsScanning(false);
           return;
         }
-        
+
         if (device) {
           console.log("Found device:", device.name, device.id);
           setDevices((prev) => {
@@ -76,7 +88,7 @@ export default function AddNewRack1() {
             return [...prev, device];
           });
         }
-      }
+      },
     );
 
     setTimeout(() => {
@@ -91,20 +103,21 @@ export default function AddNewRack1() {
 
     try {
       console.log("Connecting to:", device.id);
-      
+
       const connectedDevice = await bleManager.connectToDevice(device.id);
       await connectedDevice.discoverAllServicesAndCharacteristics();
-      
+
       console.log("Connected successfully!");
-      
+
       Alert.alert("Connected!", "Proceeding to verification...", [
         {
           text: "OK",
-          onPress: () => router.push({
-            pathname: "/(tabs)/(add_pages)/(addNewRack)/step-2",
-            params: { deviceId: device.id }
-          })
-        }
+          onPress: () =>
+            router.push({
+              pathname: "/(tabs)/(add_pages)/(addNewRack)/step-2",
+              params: { deviceId: device.id },
+            }),
+        },
       ]);
     } catch (e: any) {
       console.error("Connection error:", e);
@@ -113,7 +126,9 @@ export default function AddNewRack1() {
   };
 
   useEffect(() => {
-    return () => bleManager.stopDeviceScan();
+    return () => {
+      bleManager.stopDeviceScan().catch(() => {});
+    };
   }, []);
 
   return (
@@ -124,7 +139,7 @@ export default function AddNewRack1() {
       <Text style={typography["subheader"]} className="mb-6">
         Select your Nurtura Rack from the list below.
       </Text>
-      
+
       {isScanning && (
         <View className="items-center mb-4">
           <ActivityIndicator size="small" color="#10b981" />
@@ -170,7 +185,11 @@ export default function AddNewRack1() {
         }`}
       >
         <Text className="text-white font-bold">
-          {isScanning ? "Scanning..." : devices.length > 0 ? "Scan Again" : "Search for Racks"}
+          {isScanning
+            ? "Scanning..."
+            : devices.length > 0
+              ? "Scan Again"
+              : "Search for Racks"}
         </Text>
       </TouchableOpacity>
     </View>

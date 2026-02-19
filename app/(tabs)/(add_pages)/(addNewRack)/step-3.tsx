@@ -1,14 +1,24 @@
-import React, { useState, useRef } from "react";
-import { View, Text, ScrollView, Alert, ActivityIndicator, TouchableOpacity } from "react-native";
+import { ConfirmationModal } from "@/components/modals/confirmationModal";
 import { TextInputField } from "@/components/shared/textInputField";
-import { router, useLocalSearchParams } from "expo-router";
 import { bleManager } from "@/utils/bluetooth/bleManager";
 import { Buffer } from "buffer";
+import { router, useLocalSearchParams } from "expo-router";
+import React, { useRef, useState } from "react";
+import {
+  ActivityIndicator,
+  Alert,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { useBackWarning } from "../../../../hooks/shared/useBackWarning";
 
 const SERVICE_UUID = "4fafc201-1fb5-459e-8fcc-c5c9c331914b";
 const SSID_CHAR_UUID = "beb5483e-36e1-4688-b7f5-ea07361b26a8";
 const PASSWORD_CHAR_UUID = "1c95d5e3-d8f7-413a-bf3d-7a2e5d7be87e";
 const STATUS_CHAR_UUID = "9a8ca5e3-d8f7-413a-bf3d-7a2e5d7be123";
+const MONITOR_TRANSACTION_ID = "wifi-status-monitor";
 
 export default function AddNewRack3() {
   const { deviceId } = useLocalSearchParams();
@@ -16,7 +26,19 @@ export default function AddNewRack3() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const isProcessed = useRef(false);
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const subscriptionRef = useRef<any>(null);
+
+  const isDirty = !!ssid || !!password;
+  const { showModal, handleConfirm, handleCancel } = useBackWarning(isDirty);
+
+  const cancelMonitor = () => {
+    // Do NOT call cancelTransaction — it triggers a null error code crash on Android
+    // Just null the ref so further callbacks are ignored
+    if (subscriptionRef.current) {
+      subscriptionRef.current = null;
+    }
+  };
 
   const handleConnect = async () => {
     if (!deviceId) {
@@ -25,24 +47,30 @@ export default function AddNewRack3() {
     }
 
     if (!ssid.trim() || !password.trim()) {
-      Alert.alert("Input Required", "Please enter both WiFi name and password.");
+      Alert.alert(
+        "Input Required",
+        "Please enter both WiFi name and password.",
+      );
       return;
     }
 
     setLoading(true);
     isProcessed.current = false;
-    let subscription: any = null;
 
     try {
       console.log("Step 1: Starting to monitor status characteristic...");
 
-      subscription = bleManager.monitorCharacteristicForDevice(
+      subscriptionRef.current = bleManager.monitorCharacteristicForDevice(
         deviceId as string,
         SERVICE_UUID,
         STATUS_CHAR_UUID,
         async (error, char) => {
+          // If already cleaned up, ignore all further callbacks
+          if (!subscriptionRef.current) return;
+
           if (error) {
             console.log("Monitor error:", error.message);
+            return;
           }
 
           if (!char || !char.value) {
@@ -54,24 +82,22 @@ export default function AddNewRack3() {
             const status = Buffer.from(char.value, "base64").toString().trim();
             console.log(">>> Received status from ESP32:", status);
 
-            if ((status === "connected" || status === "failed") && !isProcessed.current) {
+            if (
+              (status === "connected" || status === "failed") &&
+              !isProcessed.current
+            ) {
               isProcessed.current = true;
+              subscriptionRef.current = null; // stop processing further callbacks
 
               if (timeoutRef.current) {
                 clearTimeout(timeoutRef.current);
                 timeoutRef.current = null;
               }
 
-              if (subscription) {
-                subscription.remove();
-                subscription = null;
-              }
-
               setLoading(false);
 
               if (status === "connected") {
                 console.log("WiFi connection SUCCESS!");
-
                 Alert.alert("Success!", "Rack connected to WiFi!", [
                   {
                     text: "Continue",
@@ -82,20 +108,19 @@ export default function AddNewRack3() {
                       }),
                   },
                 ]);
-                
               } else if (status === "failed") {
                 console.log("WiFi connection FAILED");
-                
                 Alert.alert(
                   "Connection Failed",
-                  "Could not connect to WiFi. Please check:\n\n• WiFi name is correct\n• Password is correct\n• Network is 2.4GHz (not 5GHz)\n\nYou can try again."
+                  "Could not connect to WiFi. Please check:\n\n• WiFi name is correct\n• Password is correct\n• Network is 2.4GHz (not 5GHz)\n\nYou can try again.",
                 );
               }
             }
           } catch (parseError) {
             console.error("Error parsing status:", parseError);
           }
-        }
+        },
+        MONITOR_TRANSACTION_ID,
       );
 
       console.log("Step 2: Waiting for monitor to be ready...");
@@ -107,7 +132,7 @@ export default function AddNewRack3() {
         deviceId as string,
         SERVICE_UUID,
         SSID_CHAR_UUID,
-        ssidBase64
+        ssidBase64,
       );
 
       console.log("Step 4: Waiting before sending password...");
@@ -119,47 +144,42 @@ export default function AddNewRack3() {
         deviceId as string,
         SERVICE_UUID,
         PASSWORD_CHAR_UUID,
-        passwordBase64
+        passwordBase64,
       );
 
-      console.log("Step 6: Credentials sent! Waiting for ESP32 to test WiFi...");
+      console.log(
+        "Step 6: Credentials sent! Waiting for ESP32 to test WiFi...",
+      );
 
       timeoutRef.current = setTimeout(() => {
         if (!isProcessed.current) {
           console.log("TIMEOUT: ESP32 didn't respond");
           isProcessed.current = true;
           setLoading(false);
-          if (subscription) subscription.remove();
-          
+          cancelMonitor();
           Alert.alert(
             "Connection Timeout",
-            "The rack took too long to respond. The network may be unavailable or credentials are incorrect."
+            "The rack took too long to respond. The network may be unavailable or credentials are incorrect.",
           );
         }
       }, 45000);
-
     } catch (e: any) {
       console.error("Bluetooth error:", e);
       setLoading(false);
       isProcessed.current = true;
-      
+
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
         timeoutRef.current = null;
       }
-      
-      if (subscription) subscription.remove();
-      
+
+      cancelMonitor();
+
       Alert.alert(
         "Bluetooth Error",
-        "Could not communicate with rack. Make sure it's still connected."
+        "Could not communicate with rack. Make sure it's still connected.",
       );
     }
-  };
-  const { showModal, handleConfirm, handleCancel } =
-    useBackWarning(!!onChangeText);
-  const handleNextPress = () => {
-    router.push("/(tabs)/(add_pages)/(addNewRack)/step-4");
   };
 
   return (
@@ -175,13 +195,12 @@ export default function AddNewRack3() {
           editable={!loading}
         />
 
-        <View className="h-4" />
-
         <TextInputField
           label="WiFi Password"
           onChangeText={setPassword}
           value={password}
-          secureTextEntry
+          secureTextEntry={true}
+          autoCapitalize="none"
           editable={!loading}
         />
 
@@ -201,13 +220,27 @@ export default function AddNewRack3() {
           {loading ? (
             <View className="flex-row items-center">
               <ActivityIndicator color="white" />
-              <Text className="text-white font-bold text-lg ml-2">Connecting...</Text>
+              <Text className="text-white font-bold text-lg ml-2">
+                Connecting...
+              </Text>
             </View>
           ) : (
-            <Text className="text-white font-bold text-lg">Send Credentials</Text>
+            <Text className="text-white font-bold text-lg">
+              Send Credentials
+            </Text>
           )}
         </TouchableOpacity>
       </ScrollView>
+
+      <ConfirmationModal
+        isVisible={showModal}
+        onConfirm={handleConfirm}
+        title="Go Back"
+        message="Your WiFi credentials will be lost."
+        confirmText="Continue"
+        cancelText="Cancel"
+        onCancel={handleCancel}
+      />
     </View>
   );
 }

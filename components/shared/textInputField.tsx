@@ -8,6 +8,8 @@ interface TextInputFieldProps {
   placeholder?: string;
   width?: string;
   editable: boolean;
+  secureTextEntry?: boolean;
+  autoCapitalize?: "none" | "sentences" | "words" | "characters";
 }
 
 export const TextInputField = ({
@@ -17,6 +19,8 @@ export const TextInputField = ({
   placeholder,
   width = "w-[100%]",
   editable = true,
+  secureTextEntry = false,
+  autoCapitalize = "sentences",
 }: TextInputFieldProps) => {
   return (
     <View
@@ -32,6 +36,8 @@ export const TextInputField = ({
         onChangeText={onChangeText}
         placeholder={placeholder}
         editable={editable}
+        secureTextEntry={secureTextEntry}
+        autoCapitalize={autoCapitalize}
       />
     </View>
   );

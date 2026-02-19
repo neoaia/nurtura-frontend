@@ -1,30 +1,20 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
-    AddRackRequestDTO,
-    AddRackResponseDTO,
-    DashboardResponseDTO,
-    NotificationsResponseDTO,
+  AddRackRequestDTO,
+  AddRackResponseDTO,
+  DashboardResponseDTO,
+  NotificationsResponseDTO,
 } from "../types/home.dto";
+import useFetch from "./useFetch";
 
-const apiUrl = process.env.EXPO_PUBLIC_API_URL || "http://localhost:3000";
-
-// Mock data
 const mockApiResponse: DashboardResponseDTO = {
   user: {
     name: "Juan",
     hasNotifications: true,
   },
   summary: [
-    {
-      id: "racks",
-      type: "racks",
-      value: 2,
-    },
-    {
-      id: "plants",
-      type: "plants",
-      value: 2,
-    },
+    { id: "racks", type: "racks", value: null },
+    { id: "plants", type: "plants", value: null },
   ],
   highlight: {
     title: "Farm Efficiently",
@@ -63,15 +53,54 @@ export const useHome = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchDashboard = async () => {
+  const { refetch: fetchRacks } = useFetch("/api/racks", {
+    method: "GET",
+    autoFetch: false,
+    withAuth: true,
+  });
+
+  const { refetch: fetchPlants } = useFetch("/api/plants", {
+    method: "GET",
+    autoFetch: false,
+    withAuth: true,
+  });
+
+  const { refetch: addRackRequest } = useFetch("/api/racks", {
+    method: "POST",
+    autoFetch: false,
+    withAuth: true,
+  });
+
+  const fetchDashboard = useCallback(async () => {
     setLoading(true);
     setError(null);
-    try {
-      //backend
 
-      // Mock API call
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      setData(mockApiResponse);
+    try {
+      const [racksResult, plantsResult] = await Promise.all([
+        fetchRacks(),
+        fetchPlants(),
+      ]);
+
+      console.log("Racks result:", racksResult);
+      console.log("Plants result:", plantsResult);
+
+      // Adjust these field names based on what your API actually returns
+      const racksCount =
+        racksResult?.data?.racks?.length ??
+        racksResult?.data?.data?.length ??
+        0;
+      const plantsCount =
+        plantsResult?.data?.plants?.length ??
+        plantsResult?.data?.data?.length ??
+        0;
+
+      setData((prev) => ({
+        ...prev,
+        summary: [
+          { id: "racks", type: "racks", value: racksCount },
+          { id: "plants", type: "plants", value: plantsCount },
+        ],
+      }));
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : "An error occurred";
@@ -80,16 +109,22 @@ export const useHome = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [fetchRacks, fetchPlants]);
 
   const addRack = async (
     rackData: AddRackRequestDTO,
   ): Promise<AddRackResponseDTO> => {
     try {
-      //backend
+      const { data, error } = await addRackRequest({ body: rackData });
 
-      console.log("Adding rack:", rackData);
-      await fetchDashboard(); // Refresh data
+      if (error || !data) {
+        return {
+          success: false,
+          message: error?.message || "Failed to add rack",
+        };
+      }
+
+      await fetchDashboard(); // refresh counts
       return { success: true, message: "Rack added successfully" };
     } catch (err) {
       console.error("Error adding rack:", err);
@@ -99,12 +134,7 @@ export const useHome = () => {
 
   const getNotifications = async (): Promise<NotificationsResponseDTO> => {
     try {
-      //backend
-
-      return {
-        notifications: [],
-        unreadCount: 0,
-      };
+      return { notifications: [], unreadCount: 0 };
     } catch (err) {
       console.error("Error fetching notifications:", err);
       throw err;
