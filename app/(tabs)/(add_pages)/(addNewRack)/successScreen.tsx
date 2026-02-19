@@ -1,6 +1,7 @@
 import { typography } from "@/assets/fonts/Text";
 import { ColoredButton } from "@/components/shared/coloredButton";
 import { HollowButton } from "@/components/shared/hollowButton";
+import { bleManager } from "@/utils/bluetooth/bleManager";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React from "react";
 import { Image, Text, View } from "react-native";
@@ -14,10 +15,28 @@ export default function SuccessPage() {
     finishTitle?: string;
     addAnotherTitle?: string;
     type?: "other" | "plant" | "rack";
+    deviceId?: string;
   }>();
 
-  const handleFinish = () => {
-    router.replace("/(tabs)/(home)");
+  const handleFinish = async () => {
+    const isMultiStep = params.type === "plant" || params.type === "rack";
+
+    if (isMultiStep) {
+      if (params.deviceId) {
+        try {
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          await bleManager.cancelDeviceConnection(params.deviceId);
+          console.log("Disconnected from rack");
+        } catch (e) {
+          console.log("Disconnect error (expected):", e);
+        }
+      }
+
+      router.dismissAll();
+      router.replace("/(tabs)/(home)");
+    } else {
+      router.back();
+    }
   };
 
   const handleAddAnother = () => {
