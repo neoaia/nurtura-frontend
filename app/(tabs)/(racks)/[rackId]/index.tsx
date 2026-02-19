@@ -96,10 +96,10 @@ const RackInfo = () => {
           <View className="w-full flex-row justify-between items-start mb-6">
             <View className="flex-1 pl-2">
               <Text style={typography["h1-bold"]} className="text-black">
-                {rackData?.name || "Rack"}
+                Lettuce
               </Text>
               <Text style={typography["subheader"]} className="text-grayText">
-                {rackData?.description || "No description"}
+                Leafy Greens
               </Text>
             </View>
             <View className="items-end pr-2">

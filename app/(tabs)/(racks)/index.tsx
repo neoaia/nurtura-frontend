@@ -94,15 +94,24 @@ export default function RacksScreen() {
     router.push("/(tabs)/(add_pages)/(addNewRack)");
   }, []);
 
+  const handlePreviouslyOwned = useCallback(() => {
+    router.push("/(tabs)/(racks)/previously-owned");
+  }, []);
+
   const renderHeader = useCallback(
     () => (
-      <View className="flex justify-start items-start w-full mb-2 mt-8 pl-3">
+      <View className="flex flex-row justify-between items-center w-full mb-2 mt-8 pl-3">
         <Text
           style={typography["title-bold"]}
           className="text-black text-5xl mb-[20px]"
         >
           Racks
         </Text>
+        <TouchableOpacity onPress={handlePreviouslyOwned}>
+          <Text style={typography["button"]} className="text-primary">
+            Previously Owned
+          </Text>
+        </TouchableOpacity>
       </View>
     ),
     [],
