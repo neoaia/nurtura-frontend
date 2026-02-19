@@ -36,10 +36,6 @@ export default function AddNewRack3() {
     try {
       console.log("Step 1: Starting to monitor status characteristic...");
 
-      // ═══════════════════════════════════════════════════════════
-      //  CRITICAL: Start monitoring FIRST, before sending anything
-      // ═══════════════════════════════════════════════════════════
-      
       subscription = bleManager.monitorCharacteristicForDevice(
         deviceId as string,
         SERVICE_UUID,
@@ -47,7 +43,6 @@ export default function AddNewRack3() {
         async (error, char) => {
           if (error) {
             console.log("Monitor error:", error.message);
-            // Don't return here - we might still get valid data
           }
 
           if (!char || !char.value) {
@@ -62,13 +57,11 @@ export default function AddNewRack3() {
             if ((status === "connected" || status === "failed") && !isProcessed.current) {
               isProcessed.current = true;
 
-              // Clear timeout
               if (timeoutRef.current) {
                 clearTimeout(timeoutRef.current);
                 timeoutRef.current = null;
               }
 
-              // Stop monitoring
               if (subscription) {
                 subscription.remove();
                 subscription = null;
@@ -78,17 +71,6 @@ export default function AddNewRack3() {
 
               if (status === "connected") {
                 console.log("WiFi connection SUCCESS!");
-                
-                // Wait a moment before disconnecting to ensure ESP32 gets the ACK
-                await new Promise(resolve => setTimeout(resolve, 1000));
-                
-                // Disconnect from device
-                try {
-                  await bleManager.cancelDeviceConnection(deviceId as string);
-                  console.log("Disconnected from rack");
-                } catch (e) {
-                  console.log("Disconnect error (expected):", e);
-                }
 
                 Alert.alert("Success!", "Rack connected to WiFi!", [
                   {
@@ -116,13 +98,8 @@ export default function AddNewRack3() {
         }
       );
 
-      // Wait a moment for monitor to be fully set up
       console.log("Step 2: Waiting for monitor to be ready...");
       await new Promise((resolve) => setTimeout(resolve, 500));
-
-      // ═══════════════════════════════════════════════════════════
-      //  NOW send credentials (monitor is already listening)
-      // ═══════════════════════════════════════════════════════════
 
       console.log("Step 3: Sending SSID...");
       const ssidBase64 = Buffer.from(ssid).toString("base64");
@@ -147,7 +124,6 @@ export default function AddNewRack3() {
 
       console.log("Step 6: Credentials sent! Waiting for ESP32 to test WiFi...");
 
-      // Timeout after 45 seconds
       timeoutRef.current = setTimeout(() => {
         if (!isProcessed.current) {
           console.log("TIMEOUT: ESP32 didn't respond");
