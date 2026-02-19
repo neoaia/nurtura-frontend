@@ -13,7 +13,8 @@ import {
 import { useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { useEffect, useState } from "react";
-import { Alert, ScrollView, Text, View } from "react-native";
+import { Alert, Text, View } from "react-native";
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 
 const USER_INFO_STORAGE_KEY = "temp_user_info";
 const SSO_INFO_STORAGE_KEY = "sso_temp_user_info";
@@ -256,10 +257,14 @@ const CreateUserInfo = () => {
 
   return (
     <View className="flex-1 bg-white">
-      <ScrollView
+      <KeyboardAwareScrollView
         className="flex-1"
         contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 34 }}
         showsVerticalScrollIndicator={false}
+        extraScrollHeight={100} 
+        enableOnAndroid={true} 
+        extraHeight={135}
+        keyboardShouldPersistTaps="handled"
       >
         <Text style={typography["h1-bold"]} className="text-black mb-3 pl-2">
           Let us know you!
@@ -354,7 +359,7 @@ const CreateUserInfo = () => {
             </View>
           </View>
         </View>
-      </ScrollView>
+      </KeyboardAwareScrollView>
 
       <View className="px-4 pb-8 pt-4 bg-white border-t border-gray-100">
         <PrimaryButton
