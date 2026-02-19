@@ -1,139 +1,177 @@
-import React, { useState, useEffect, useRef } from "react";
-import { Image, ScrollView, Text, View, Alert, Linking, Platform, PermissionsAndroid, TouchableOpacity, ActivityIndicator } from "react-native";
-import { State, Device } from "react-native-ble-plx";
-import { typography } from "@/assets/fonts/Text";
-import { PrimaryButton } from "@/components/shared/primaryButton";
+import React, { useState, useEffect } from "react";
+import { 
+  View, 
+  Text, 
+  FlatList, 
+  TouchableOpacity, 
+  ActivityIndicator, 
+  Alert,
+  Platform,
+  PermissionsAndroid 
+} from "react-native";
+import { bleManager } from "@/utils/bluetooth/bleManager"; // FIXED: was 'manager'
 import { router } from "expo-router";
-// Correct named import
-import { manager } from "@/utils/bluetooth/bleManager"; 
+import { typography } from "@/assets/fonts/Text";
+import { State } from "react-native-ble-plx";
 
 const SERVICE_UUID = "4fafc201-1fb5-459e-8fcc-c5c9c331914b";
 
 export default function AddNewRack1() {
+  const [devices, setDevices] = useState<any[]>([]);
   const [isScanning, setIsScanning] = useState(false);
-  const [status, setStatus] = useState("Ready");
-  const [discoveredDevices, setDiscoveredDevices] = useState<Device[]>([]);
-  
-  const scanTimeout = useRef<NodeJS.Timeout | null>(null);
-  const isScanningRef = useRef(false);
 
-  useEffect(() => {
-    const subscription = manager.onStateChange((state) => {
-      if (state === State.PoweredOff) setStatus("Bluetooth is off");
-      else if (state === State.PoweredOn) setStatus("Ready");
-    }, true);
-
-    return () => {
-      subscription.remove();
-      stopScan();
-    };
-  }, []);
-
-  const requestAndroidPermissions = async () => {
+  const requestPermissions = async () => {
     if (Platform.OS === 'ios') return true;
-    const apiLevel = parseInt(Platform.Version.toString(), 10);
-    if (apiLevel < 31) {
-      const granted = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION);
+    
+    if (Platform.Version < 31) {
+      const granted = await PermissionsAndroid.request(
+        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION
+      );
       return granted === PermissionsAndroid.RESULTS.GRANTED;
     }
+    
     const result = await PermissionsAndroid.requestMultiple([
       PermissionsAndroid.PERMISSIONS.BLUETOOTH_SCAN,
       PermissionsAndroid.PERMISSIONS.BLUETOOTH_CONNECT,
       PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
     ]);
-    return result['android.permission.BLUETOOTH_CONNECT'] === PermissionsAndroid.RESULTS.GRANTED;
-  };
-
-  const stopScan = (finalStatus?: string) => {
-    manager.stopDeviceScan();
-    setIsScanning(false);
-    isScanningRef.current = false;
-    if (scanTimeout.current) {
-      clearTimeout(scanTimeout.current);
-      scanTimeout.current = null;
-    }
-    setStatus(typeof finalStatus === 'string' ? finalStatus : "Ready");
+    
+    return (
+      result['android.permission.BLUETOOTH_CONNECT'] === PermissionsAndroid.RESULTS.GRANTED &&
+      result['android.permission.BLUETOOTH_SCAN'] === PermissionsAndroid.RESULTS.GRANTED
+    );
   };
 
   const startScan = async () => {
-    const state = await manager.state();
+    const state = await bleManager.state();
     if (state !== State.PoweredOn) {
-      Alert.alert("Bluetooth Off", "Enable Bluetooth to find your Rack.", [
-        { text: "Settings", onPress: () => Linking.openSettings() },
-        { text: "Cancel", style: "cancel" }
-      ]);
+      Alert.alert("Bluetooth Off", "Please turn on Bluetooth.");
       return;
     }
 
-    const hasPermission = await requestAndroidPermissions();
+    const hasPermission = await requestPermissions();
     if (!hasPermission) {
-      setStatus("Permissions denied");
+      Alert.alert("Permissions Required", "Please grant Bluetooth permissions.");
       return;
     }
 
-    setDiscoveredDevices([]); 
+    setDevices([]);
     setIsScanning(true);
-    isScanningRef.current = true;
-    setStatus("Scanning...");
 
-    scanTimeout.current = setTimeout(() => {
-      if (isScanningRef.current) stopScan("Scan complete");
+    bleManager.startDeviceScan(
+      [SERVICE_UUID], 
+      { allowDuplicates: false },
+      (error, device) => {
+        if (error) {
+          console.error("Scan error:", error);
+          setIsScanning(false);
+          return;
+        }
+        
+        if (device) {
+          console.log("Found device:", device.name, device.id);
+          setDevices((prev) => {
+            if (prev.some((d) => d.id === device.id)) return prev;
+            return [...prev, device];
+          });
+        }
+      }
+    );
+
+    setTimeout(() => {
+      bleManager.stopDeviceScan();
+      setIsScanning(false);
     }, 15000);
-
-    manager.startDeviceScan([SERVICE_UUID], null, (error, device) => {
-      if (error) {
-        stopScan("Scan error");
-        return;
-      }
-
-      if (device) {
-        setDiscoveredDevices((prev) => {
-          if (prev.find((d) => d.id === device.id)) return prev;
-          return [...prev, device];
-        });
-      }
-    });
   };
 
-  const connectToDevice = async (device: Device) => {
-    stopScan("Connecting...");
+  const connectToDevice = async (device: any) => {
+    bleManager.stopDeviceScan();
+    setIsScanning(false);
+
     try {
-      // Connect and discover services immediately
-      const connectedDevice = await manager.connectToDevice(device.id);
+      console.log("Connecting to:", device.id);
+      
+      const connectedDevice = await bleManager.connectToDevice(device.id);
       await connectedDevice.discoverAllServicesAndCharacteristics();
       
-      Alert.alert("Connected!", "Rack found and paired.", [
-        { text: "Verify Rack", onPress: () => router.push({
+      console.log("Connected successfully!");
+      
+      Alert.alert("Connected!", "Proceeding to verification...", [
+        {
+          text: "OK",
+          onPress: () => router.push({
             pathname: "/(tabs)/(add_pages)/(addNewRack)/step-2",
             params: { deviceId: device.id }
-        })}
+          })
+        }
       ]);
-    } catch (e) {
-      console.error("Connection Error:", e);
-      setStatus("Failed to connect");
+    } catch (e: any) {
+      console.error("Connection error:", e);
+      Alert.alert("Error", "Could not connect to Rack. Try again.");
     }
   };
 
+  useEffect(() => {
+    return () => bleManager.stopDeviceScan();
+  }, []);
+
   return (
-    <View className="flex-1 bg-white">
-      <ScrollView className="flex-1 px-4" showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingTop: 34 }}>
-        <View className="mb-9 items-center">
-          <Image source={require("@/assets/images/add-new-rack/plant-rack.png")} className="w-40 h-40" />
+    <View className="flex-1 bg-white p-6">
+      <Text style={typography["h1-bold"]} className="mt-10 mb-2">
+        Find your Rack
+      </Text>
+      <Text style={typography["subheader"]} className="mb-6">
+        Select your Nurtura Rack from the list below.
+      </Text>
+      
+      {isScanning && (
+        <View className="items-center mb-4">
+          <ActivityIndicator size="small" color="#10b981" />
+          <Text className="text-gray-500 mt-2">Scanning...</Text>
         </View>
-        <Text style={typography["h1-bold"]} className="text-black mb-3">Connect to Nurtura</Text>
-        <Text style={typography["subheader"]} className="mb-6 text-black">Status: <Text className="font-bold text-primary">{status}</Text></Text>
-        
-        <View className="mb-6">
-          {discoveredDevices.map((device) => (
-            <TouchableOpacity key={device.id} onPress={() => connectToDevice(device)} className="p-5 mb-3 bg-gray-50 rounded-2xl border border-gray-100 flex-row justify-between items-center">
-               <Text className="font-bold text-black text-lg">{device.name || "NURTURA_V4"}</Text>
-               <View className="bg-primary px-4 py-2 rounded-full"><Text className="text-white font-bold text-xs">CONNECT</Text></View>
-            </TouchableOpacity>
-          ))}
-        </View>
-        {!isScanning && <PrimaryButton title="Search for Racks" onPress={startScan} />}
-        {isScanning && <ActivityIndicator size="large" color="#10b981" />}
-      </ScrollView>
+      )}
+
+      <FlatList
+        data={devices}
+        keyExtractor={(item) => item.id}
+        ListEmptyComponent={
+          !isScanning ? (
+            <View className="p-8 bg-gray-50 rounded-2xl border border-dashed border-gray-200 items-center">
+              <Text className="text-gray-400 italic text-center">
+                No racks found.{"\n"}Make sure your rack is powered on.
+              </Text>
+            </View>
+          ) : null
+        }
+        renderItem={({ item }) => (
+          <TouchableOpacity
+            onPress={() => connectToDevice(item)}
+            className="p-5 bg-gray-50 mb-3 rounded-2xl border border-gray-100 flex-row justify-between items-center"
+          >
+            <View>
+              <Text className="font-bold text-lg">
+                {item.name || "Nurtura Rack"}
+              </Text>
+              <Text className="text-gray-400 text-xs">{item.id}</Text>
+            </View>
+            <View className="bg-primary px-3 py-1 rounded-full">
+              <Text className="text-white text-xs font-bold">Connect</Text>
+            </View>
+          </TouchableOpacity>
+        )}
+      />
+
+      <TouchableOpacity
+        onPress={startScan}
+        disabled={isScanning}
+        className={`p-4 rounded-2xl items-center mt-4 ${
+          isScanning ? "bg-gray-200" : "bg-primary"
+        }`}
+      >
+        <Text className="text-white font-bold">
+          {isScanning ? "Scanning..." : devices.length > 0 ? "Scan Again" : "Search for Racks"}
+        </Text>
+      </TouchableOpacity>
     </View>
   );
 }

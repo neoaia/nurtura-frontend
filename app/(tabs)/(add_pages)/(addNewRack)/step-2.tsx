@@ -1,14 +1,22 @@
-import React, { useState, useEffect, useRef } from "react";
-import { Image, ScrollView, Text, View, StyleSheet, Alert, TouchableOpacity, ActivityIndicator } from "react-native";
+import React, { useState } from "react";
+import { 
+  Image, 
+  ScrollView, 
+  Text, 
+  View, 
+  StyleSheet, 
+  Alert, 
+  TouchableOpacity, 
+  ActivityIndicator 
+} from "react-native";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { typography } from "@/assets/fonts/Text";
 import { router, useLocalSearchParams } from "expo-router";
 import { Buffer } from "buffer";
-import { manager } from "@/utils/bluetooth/bleManager"; 
-import { Subscription } from "react-native-ble-plx";
+import { bleManager } from "@/utils/bluetooth/bleManager"; // FIXED: was 'manager'
 
-const SERVICE_UUID = "4fafc201-1fb5-459e-8fcc-c5c9c331914b".toLowerCase();
-const VERIFY_CHARACTERISTIC_UUID = "beb5483e-36e1-4688-b7f5-ea07361b26a9".toLowerCase();
+const SERVICE_UUID = "4fafc201-1fb5-459e-8fcc-c5c9c331914b";
+const DEVICE_ID_CHAR_UUID = "abc12345-1234-5678-1234-56789abcdef0";
 
 export default function AddNewRack2() {
   const { deviceId } = useLocalSearchParams();
@@ -16,84 +24,68 @@ export default function AddNewRack2() {
   const [scanning, setScanning] = useState(false);
   const [verifying, setVerifying] = useState(false);
 
-  // 1. Ref to track the monitor subscription
-  const monitorRef = useRef<Subscription | null>(null);
+  const verifyWithESP32 = async (qrData: string) => {
+    if (!deviceId) {
+      Alert.alert("Error", "No device connected. Go back to Step 1.");
+      return;
+    }
 
-  // 2. Cleanup on screen exit
-  useEffect(() => {
-    return () => {
-      if (monitorRef.current) {
-        monitorRef.current.remove();
-        monitorRef.current = null;
-      }
-    };
-  }, []);
-
-  const verifyWithESP32 = async (macFromQR: string) => {
-    if (!deviceId) return;
     setVerifying(true);
 
     try {
-      // Clear any existing monitor before starting a new one
-      if (monitorRef.current) {
-        monitorRef.current.remove();
-      }
-
-      const isConnected = await manager.isDeviceConnected(deviceId as string);
+      // Check if still connected
+      const isConnected = await bleManager.isDeviceConnected(deviceId as string);
       if (!isConnected) {
-        await manager.connectToDevice(deviceId as string);
-        await manager.discoverAllServicesAndCharacteristicsForDevice(deviceId as string);
+        console.log("Device disconnected, reconnecting...");
+        await bleManager.connectToDevice(deviceId as string);
+        await bleManager.discoverAllServicesAndCharacteristicsForDevice(deviceId as string);
       }
 
-      const base64Data = Buffer.from(macFromQR.toUpperCase().trim()).toString("base64");
-
-      // 3. START MONITOR (Capture the subscription)
-      monitorRef.current = manager.monitorCharacteristicForDevice(
+      // Read the MAC address from ESP32
+      const characteristic = await bleManager.readCharacteristicForDevice(
         deviceId as string,
         SERVICE_UUID,
-        VERIFY_CHARACTERISTIC_UUID,
-        (error, characteristic) => {
-          if (error) {
-            // Error code 2 is "Operation cancelled", which we expect when we .remove()
-            if (error.errorCode !== 2) {
-              console.log("Monitor Error:", error.message);
-              setVerifying(false);
-            }
-            return;
-          }
-
-          const response = Buffer.from(characteristic?.value ?? "", "base64").toString();
-          if (response === "VERIFIED") {
-            // 4. Success cleanup: stop monitoring
-            if (monitorRef.current) {
-              monitorRef.current.remove();
-              monitorRef.current = null;
-            }
-            
-            setVerifying(false);
-            Alert.alert("Verified!", "Rack identity confirmed!", [
-              { text: "Continue", onPress: () => router.push({
-                  pathname: "/(tabs)/(add_pages)/(addNewRack)/step-3",
-                  params: { deviceId }
-                }) 
-              }
-            ]);
-          }
-        }
+        DEVICE_ID_CHAR_UUID
       );
 
-      // 5. WRITE WITHOUT RESPONSE (More stable for Android)
-      await manager.writeCharacteristicWithoutResponseForDevice(
-        deviceId as string,
-        SERVICE_UUID,
-        VERIFY_CHARACTERISTIC_UUID,
-        base64Data
-      );
+      if (!characteristic?.value) {
+        throw new Error("Could not read device ID from rack");
+      }
 
+      // Decode the MAC address
+      const deviceMAC = Buffer.from(characteristic.value, "base64").toString().trim();
+      const scannedMAC = qrData.trim();
+
+      console.log("ESP32 MAC:", deviceMAC);
+      console.log("QR MAC:", scannedMAC);
+
+      // Compare (case-insensitive)
+      if (scannedMAC.toLowerCase() === deviceMAC.toLowerCase()) {
+        setVerifying(false);
+        Alert.alert("Verified!", "Rack identity confirmed!", [
+          {
+            text: "Continue",
+            onPress: () =>
+              router.push({
+                pathname: "/(tabs)/(add_pages)/(addNewRack)/step-3",
+                params: { deviceId },
+              }),
+          },
+        ]);
+      } else {
+        setVerifying(false);
+        Alert.alert(
+          "Verification Failed",
+          `QR code doesn't match this rack.\n\nScanned: ${scannedMAC}\nDevice: ${deviceMAC}`
+        );
+      }
     } catch (error: any) {
       setVerifying(false);
-      console.error("Write Error:", error);
-      Alert.alert("Connection Issue", "Make sure you are still near the rack.");
+      console.error("Verification error:", error);
+      Alert.alert(
+        "Verification Error",
+        "Could not verify device. Make sure the rack is still connected."
+      );
     }
   };
 
@@ -106,27 +98,49 @@ export default function AddNewRack2() {
 
   return (
     <View className="flex-1 bg-white">
+      {/* Verification Overlay */}
       {verifying && (
-        <View style={StyleSheet.absoluteFill} className="z-50 bg-black/70 items-center justify-center">
+        <View
+          style={StyleSheet.absoluteFill}
+          className="z-50 bg-black/70 items-center justify-center"
+        >
           <ActivityIndicator size="large" color="#10b981" />
-          <Text className="text-white mt-4 font-bold">Verifying Rack Identity...</Text>
+          <Text className="text-white mt-4 font-bold">
+            Verifying Rack Identity...
+          </Text>
         </View>
       )}
 
       {!scanning ? (
-        <ScrollView className="flex-1 px-4" contentContainerStyle={{ paddingTop: 34 }}>
+        <ScrollView
+          className="flex-1 px-4"
+          contentContainerStyle={{ paddingTop: 34 }}
+        >
           <View className="mb-9 items-center">
-            <Image source={require("@/assets/images/add-new-rack/plant-rack.png")} className="w-40 h-40" />
+            <Image
+              source={require("@/assets/images/add-new-rack/plant-rack.png")}
+              className="w-40 h-40"
+            />
           </View>
-          <Text style={typography["h1-bold"]} className="text-black mb-3">Verify connection</Text>
-          <TouchableOpacity 
+
+          <Text style={typography["h1-bold"]} className="text-black mb-3">
+            Verify Connection
+          </Text>
+          <Text style={typography["subheader"]} className="text-gray-500 mb-6">
+            Scan the QR code on your Nurtura Rack to verify its identity.
+          </Text>
+
+          <TouchableOpacity
             onPress={async () => {
-              if (!permission.granted) await requestPermission();
+              if (!permission.granted) {
+                const res = await requestPermission();
+                if (!res.granted) return;
+              }
               setScanning(true);
-            }} 
-            className="bg-primary p-4 rounded-2xl items-center"
+            }}
+            className="bg-primary p-4 rounded-2xl items-center shadow-sm"
           >
-            <Text className="text-white font-bold">Open Camera</Text>
+            <Text className="text-white font-bold text-lg">Scan QR Code</Text>
           </TouchableOpacity>
         </ScrollView>
       ) : (
@@ -136,6 +150,12 @@ export default function AddNewRack2() {
             onBarcodeScanned={handleBarCodeScanned}
             barcodeScannerSettings={{ barcodeTypes: ["qr"] }}
           />
+          <TouchableOpacity
+            onPress={() => setScanning(false)}
+            className="absolute top-12 left-6 bg-black/50 p-3 rounded-full"
+          >
+            <Text className="text-white font-bold">Cancel</Text>
+          </TouchableOpacity>
         </View>
       )}
     </View>
