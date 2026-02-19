@@ -4,8 +4,8 @@ import RackItem from "@/components/racks/rackItem";
 import useFetch from "@/hooks/useFetch";
 import { rackService } from "@/services/rackService";
 import { GetRackInfoDTO } from "@/types/rack.dto";
-import { router, useFocusEffect } from "expo-router"; // ✅ ADDED useFocusEffect
-import { useCallback, useState } from "react"; // ❌ REMOVED useEffect
+import { router, useFocusEffect } from "expo-router";
+import { useCallback, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -30,24 +30,24 @@ export default function RacksScreen() {
 
   const fetchRacks = useCallback(async () => {
     try {
-      // Optional: Pwede mong tanggalin to kung ayaw mo mag-flash yung loading spinner pagbalik
-      // setLoading(true);
       setError(null);
 
       const response = await rackService.getAllUserRack(getAllRacks);
 
       if (response?.data) {
-        const mappedRacks: GetRackInfoDTO[] = response.data.map((rack) => ({
-          id: rack.id,
-          name: rack.name,
-          plant: "Lettuce",
-          image: undefined,
-          seeds: 12,
-          water: 0,
-          humidity: 0,
-          temperature: 0,
-          hasAlert: rack.status === "offline" || rack.status === "error",
-        }));
+        const mappedRacks: GetRackInfoDTO[] = response.data
+          .filter((rack: any) => rack.isActive === true)
+          .map((rack: any) => ({
+            id: rack.id,
+            name: rack.name,
+            plant: "Lettuce",
+            image: undefined,
+            seeds: 12,
+            water: 0,
+            humidity: 0,
+            temperature: 0,
+            hasAlert: rack.status === "offline" || rack.status === "error",
+          }));
 
         setRacks(mappedRacks);
       } else {
@@ -67,16 +67,12 @@ export default function RacksScreen() {
     setRefreshing(false);
   }, [fetchRacks]);
 
-  // ✅ ITO ANG SOLUSYON: useFocusEffect
-  // Tumatakbo ito every time na mag-focus ka sa screen na 'to
   useFocusEffect(
     useCallback(() => {
-      let isActive = true;
+      let isScreenActive = true;
 
       const loadData = async () => {
-        if (isActive) {
-          // I-set natin loading true ONLY kung wala pang laman yung racks
-          // para hindi nakakairita yung loading spinner pag may laman na
+        if (isScreenActive) {
           if (racks.length === 0) setLoading(true);
           await fetchRacks();
         }
@@ -85,9 +81,9 @@ export default function RacksScreen() {
       loadData();
 
       return () => {
-        isActive = false;
+        isScreenActive = false;
       };
-    }, [fetchRacks]), // Remove 'racks.length' dependency to avoid loop, just fetchRacks
+    }, [fetchRacks, racks.length]),
   );
 
   const handleCardPress = useCallback((rackId: string) => {
@@ -144,7 +140,6 @@ export default function RacksScreen() {
     [handleAddRack],
   );
 
-  // Check kung loading AND walang data para hindi mawala yung UI habang nagrerefresh
   if (loading && !refreshing && racks.length === 0) {
     return (
       <SafeAreaView className="bg-white flex-1">

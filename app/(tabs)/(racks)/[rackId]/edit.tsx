@@ -1,8 +1,10 @@
 import React, { useCallback, useMemo, useState } from "react";
-import { ScrollView, View } from "react-native";
+import { Alert, ScrollView, View } from "react-native";
 
 import { ConfirmationModal } from "@/components/modals/confirmationModal";
 import { MenuCard } from "@/components/shared/menubtn";
+import useFetch from "@/hooks/useFetch";
+import { rackService } from "@/services/rackService";
 import { router, useLocalSearchParams } from "expo-router";
 
 const EditRack = () => {
@@ -10,6 +12,13 @@ const EditRack = () => {
 
   const [removePlantModal, setRemovePlantModal] = useState(false);
   const [removeRackModal, setRemoveRackModal] = useState(false);
+
+  // ✅ 1. I-setup ang useFetch para sa DELETE request
+  const { refetch: deleteRackReq } = useFetch(`/api/racks/${rackId}`, {
+    method: "DELETE",
+    autoFetch: false,
+    withAuth: true,
+  });
 
   const handleRemovePlantPress = useCallback(
     () => setRemovePlantModal(true),
@@ -21,9 +30,26 @@ const EditRack = () => {
     setRemovePlantModal(false);
   }, []);
 
-  const handleRemoveRackConfirm = useCallback(() => {
-    setRemoveRackModal(false);
-  }, []);
+  // ✅ 2. Gawing async at tawagin ang rackService.deleteRackbyId
+  const handleRemoveRackConfirm = useCallback(async () => {
+    try {
+      const response = await rackService.deleteRackbyId(deleteRackReq);
+
+      if (response) {
+        setRemoveRackModal(false);
+        Alert.alert("Success", "Nurtura Rack removed successfully.");
+
+        // ✅ 3. I-redirect ang user pabalik sa main list para iwas error
+        router.replace("/(tabs)/(racks)" as any);
+      }
+    } catch (error) {
+      console.error("Failed to delete rack:", error);
+      Alert.alert("Error", "Failed to remove the rack. Please try again.");
+    } finally {
+      // Siguraduhing magsasara ang modal kahit mag-error
+      setRemoveRackModal(false);
+    }
+  }, [deleteRackReq]);
 
   const handleEditNamePress = useCallback(() => {
     router.push({
