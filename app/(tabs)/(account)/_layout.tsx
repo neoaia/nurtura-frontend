@@ -70,7 +70,7 @@ export default function AccountLayout() {
           options={{
             headerTitle: () => (
               <Image
-                source={require("@/assets/images/account/progress-bar-1.png")}
+                source={require("@/assets/images/add-new-plant/progress-bar-1.png")}
               />
             ),
             headerTitleAlign: "center",
@@ -82,7 +82,19 @@ export default function AccountLayout() {
           options={{
             headerTitle: () => (
               <Image
-                source={require("@/assets/images/account/progress-bar-2.png")}
+                source={require("@/assets/images/add-new-plant/progress-bar-2.png")}
+              />
+            ),
+            headerTitleAlign: "center",
+            headerShown: true,
+          }}
+        />
+        <Stack.Screen
+          name="update-email-3"
+          options={{
+            headerTitle: () => (
+              <Image
+                source={require("@/assets/images/add-new-plant/progress-bar-3.png")}
               />
             ),
             headerTitleAlign: "center",

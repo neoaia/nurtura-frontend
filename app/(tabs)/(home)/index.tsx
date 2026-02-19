@@ -44,9 +44,8 @@ export default function HomeScreen() {
 
   const handleCardPress = (cardType: string) => {
     console.log("Card pressed:", cardType);
-    // TODO: Navigate to detail screen based on cardType
-    // if (cardType === 'racks') router.push('/(tabs)/racks');
-    // if (cardType === 'plants') router.push('/(tabs)/plants');
+    if (cardType === "racks") router.push("/(tabs)/(racks)");
+    if (cardType === "plants") router.push("/(tabs)/(plants)");
   };
 
   const handleAddRack = async () => {

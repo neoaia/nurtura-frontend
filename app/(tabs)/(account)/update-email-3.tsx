@@ -1,38 +1,33 @@
 import { typography } from "@/assets/fonts/Text";
-import { OTPInput } from "@/components/auth/otpInput";
-import { ResendCode } from "@/components/auth/resendCode";
-import { ConfirmationModal } from "@/components/modals/confirmationModal";
 import { PrimaryButton } from "@/components/shared/primaryButton";
-import { useBackWarning } from "@/hooks/shared/useBackWarning";
 import useFetch from "@/hooks/useFetch";
 import { authService } from "@/services/authService";
+import { userService } from "@/services/userService";
 import { logger } from "@/utils/logger";
-import { router } from "expo-router";
-import * as SecureStore from "expo-secure-store";
+import { router, useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-    Alert,
-    NativeSyntheticEvent,
-    ScrollView,
-    Text,
-    TextInput,
-    TextInputKeyPressEventData,
-    View,
+  Alert,
+  NativeSyntheticEvent,
+  ScrollView,
+  Text,
+  TextInput,
+  TextInputKeyPressEventData,
+  View,
 } from "react-native";
+import { OTPInput } from "../../../components/auth/otpInput";
+import { ResendCode } from "../../../components/auth/resendCode";
 
-export default function UpdateEmailScreen1() {
+export default function UpdateEmailScreen3() {
   const [otp, setOtp] = useState(["", "", "", "", ""]);
   const inputs = useRef<(TextInput | null)[]>([]);
   const [isOtpInvalid, setIsOtpInvalid] = useState(false);
-  const [timer, setTimer] = useState(60);
+  const [timer, setTimer] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
-  const [currentEmail, setCurrentEmail] = useState<string>("");
 
   const allFilled = otp.every((digit) => digit !== "");
-  const hasStartedOtp = otp.some((digit) => digit !== "");
 
-  const { showModal, handleConfirm, handleCancel } =
-    useBackWarning(!hasStartedOtp);
+  const { email } = useLocalSearchParams();
 
   const { refetch: sendOtp } = useFetch("/api/auth/otp/registration", {
     method: "POST",
@@ -46,35 +41,19 @@ export default function UpdateEmailScreen1() {
     withAuth: false,
   });
 
-  useEffect(() => {
-    const loadCurrentEmail = async () => {
-      try {
-        const email = await SecureStore.getItemAsync("user_email");
-        if (email) {
-          setCurrentEmail(email);
-          logger.log("Current email loaded:", email);
-        } else {
-          Alert.alert(
-            "Error",
-            "Unable to retrieve your email. Please log in again.",
-          );
-          router.back();
-        }
-      } catch (error) {
-        logger.error("Error loading current email:", error);
-        Alert.alert("Error", "Failed to load user information.");
-      }
-    };
-    loadCurrentEmail();
-  }, []);
+  const { refetch: updateUserInfo } = useFetch("/api/users", {
+    method: "PATCH",
+    autoFetch: false,
+    withAuth: true,
+  });
 
   const handleSendOtp = useCallback(
     async (isResend = false) => {
-      if (!currentEmail) return;
+      if (!email) return;
 
       setIsLoading(true);
       try {
-        const response = await authService.sendOtp(sendOtp, currentEmail);
+        const response = await authService.sendOtp(sendOtp, email as string);
 
         if (!response.success) {
           Alert.alert(
@@ -89,68 +68,64 @@ export default function UpdateEmailScreen1() {
           Alert.alert("Success", "OTP has been resent to your email.");
           setTimer(60);
         }
-
-        logger.log("OTP sent to current email successfully");
       } catch (err: any) {
         Alert.alert("Error", err.message || "An unexpected error occurred.");
       } finally {
         setIsLoading(false);
       }
     },
-    [currentEmail, sendOtp],
+    [email, sendOtp],
   );
 
-  // Send OTP once email is loaded
-  useEffect(() => {
-    if (currentEmail) {
-      handleSendOtp(false);
-    }
-  }, [currentEmail]);
-
-  // Timer countdown
-  useEffect(() => {
-    let interval: ReturnType<typeof setInterval> | undefined;
-    if (timer > 0) {
-      interval = setInterval(() => {
-        setTimer((prev) => prev - 1);
-      }, 1000);
-    }
-    return () => {
-      if (interval) clearInterval(interval);
-    };
-  }, [timer]);
-
   const submitOtp = async (enteredOtp: string) => {
-    if (!currentEmail) return;
+    if (!email) return;
     setIsLoading(true);
 
     try {
-      const response = await authService.verifyOtp(
+      const otpResponse = await authService.verifyOtp(
         verifyOtp,
-        currentEmail,
+        email as string,
         enteredOtp,
         "registration",
       );
 
-      if (!response.success) {
+      if (!otpResponse.success) {
         setIsOtpInvalid(true);
-        setOtp(["", "", "", "", ""]);
-        inputs.current[0]?.focus();
         Alert.alert(
           "Error",
-          response.message || "Invalid OTP. Please try again.",
+          otpResponse.message || "OTP verification failed. Please try again.",
         );
         return;
       }
 
-      logger.log("Current email verified, proceeding to enter new email...");
+      logger.log("OTP verified, updating user email...");
+      const updateResponse = await userService.updateUser(updateUserInfo, {
+        email: email as string,
+      });
 
-      // Navigate to screen 2 where user enters their new email
-      router.push("/(tabs)/(account)/update-email-2");
+      if (!updateResponse) {
+        Alert.alert(
+          "Error",
+          "Failed to update email. Please try again or contact support.",
+        );
+        return;
+      }
+
+      logger.log("Email updated successfully");
+      router.dismissAll();
+      router.push({
+        pathname: "/(tabs)/(account)/successScreen",
+        params: {
+          type: "other",
+          title: "E-mail updated!",
+          subtitle: "You can now proceed back to making your account safe.",
+          finishTitle: "Finish",
+        },
+      });
     } catch (error) {
       setIsOtpInvalid(true);
       Alert.alert("Error", "An unexpected error occurred. Please try again.");
-      logger.error("OTP verification error:", error);
+      logger.error("Email update error:", error);
     } finally {
       setIsLoading(false);
     }
@@ -159,12 +134,10 @@ export default function UpdateEmailScreen1() {
   //#region Button Handlers
   const handleResendPress = () => {
     if (timer > 0 || isLoading) return;
-    setOtp(["", "", "", "", ""]);
     handleSendOtp(true);
   };
 
   const handleNextPress = () => {
-    if (!allFilled || isLoading) return;
     const enteredOtp = otp.join("");
     submitOtp(enteredOtp);
   };
@@ -185,9 +158,9 @@ export default function UpdateEmailScreen1() {
     }
   };
 
-  const handleFocus = (index: number) => {
+  const handleFocus = () => {
     const firstEmpty = otp.findIndex((v) => v === "");
-    if (firstEmpty !== -1 && index > firstEmpty) {
+    if (firstEmpty !== -1) {
       inputs.current[firstEmpty]?.focus();
     }
   };
@@ -199,7 +172,9 @@ export default function UpdateEmailScreen1() {
     newOtp[index] = text;
     setOtp(newOtp);
 
-    if (isOtpInvalid) setIsOtpInvalid(false);
+    if (isOtpInvalid) {
+      setIsOtpInvalid(false);
+    }
 
     if (text && index < 4) {
       inputs.current[index + 1]?.focus();
@@ -207,9 +182,30 @@ export default function UpdateEmailScreen1() {
 
     const filled = newOtp.every((digit) => digit !== "");
     if (filled) {
-      submitOtp(newOtp.join(""));
+      const enteredOtp = newOtp.join("");
+      submitOtp(enteredOtp);
     }
   };
+  //#endregion
+
+  //#region Effects
+  // Timer countdown effect
+  useEffect(() => {
+    let interval: ReturnType<typeof setInterval> | undefined;
+    if (timer > 0) {
+      interval = setInterval(() => {
+        setTimer((prev) => prev - 1);
+      }, 1000);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [timer]);
+
+  // Send OTP on mount
+  useEffect(() => {
+    handleSendOtp(false);
+  }, []);
   //#endregion
 
   return (
@@ -220,19 +216,17 @@ export default function UpdateEmailScreen1() {
         contentContainerStyle={{ paddingTop: 34 }}
       >
         <Text style={typography["h1-bold"]} className="text-black mb-3 pl-2">
-          Verify your identity
+          Enter one-time code
         </Text>
         <Text
           style={typography["subheader"]}
           className="pl-2 mb-6 text-black leading-normal"
         >
-          To change your email, we first need to confirm it's you. Enter the
-          5-digit code sent to your current email address:{" "}
+          Enter the 5 digit code that was sent to your email address:{" "}
           <Text style={typography["subheader-bold"]} className="text-primary">
-            {currentEmail}
+            {email as string}
           </Text>
         </Text>
-
         <OTPInput
           otp={otp}
           onChangeOtp={handleChange}
@@ -240,7 +234,6 @@ export default function UpdateEmailScreen1() {
           onFocus={handleFocus}
           inputRefs={inputs}
           isInvalid={isOtpInvalid}
-          disabled={isLoading}
         />
 
         {isOtpInvalid && (
@@ -252,13 +245,8 @@ export default function UpdateEmailScreen1() {
           </Text>
         )}
 
-        <ResendCode
-          onResend={handleResendPress}
-          timer={timer}
-          loading={isLoading}
-        />
+        <ResendCode onResend={handleResendPress} timer={timer} />
       </ScrollView>
-
       <View className="px-4 pb-9">
         <PrimaryButton
           title="Next"
@@ -267,15 +255,6 @@ export default function UpdateEmailScreen1() {
           loading={isLoading}
         />
       </View>
-      <ConfirmationModal
-        isVisible={showModal}
-        title="Your progress will be lost"
-        message="Are you sure you want to cancel?"
-        confirmText="Continue"
-        onConfirm={handleConfirm}
-        cancelText="Cancel"
-        onCancel={handleCancel}
-      />
     </View>
   );
 }
