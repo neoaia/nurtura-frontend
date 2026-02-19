@@ -1,7 +1,9 @@
 import { typography } from "@/assets/fonts/Text";
 import { OTPInput } from "@/components/auth/otpInput";
 import { ResendCode } from "@/components/auth/resendCode";
+import { ConfirmationModal } from "@/components/modals/confirmationModal";
 import { PrimaryButton } from "@/components/shared/primaryButton";
+import { useBackWarning } from "@/hooks/shared/useBackWarning";
 import useFetch from "@/hooks/useFetch";
 import { authService } from "@/services/authService";
 import { createLogger } from "@/utils/logger";
@@ -26,6 +28,10 @@ export default function ChangePassword1() {
   const [isOtpInvalid, setIsOtpInvalid] = useState(false);
   const [timer, setTimer] = useState(60);
   const [userEmail, setUserEmail] = useState<string>("");
+
+  const hasStartedOtp = otp.some((digit) => digit !== "");
+  const { showModal, handleConfirm, handleCancel } =
+    useBackWarning(!hasStartedOtp);
 
   const inputs = useRef<(TextInput | null)[]>([]);
 
@@ -252,6 +258,15 @@ export default function ChangePassword1() {
           disabled={!allFilled || loading}
         />
       </View>
+      <ConfirmationModal
+        isVisible={showModal}
+        title="Your progress will be lost"
+        message="Are you sure you want to cancel?"
+        confirmText="Continue"
+        onConfirm={handleConfirm}
+        cancelText="Cancel"
+        onCancel={handleCancel}
+      />
     </View>
   );
 }

@@ -6,9 +6,10 @@ import { SettingsRow } from "@/components/settings/settingsTab";
 import { useAuth } from "@/contexts/AuthContext";
 import useFetch from "@/hooks/useFetch";
 import { createLogger } from "@/utils/logger";
+import { useFocusEffect } from "@react-navigation/native";
 import { useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { userService } from "../../../services/userService";
@@ -81,10 +82,12 @@ export default function AccountScreen() {
     }
   };
 
-  useEffect(() => {
-    getUserInfoData();
-    checkUserProvider();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      getUserInfoData();
+      checkUserProvider();
+    }, []),
+  );
 
   useEffect(() => {
     setFormValues(savedValues);
