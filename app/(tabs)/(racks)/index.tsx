@@ -4,8 +4,8 @@ import RackItem from "@/components/racks/rackItem";
 import useFetch from "@/hooks/useFetch";
 import { rackService } from "@/services/rackService";
 import { GetRackInfoDTO } from "@/types/rack.dto";
-import { router } from "expo-router";
-import { useCallback, useEffect, useState } from "react";
+import { router, useFocusEffect } from "expo-router"; // ✅ ADDED useFocusEffect
+import { useCallback, useState } from "react"; // ❌ REMOVED useEffect
 import {
   ActivityIndicator,
   FlatList,
@@ -28,25 +28,24 @@ export default function RacksScreen() {
     withAuth: true,
   });
 
-  const fetchRacks = async () => {
+  const fetchRacks = useCallback(async () => {
     try {
-      setLoading(true);
+      // Optional: Pwede mong tanggalin to kung ayaw mo mag-flash yung loading spinner pagbalik
+      // setLoading(true);
       setError(null);
 
-      // ✅ Use real API
       const response = await rackService.getAllUserRack(getAllRacks);
 
       if (response?.data) {
-        // ✅ Map API response to GetRackInfoDTO format
         const mappedRacks: GetRackInfoDTO[] = response.data.map((rack) => ({
           id: rack.id,
           name: rack.name,
-          plant: "Lettuce", // ❌ Not in API, using default
+          plant: "Lettuce",
           image: undefined,
-          seeds: 12, // ❌ Not in API, using default
-          water: 0, // Will be populated by useRackSensor in RackItem
-          humidity: 0, // Will be populated by useRackSensor in RackItem
-          temperature: 0, // Will be populated by useRackSensor in RackItem
+          seeds: 12,
+          water: 0,
+          humidity: 0,
+          temperature: 0,
           hasAlert: rack.status === "offline" || rack.status === "error",
         }));
 
@@ -55,74 +54,98 @@ export default function RacksScreen() {
         setRacks([]);
       }
     } catch (err) {
-      console.error("Failed to fetch racks:", err);
       setError(err instanceof Error ? err.message : "Failed to load racks");
       setRacks([]);
     } finally {
       setLoading(false);
     }
-  };
+  }, [getAllRacks]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await fetchRacks();
     setRefreshing(false);
-  }, []);
+  }, [fetchRacks]);
 
-  useEffect(() => {
-    fetchRacks();
-  }, []);
+  // ✅ ITO ANG SOLUSYON: useFocusEffect
+  // Tumatakbo ito every time na mag-focus ka sa screen na 'to
+  useFocusEffect(
+    useCallback(() => {
+      let isActive = true;
 
-  const handleCardPress = (rackId: string) => {
-    console.log("Card clicked!", rackId);
+      const loadData = async () => {
+        if (isActive) {
+          // I-set natin loading true ONLY kung wala pang laman yung racks
+          // para hindi nakakairita yung loading spinner pag may laman na
+          if (racks.length === 0) setLoading(true);
+          await fetchRacks();
+        }
+      };
+
+      loadData();
+
+      return () => {
+        isActive = false;
+      };
+    }, [fetchRacks]), // Remove 'racks.length' dependency to avoid loop, just fetchRacks
+  );
+
+  const handleCardPress = useCallback((rackId: string) => {
     router.push(`/(tabs)/(racks)/${rackId}` as any);
-  };
+  }, []);
 
-  const handleAddRack = () => {
+  const handleAddRack = useCallback(() => {
     router.push("/(tabs)/(add_pages)/(addNewRack)");
-  };
+  }, []);
 
-  const renderHeader = () => (
-    <View className="flex justify-start items-start w-full mb-2 mt-8 pl-3">
-      <Text
-        style={typography["title-bold"]}
-        className="text-black text-5xl mb-[20px]"
-      >
-        Racks
-      </Text>
-    </View>
+  const renderHeader = useCallback(
+    () => (
+      <View className="flex justify-start items-start w-full mb-2 mt-8 pl-3">
+        <Text
+          style={typography["title-bold"]}
+          className="text-black text-5xl mb-[20px]"
+        >
+          Racks
+        </Text>
+      </View>
+    ),
+    [],
   );
 
-  const renderRackItem = ({
-    item,
-    index,
-  }: {
-    item: GetRackInfoDTO;
-    index: number;
-  }) => (
-    <RackItem
-      rack={{
-        ...item,
-        onPress: () => handleCardPress(item.id),
-        onMorePress: () => console.log("More pressed:", item.id),
-      }}
-    />
+  const renderRackItem = useCallback(
+    ({ item }: { item: GetRackInfoDTO }) => (
+      <RackItem
+        rack={{
+          ...item,
+          onPress: () => handleCardPress(item.id),
+          onMorePress: () => {},
+        }}
+      />
+    ),
+    [handleCardPress],
   );
 
-  const renderEmpty = () => (
-    <View className="flex-1 justify-center items-center py-20">
-      <Text style={typography["h2-bold"]} className="text-gray-400 mb-2">
-        No racks yet
-      </Text>
-      <Text style={typography["subheader"]} className="text-gray-400">
-        Add your first rack to get started
-      </Text>
-    </View>
+  const renderEmpty = useCallback(
+    () => (
+      <View className="flex-1 justify-center items-center py-20">
+        <Text style={typography["h2-bold"]} className="text-gray-400 mb-2">
+          No racks yet
+        </Text>
+        <Text style={typography["subheader"]} className="text-gray-400">
+          Add your first rack to get started
+        </Text>
+      </View>
+    ),
+    [],
   );
 
-  const renderFooter = () => <AddRackButton onPress={handleAddRack} />;
+  const renderFooter = useCallback(
+    () => <AddRackButton onPress={handleAddRack} />,
+    [handleAddRack],
+  );
 
-  if (loading) {
+  // Check kung loading AND walang data para hindi mawala yung UI habang nagrerefresh
+  if (loading && !refreshing && racks.length === 0) {
     return (
       <SafeAreaView className="bg-white flex-1">
         <View className="flex-1 justify-center items-center">
@@ -135,7 +158,7 @@ export default function RacksScreen() {
     );
   }
 
-  if (error) {
+  if (error && racks.length === 0) {
     return (
       <SafeAreaView className="bg-white flex-1">
         <View className="flex-1 justify-center items-center px-6">
@@ -167,7 +190,7 @@ export default function RacksScreen() {
       <FlatList
         data={racks}
         renderItem={renderRackItem}
-        keyExtractor={(item, index) => `${item.id}-${index}`}
+        keyExtractor={(item) => item.id}
         ListHeaderComponent={renderHeader}
         ListFooterComponent={renderFooter}
         ListEmptyComponent={renderEmpty}

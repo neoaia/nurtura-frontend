@@ -1,38 +1,82 @@
-// app/(tabs)/(racks)/[rackId]/index.tsx
 import { typography } from "@/assets/fonts/Text";
 import { YieldInputModal } from "@/components/modals/yieldInputModal";
 import PlantStatusIndicators from "@/components/racks/plantStatusIndicators";
 import { BottomButton } from "@/components/shared/bottomButton";
 import { MenuCard } from "@/components/shared/menubtn";
 import SmallDescription from "@/components/shared/smallDescription";
+import useFetch from "@/hooks/useFetch";
 import { useRackSensor } from "@/hooks/useRackSensor";
-import React, { useState } from "react";
+import { rackService } from "@/services/rackService";
+import { useFocusEffect } from "@react-navigation/native";
+import { useLocalSearchParams } from "expo-router";
+import React, { useCallback, useState } from "react";
 import { ActivityIndicator, Image, ScrollView, Text, View } from "react-native";
 import DateIcon from "../../../../assets/images/icons/date.svg";
 import SoilIcon from "../../../../assets/images/icons/soil.svg";
 
 const RackInfo = () => {
+  const { rackId } = useLocalSearchParams<{ rackId: string }>();
   const [showModal, setShowModal] = useState(false);
+  const [rackData, setRackData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
-  // temporary hardcoded rack macAddress, will be determined by gelo if macAddress or rackId
-  const { reading, deviceStatus, error } = useRackSensor(
-    "0d814ddd-3529-4032-893d-80603936f9f6",
+  const { reading } = useRackSensor(rackId);
+
+  const { refetch: getRackInfo } = useFetch(`/api/racks/${rackId}`, {
+    method: "GET",
+    autoFetch: false,
+    withAuth: true,
+  });
+
+  useFocusEffect(
+    useCallback(() => {
+      let isActive = true;
+
+      const fetchRackData = async () => {
+        try {
+          if (isActive) setLoading(true);
+          const response = await rackService.getRackbyId(getRackInfo);
+          if (isActive && response?.rack) {
+            setRackData(response.rack);
+          }
+        } catch (err) {
+        } finally {
+          if (isActive) setLoading(false);
+        }
+      };
+
+      if (rackId) {
+        fetchRackData();
+      }
+
+      return () => {
+        isActive = false;
+      };
+    }, [rackId]),
   );
 
-  const handleSubmit = (val: number) => {
-    console.log("Final Yield:", val);
+  const handleSubmit = useCallback((val: number) => {
     setShowModal(false);
-  };
+  }, []);
 
-  const handleCancel = () => {
-    console.log("Cancelled");
+  const handleCancel = useCallback(() => {
     setShowModal(false);
-  };
+  }, []);
 
-  const handleHarvestPress = () => {
-    console.log("Harvest button pressed");
+  const handleHarvestPress = useCallback(() => {
     setShowModal(true);
-  };
+  }, []);
+
+  if (loading) {
+    return (
+      <View className="flex-1 bg-white items-center justify-center">
+        <ActivityIndicator size="large" color="#86975A" />
+        <Text style={typography["subheader"]} className="text-gray-500 mt-4">
+          Loading rack information...
+        </Text>
+      </View>
+    );
+  }
 
   return (
     <>
@@ -52,10 +96,10 @@ const RackInfo = () => {
           <View className="w-full flex-row justify-between items-start mb-6">
             <View className="flex-1 pl-2">
               <Text style={typography["h1-bold"]} className="text-black">
-                Lettuce
+                {rackData?.name || "Rack"}
               </Text>
               <Text style={typography["subheader"]} className="text-grayText">
-                Fruit Vegetable
+                {rackData?.description || "No description"}
               </Text>
             </View>
             <View className="items-end pr-2">
@@ -70,7 +114,6 @@ const RackInfo = () => {
 
           <View className="flex-row gap-3 mb-6">
             {reading === null ? (
-              // Loading state
               <View className="flex-1 items-center justify-center py-8 bg-gray-50 rounded-lg">
                 <ActivityIndicator size="large" color="#86975A" />
                 <Text
@@ -81,7 +124,6 @@ const RackInfo = () => {
                 </Text>
               </View>
             ) : (
-              // Live data
               <>
                 <PlantStatusIndicators
                   type="temperature"
@@ -135,9 +177,7 @@ const RackInfo = () => {
       <YieldInputModal
         isVisible={showModal}
         title="Record Harvest"
-        onConfirm={(val) => {
-          handleSubmit(val);
-        }}
+        onConfirm={handleSubmit}
         onCancel={handleCancel}
       />
     </>
