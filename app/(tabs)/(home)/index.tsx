@@ -1,7 +1,7 @@
 import { typography } from "@/assets/fonts/Text";
 import useFetch from "@/hooks/useFetch";
-import { router } from "expo-router";
-import React, { useEffect, useState } from "react";
+import { router, useFocusEffect } from "expo-router";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   Image,
   ScrollView,
@@ -82,9 +82,12 @@ export default function HomeScreen() {
     }
   };
 
-  useEffect(() => {
-    getUserInfoData();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      getUserInfoData();
+      refetch();
+    }, []),
+  );
   useEffect(() => {
     setFormValues(savedValues);
   }, [savedValues]);

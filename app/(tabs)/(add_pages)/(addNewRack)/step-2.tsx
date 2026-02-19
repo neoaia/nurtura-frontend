@@ -1,19 +1,19 @@
-import React, { useState } from "react";
-import { 
-  Image, 
-  ScrollView, 
-  Text, 
-  View, 
-  StyleSheet, 
-  Alert, 
-  TouchableOpacity, 
-  ActivityIndicator 
-} from "react-native";
-import { CameraView, useCameraPermissions } from "expo-camera";
 import { typography } from "@/assets/fonts/Text";
-import { router, useLocalSearchParams } from "expo-router";
+import { bleManager } from "@/utils/bluetooth/bleManager";
 import { Buffer } from "buffer";
-import { bleManager } from "@/utils/bluetooth/bleManager"; // FIXED: was 'manager'
+import { CameraView, useCameraPermissions } from "expo-camera";
+import { router, useLocalSearchParams } from "expo-router";
+import React, { useState } from "react";
+import {
+  ActivityIndicator,
+  Alert,
+  Image,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
 const SERVICE_UUID = "4fafc201-1fb5-459e-8fcc-c5c9c331914b";
 const DEVICE_ID_CHAR_UUID = "abc12345-1234-5678-1234-56789abcdef0";
@@ -33,33 +33,35 @@ export default function AddNewRack2() {
     setVerifying(true);
 
     try {
-      // Check if still connected
-      const isConnected = await bleManager.isDeviceConnected(deviceId as string);
+      const isConnected = await bleManager.isDeviceConnected(
+        deviceId as string,
+      );
       if (!isConnected) {
         console.log("Device disconnected, reconnecting...");
         await bleManager.connectToDevice(deviceId as string);
-        await bleManager.discoverAllServicesAndCharacteristicsForDevice(deviceId as string);
+        await bleManager.discoverAllServicesAndCharacteristicsForDevice(
+          deviceId as string,
+        );
       }
 
-      // Read the MAC address from ESP32
       const characteristic = await bleManager.readCharacteristicForDevice(
         deviceId as string,
         SERVICE_UUID,
-        DEVICE_ID_CHAR_UUID
+        DEVICE_ID_CHAR_UUID,
       );
 
       if (!characteristic?.value) {
         throw new Error("Could not read device ID from rack");
       }
 
-      // Decode the MAC address
-      const deviceMAC = Buffer.from(characteristic.value, "base64").toString().trim();
+      const deviceMAC = Buffer.from(characteristic.value, "base64")
+        .toString()
+        .trim();
       const scannedMAC = qrData.trim();
 
       console.log("ESP32 MAC:", deviceMAC);
       console.log("QR MAC:", scannedMAC);
 
-      // Compare (case-insensitive)
       if (scannedMAC.toLowerCase() === deviceMAC.toLowerCase()) {
         setVerifying(false);
         Alert.alert("Verified!", "Rack identity confirmed!", [
@@ -76,7 +78,7 @@ export default function AddNewRack2() {
         setVerifying(false);
         Alert.alert(
           "Verification Failed",
-          `QR code doesn't match this rack.\n\nScanned: ${scannedMAC}\nDevice: ${deviceMAC}`
+          `QR code doesn't match this rack.\n\nScanned: ${scannedMAC}\nDevice: ${deviceMAC}`,
         );
       }
     } catch (error: any) {
@@ -84,7 +86,7 @@ export default function AddNewRack2() {
       console.error("Verification error:", error);
       Alert.alert(
         "Verification Error",
-        "Could not verify device. Make sure the rack is still connected."
+        "Could not verify device. Make sure the rack is still connected.",
       );
     }
   };
@@ -98,7 +100,6 @@ export default function AddNewRack2() {
 
   return (
     <View className="flex-1 bg-white">
-      {/* Verification Overlay */}
       {verifying && (
         <View
           style={StyleSheet.absoluteFill}
