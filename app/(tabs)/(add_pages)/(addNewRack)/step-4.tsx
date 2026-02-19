@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { ScrollView, Text, View } from "react-native";
 import { typography } from "@/assets/fonts/Text";
+import { ConfirmationModal } from "@/components/modals/confirmationModal";
 import { BottomButton } from "@/components/shared/bottomButton";
 import { TextInputField } from "@/components/shared/textInputField";
 import { router, useLocalSearchParams } from "expo-router";

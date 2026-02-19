@@ -22,7 +22,6 @@ export interface ActivityDTO {
   action: string;
   plant: string;
   timestamp: string;
-  // amount?: string;
   duration?: string;
 }
 
@@ -45,6 +44,18 @@ export interface NotificationDTO {
 export interface NotificationsResponseDTO {
   notifications: NotificationDTO[];
   unreadCount: number;
+}
+
+export interface NotificationItemDTO {
+  id: string;
+  type: "water" | "light" | "harvest" | "sensor" | "environment" | "info";
+  plantName?: string;
+  location?: string;
+  value?: string;
+  time: string;
+  rackName?: string;
+  metric?: "temperature" | "moisture";
+  component?: string;
 }
 
 export interface AddRackRequestDTO {

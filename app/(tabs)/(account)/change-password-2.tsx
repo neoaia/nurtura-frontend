@@ -1,23 +1,145 @@
-import React from "react";
-import { ScrollView, Text, View } from "react-native";
-
 import { typography } from "@/assets/fonts/Text";
 import { PasswordInput } from "@/components/auth/passwordInput";
 import { PrimaryButton } from "@/components/shared/primaryButton";
+import useFetch from "@/hooks/useFetch";
+import { authService } from "@/services/authService";
+import { createLogger } from "@/utils/logger";
+import {
+  cleanInput,
+  isStrongPassword,
+  validatePassword,
+} from "@/utils/validation";
 import { router } from "expo-router";
+import * as SecureStore from "expo-secure-store";
+import React, { useEffect, useState } from "react";
+import { Alert, ScrollView, Text, View } from "react-native";
+
+const logger = createLogger("ChangePassword2");
 
 export default function ChangePassword2() {
-  const handleNextPress = () => {
-    router.dismissAll();
-    router.push({
-          pathname: "/(tabs)/(account)/successScreen",
-          params: {
-            type: "other",
-            title: "Password updated!",
-            subtitle: "You can now proceed back to making your account safe.",
-            finishTitle: "Finish"
-          }
-        });
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [verifiedEmail, setVerifiedEmail] = useState<string>("");
+
+  const { refetch: changePassword } = useFetch("/api/auth/reset-password", {
+    method: "POST",
+    autoFetch: false,
+    withAuth: true,
+  });
+
+  const isPasswordValid = isStrongPassword(password);
+  const isConfirmPasswordValid = isStrongPassword(confirmPassword);
+  const passwordsMatch = password === confirmPassword;
+
+  const isNextButtonEnabled =
+    password.length > 0 &&
+    confirmPassword.length > 0 &&
+    validatePassword(password) &&
+    validatePassword(confirmPassword) &&
+    passwordsMatch;
+
+  useEffect(() => {
+    const loadVerifiedEmail = async () => {
+      try {
+        const email = await SecureStore.getItemAsync(
+          "change_password_verified_email",
+        );
+        if (!email) {
+          Alert.alert(
+            "Error",
+            "Verification required. Please complete the OTP verification first.",
+            [
+              {
+                text: "OK",
+                onPress: () => router.back(),
+              },
+            ],
+          );
+          return;
+        }
+        setVerifiedEmail(email);
+        logger.log("Verified email loaded");
+      } catch (error) {
+        logger.error("Error loading verified email", error);
+        Alert.alert("Error", "Failed to load verification status.");
+      }
+    };
+    loadVerifiedEmail();
+  }, []);
+
+  const handlePasswordChange = (value: string) => {
+    setPassword(cleanInput(value));
+  };
+
+  const handleConfirmPasswordChange = (value: string) => {
+    setConfirmPassword(cleanInput(value));
+  };
+
+  const handleNextPress = async () => {
+    if (!verifiedEmail) {
+      Alert.alert(
+        "Error",
+        "Email verification is missing. Please restart the process.",
+      );
+      return;
+    }
+
+    if (!passwordsMatch) {
+      Alert.alert("Error", "Passwords do not match.");
+      return;
+    }
+
+    if (!isPasswordValid || !isConfirmPasswordValid) {
+      Alert.alert(
+        "Error",
+        "Password must have 8+ characters, uppercase, number & symbol.",
+      );
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const response = await authService.resetPassword(
+        changePassword,
+        verifiedEmail,
+        password,
+      );
+
+      if (!response.success) {
+        Alert.alert(
+          "Error",
+          response.message || "Failed to change password. Please try again.",
+        );
+        setLoading(false);
+        return;
+      }
+
+      logger.log("Password changed successfully");
+
+      await SecureStore.deleteItemAsync("change_password_verified_email");
+
+      router.dismissAll();
+      router.push({
+        pathname: "/(tabs)/(account)/successScreen",
+        params: {
+          type: "other",
+          title: "Password updated!",
+          subtitle: "You can now proceed back to making your account safe.",
+          finishTitle: "Finish",
+        },
+      });
+    } catch (error) {
+      logger.error("Error changing password:", error);
+      Alert.alert("Error", "Failed to change password. Please try again.");
+      setLoading(false);
+    }
+  };
+
+  const getPasswordStrengthColor = (pwd: string) => {
+    if (pwd.length === 0) return "#919191";
+    return isStrongPassword(pwd) ? "#4CAF50" : "#E65656";
   };
 
   return (
@@ -35,15 +157,58 @@ export default function ChangePassword2() {
           className="pl-2 mb-6 text-black leading-normal"
         >
           Enter a secure password to protect your account.
-          <Text className="text-primary font-bold"></Text>
         </Text>
+
         <View className="flex-col gap-2">
-          <PasswordInput label="Password" value=""></PasswordInput>
-          <PasswordInput label="Confirm Password" value=""></PasswordInput>
+          <View>
+            <PasswordInput
+              label="Password"
+              value={password}
+              onChangeText={handlePasswordChange}
+              borderColor={getPasswordStrengthColor(password)}
+            />
+            {!isPasswordValid && password.length > 0 && (
+              <Text className="text-[#E65656] text-[13px] mt-1 pl-2">
+                Password must have 8+ chars, uppercase, number & symbol.
+              </Text>
+            )}
+          </View>
+
+          <View>
+            <PasswordInput
+              label="Confirm Password"
+              value={confirmPassword}
+              onChangeText={handleConfirmPasswordChange}
+              borderColor={
+                confirmPassword.length === 0
+                  ? "#919191"
+                  : !passwordsMatch
+                    ? "#E65656"
+                    : getPasswordStrengthColor(confirmPassword)
+              }
+            />
+            {!passwordsMatch && confirmPassword.length > 0 && (
+              <Text className="text-[#E65656] text-[13px] mt-1 pl-2">
+                Passwords do not match.
+              </Text>
+            )}
+            {passwordsMatch &&
+              confirmPassword.length > 0 &&
+              !isConfirmPasswordValid && (
+                <Text className="text-[#E65656] text-[13px] mt-1 pl-2">
+                  Password must have 8+ chars, uppercase, number & symbol.
+                </Text>
+              )}
+          </View>
         </View>
       </ScrollView>
+
       <View className="px-4 pb-9">
-        <PrimaryButton title="Finish" onPress={handleNextPress}></PrimaryButton>
+        <PrimaryButton
+          title={loading ? "Updating..." : "Finish"}
+          onPress={handleNextPress}
+          disabled={!isNextButtonEnabled || loading}
+        />
       </View>
     </View>
   );

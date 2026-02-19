@@ -7,6 +7,7 @@ interface TextInputFieldProps {
   onChangeText: (text: string) => void;
   placeholder?: string;
   width?: string;
+  editable: boolean;
 }
 
 export const TextInputField = ({
@@ -15,6 +16,7 @@ export const TextInputField = ({
   onChangeText,
   placeholder,
   width = "w-[100%]",
+  editable = true,
 }: TextInputFieldProps) => {
   return (
     <View
@@ -29,6 +31,7 @@ export const TextInputField = ({
         value={value}
         onChangeText={onChangeText}
         placeholder={placeholder}
+        editable={editable}
       />
     </View>
   );

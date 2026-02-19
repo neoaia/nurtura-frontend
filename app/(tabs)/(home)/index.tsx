@@ -1,6 +1,7 @@
 import { typography } from "@/assets/fonts/Text";
+import useFetch from "@/hooks/useFetch";
 import { router } from "expo-router";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   Image,
   ScrollView,
@@ -15,10 +16,21 @@ import { Highlight } from "../../../components/home/highlight";
 import { RecentActivityBar } from "../../../components/home/recentActivityBar";
 import { SummaryCard } from "../../../components/home/summaryCard";
 import { useHome } from "../../../hooks/useHome";
+import { userService } from "../../../services/userService";
+import { UserDetails } from "../../../types/interface";
 
 export default function HomeScreen() {
+  const [savedValues, setSavedValues] = useState<Partial<UserDetails>>({});
+  const [formValues, setFormValues] = useState<Partial<UserDetails>>({});
+
   const { data, loading, error, refetch, addRack, getNotifications } =
     useHome();
+
+  const { refetch: getUserInfo } = useFetch("/api/users", {
+    method: "GET",
+    autoFetch: false,
+    withAuth: true,
+  });
 
   const handleNotificationPress = async () => {
     try {
@@ -32,9 +44,8 @@ export default function HomeScreen() {
 
   const handleCardPress = (cardType: string) => {
     console.log("Card pressed:", cardType);
-    // TODO: Navigate to detail screen based on cardType
-    // if (cardType === 'racks') router.push('/(tabs)/racks');
-    // if (cardType === 'plants') router.push('/(tabs)/plants');
+    if (cardType === "racks") router.push("/(tabs)/(racks)");
+    if (cardType === "plants") router.push("/(tabs)/(plants)");
   };
 
   const handleAddRack = async () => {
@@ -49,6 +60,34 @@ export default function HomeScreen() {
       // TODO: Show error message to user
     }
   };
+
+  const getUserInfoData = async () => {
+    try {
+      const response = await userService.getUser(getUserInfo);
+      if (response?.userInfo) {
+        const data = {
+          firstName: response.userInfo.firstName || "",
+          middleName: response.userInfo.middleName || "",
+          lastName: response.userInfo.lastName || "",
+          suffix: response.userInfo.suffix || "",
+          block: response.userInfo.block || "",
+          street: response.userInfo.street || "",
+          barangay: response.userInfo.barangay || "",
+          city: response.userInfo.city || "",
+        };
+        setSavedValues(data);
+      }
+    } catch (error) {
+      console.error("Failed to fetch user info:", error);
+    }
+  };
+
+  useEffect(() => {
+    getUserInfoData();
+  }, []);
+  useEffect(() => {
+    setFormValues(savedValues);
+  }, [savedValues]);
 
   if (loading) {
     return (
@@ -86,13 +125,13 @@ export default function HomeScreen() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-primary" edges={["top", "bottom"]}>
+    <SafeAreaView className="flex-1 bg-primary" edges={["top"]}>
       <StatusBar barStyle="light-content" />
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View className="px-10 pt-4 pb-2 flex-row items-center justify-between">
           <Text style={typography["h1-bold"]} className="text-white">
-            Hi {data.user.name}!
+            Hi {formValues.firstName || data.user.name}!
           </Text>
           <TouchableOpacity
             onPress={handleNotificationPress}

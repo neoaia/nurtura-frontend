@@ -3,7 +3,7 @@ export interface SensorReading {
   rackId: string;
   temperature: number;
   humidity: number;
-  soilMoisture: number;
+  moisture: number;
   waterLevel: number;
   timestamp: Date | string;
   lightIntensity?: number;

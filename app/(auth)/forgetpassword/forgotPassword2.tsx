@@ -1,5 +1,7 @@
 /* eslint-disable react/no-unescaped-entities */
-import useFetch from '@/hooks/useFetch';
+import useFetch from "@/hooks/useFetch";
+import { authService } from "@/services/authService";
+import { createLogger } from "@/utils/logger";
 import { router, useLocalSearchParams } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import React, { useCallback, useEffect, useRef, useState } from "react";
@@ -12,14 +14,12 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { authService } from '@/services/authService';
-import { createLogger } from '@/utils/logger';
 
-const logger = createLogger('ForgotPassword2');
+const logger = createLogger("ForgotPassword2");
 
 const ForgotPassword2 = () => {
   const { email } = useLocalSearchParams();
-  
+
   const [otp, setOtp] = useState<string[]>(["", "", "", "", ""]);
   const [loading, setLoading] = useState(false);
   const [isOtpInvalid, setIsOtpInvalid] = useState(false);
@@ -29,48 +29,49 @@ const ForgotPassword2 = () => {
 
   const allFilled = otp.every((digit) => digit !== "");
 
-  const { 
-    refetch: sendOtp 
-  } = useFetch('/api/auth/otp/forgot-password', {
-    method: 'POST',
+  const { refetch: sendOtp } = useFetch("/api/auth/otp/reset-password", {
+    method: "POST",
     autoFetch: false,
-    withAuth: false
+    withAuth: false,
   });
 
-  const { 
-    refetch: verifyOtp 
-  } = useFetch('/api/auth/otp/verify', {
-    method: 'POST',
+  const { refetch: verifyOtp } = useFetch("/api/auth/otp/verify", {
+    method: "POST",
     autoFetch: false,
-    withAuth: false
+    withAuth: false,
   });
 
-  const handleSendOtp = useCallback(async (isResend = false) => {
-    if (!email) return;
-      
-    setLoading(true);
-    try {
-      const response = await authService.sendOtp(sendOtp, email as string);
+  const handleSendOtp = useCallback(
+    async (isResend = false) => {
+      if (!email) return;
 
-      if (!response.success) {
-        Alert.alert("Error", response.message || "Failed to send OTP. Please try again.");
-        setLoading(false);
-        return;
-      }
+      setLoading(true);
+      try {
+        const response = await authService.sendOtp(sendOtp, email as string);
 
-      if (isResend) {
-        Alert.alert("Success", "OTP has been resent to your email.");
-        setTimer(60);
-      }
+        if (!response.success) {
+          Alert.alert(
+            "Error",
+            response.message || "Failed to send OTP. Please try again.",
+          );
+          setLoading(false);
+          return;
+        }
 
-    } catch (err: any) {
+        if (isResend) {
+          Alert.alert("Success", "OTP has been resent to your email.");
+          setTimer(60);
+        }
+      } catch (err: any) {
         Alert.alert("Error", err.message || "An unexpected error occurred.");
-    } finally {
-      setLoading(false);
-    }
-  }, [email, sendOtp]);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [email, sendOtp],
+  );
 
-  const handleChange = (text: string, index: number) => { 
+  const handleChange = (text: string, index: number) => {
     if (!/^\d*$/.test(text)) return;
 
     const newOtp = [...otp];
@@ -84,7 +85,7 @@ const ForgotPassword2 = () => {
     if (text && index < 4) {
       inputs.current[index + 1]?.focus();
     }
-    
+
     const filled = newOtp.every((digit) => digit !== "");
     if (filled) {
       const userCode = newOtp.join("");
@@ -94,7 +95,7 @@ const ForgotPassword2 = () => {
 
   const handleKeyPress = (
     e: NativeSyntheticEvent<TextInputKeyPressEventData>,
-    index: number
+    index: number,
   ) => {
     if (e.nativeEvent.key === "Backspace") {
       if (otp[index] === "" && index > 0) {
@@ -108,7 +109,7 @@ const ForgotPassword2 = () => {
 
   const handleFocus = (index: number) => {
     const firstEmptyIndex = otp.findIndex((v) => v === "");
-    
+
     if (firstEmptyIndex !== -1 && index > firstEmptyIndex) {
       inputs.current[firstEmptyIndex]?.focus();
     }
@@ -119,7 +120,12 @@ const ForgotPassword2 = () => {
     setIsOtpInvalid(false);
 
     try {
-      const response = await authService.verifyOtp(verifyOtp, email as string, userCode, "forgot-password");
+      const response = await authService.verifyOtp(
+        verifyOtp,
+        email as string,
+        userCode,
+        "reset-password",
+      );
 
       if (!response.success) {
         setIsOtpInvalid(true);
@@ -128,17 +134,19 @@ const ForgotPassword2 = () => {
         return;
       }
 
-      await SecureStore.setItemAsync("forgot_password_verified_email", email as string);
-      
+      await SecureStore.setItemAsync(
+        "forgot_password_verified_email",
+        email as string,
+      );
+
       router.push({
         pathname: "/(auth)/forgetpassword/forgotPassword3",
         params: { email },
       });
-
     } catch (error) {
       logger.error("Error verifying OTP:", error);
       Alert.alert("Error", "Failed to verify OTP. Please try again.");
-      setLoading(false); 
+      setLoading(false);
     }
   };
 
@@ -164,10 +172,9 @@ const ForgotPassword2 = () => {
     };
   }, [timer]);
 
-
   useEffect(() => {
     handleSendOtp(false);
-  }, []); 
+  }, []);
 
   return (
     <View className="flex-1 bg-white px-[16px] pb-[34px] w-screen justify-between h-screen">
@@ -194,7 +201,7 @@ const ForgotPassword2 = () => {
               onFocus={() => handleFocus(index)}
               keyboardType="number-pad"
               maxLength={1}
-              editable={!loading} 
+              editable={!loading}
               className={`h-[60px] w-[60px] border-[2px] rounded-[12px] text-black text-center text-xl font-bold ${
                 isOtpInvalid ? "border-[#E65656]" : "border-grayText"
               }`}
@@ -202,7 +209,7 @@ const ForgotPassword2 = () => {
             />
           ))}
         </View>
-        
+
         {isOtpInvalid && (
           <Text className="text-[#E65656] text-base mb-[26px] pl-2">
             Invalid OTP. Please try again.
@@ -213,8 +220,8 @@ const ForgotPassword2 = () => {
           <Text className="text-base text-gray-700 leading-normal">
             Didn't receive the code?{" "}
           </Text>
-          <TouchableOpacity 
-            onPress={handleResendPress} 
+          <TouchableOpacity
+            onPress={handleResendPress}
             disabled={timer > 0 || loading}
           >
             <Text

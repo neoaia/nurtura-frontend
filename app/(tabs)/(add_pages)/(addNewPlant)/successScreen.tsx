@@ -17,14 +17,7 @@ export default function SuccessPage() {
   }>();
 
   const handleFinish = () => {
-    const isMultiStep = params.type === "plant" || params.type === "rack";
-
-    if (isMultiStep) {
-      router.dismissAll();
-      router.replace("/(tabs)/(home)");
-    } else {
-      router.back();
-    }
+    router.replace("/(tabs)/(home)");
   };
 
   const handleAddAnother = () => {

@@ -156,6 +156,11 @@ export default function AddNewRack3() {
       );
     }
   };
+  const { showModal, handleConfirm, handleCancel } =
+    useBackWarning(!!onChangeText);
+  const handleNextPress = () => {
+    router.push("/(tabs)/(add_pages)/(addNewRack)/step-4");
+  };
 
   return (
     <View className="flex-1 bg-white p-6">

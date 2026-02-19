@@ -1,28 +1,27 @@
 import { typography } from "@/assets/fonts/Text";
-import { Stack, router, useGlobalSearchParams } from "expo-router";
-import React, { useState } from "react";
+import { Stack, router, useLocalSearchParams } from "expo-router";
+import React, { useCallback, useState } from "react";
 import { Image, TextStyle, TouchableOpacity, View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function RackIDLayout() {
-  const params = useGlobalSearchParams();
-  const insets = useSafeAreaInsets();
+  const { rackId } = useLocalSearchParams<{ rackId: string }>();
   const [isLoading, setIsLoading] = useState(false);
-  
-  const handleNavigation = async (pathname: string) => {
-    if (isLoading) return;
 
-    setIsLoading(true);
-    router.push({
-      pathname: pathname as any,
-      params: { rackId: rackId },
-    });
+  const handleNavigation = useCallback(
+    (pathname: string) => {
+      if (isLoading || !rackId) return;
 
-    setTimeout(() => setIsLoading(false), 500);
-  };
+      setIsLoading(true);
 
-  // temporary id lang for testing loveu
-  const rackId = params.rackId || "1";
+      router.push({
+        pathname: pathname as any,
+        params: { rackId },
+      });
+
+      setTimeout(() => setIsLoading(false), 500);
+    },
+    [isLoading, rackId],
+  );
 
   return (
     <Stack
@@ -46,9 +45,10 @@ export default function RackIDLayout() {
           headerTitleAlign: "left",
           headerRight: () => (
             <View className="flex-row items-center pr-2 gap-1">
-              {/* Connection Button */}
               <TouchableOpacity
-                onPress={() => handleNavigation("/(tabs)/(racks)/[rackId]/connection")}
+                onPress={() =>
+                  handleNavigation(`/(tabs)/(racks)/${rackId}/connection`)
+                }
                 disabled={isLoading}
                 activeOpacity={0.7}
                 className={`p-2 rounded-lg ${isLoading ? "opacity-50" : ""}`}
@@ -60,9 +60,10 @@ export default function RackIDLayout() {
                 />
               </TouchableOpacity>
 
-              {/* Edit Button */}
               <TouchableOpacity
-                onPress={() => handleNavigation("/(tabs)/(racks)/[rackId]/edit")}
+                onPress={() =>
+                  handleNavigation(`/(tabs)/(racks)/${rackId}/edit`)
+                }
                 disabled={isLoading}
                 activeOpacity={0.7}
                 className={`p-2 rounded-lg ${isLoading ? "opacity-50" : ""}`}
@@ -96,7 +97,7 @@ export default function RackIDLayout() {
       />
       <Stack.Screen
         name="edit-rack-name"
-        options={{ title: "Rack Connection", headerTitleAlign: "left" }}
+        options={{ title: "Edit Rack Name", headerTitleAlign: "left" }}
       />
     </Stack>
   );

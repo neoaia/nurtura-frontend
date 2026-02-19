@@ -8,7 +8,8 @@ interface PasswordInputProps {
   onToggleVisibility?: () => void;
   hasError?: boolean;
   label?: string;
-  type?: "login" | "signup";
+  type?: "login" | "signup" | "change-password";
+  borderColor?: string;
 }
 
 export const PasswordInput = ({
@@ -24,7 +25,7 @@ export const PasswordInput = ({
     if (value.length === 0) return "border-[#919191]";
     if (hasError) return "border-[#E65656]";
 
-    if (type === "signup") {
+    if (type === "signup" || type === "change-password") {
       return "border-[#4CAF50]";
     }
 

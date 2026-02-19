@@ -1,11 +1,16 @@
-export interface UserInfo {
-  user_id?: string;
-  first_name?: string;
-  last_name?: string;
-  middle_name?: string;
+export interface UserDetails {
+  id?: string;
+  firebaseUid?: string;
+  firstName?: string;
+  lastName?: string;
+  middleName?: string;
   suffix?: string;
   email?: string;
   address?: string;
+  block?: string;
+  street?: string;
+  barangay?: string;
+  city?: string;
 }
 
 export interface UseFetchOptions {
