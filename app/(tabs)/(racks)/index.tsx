@@ -1,13 +1,13 @@
 import { typography } from "@/assets/fonts/Text";
 import AddRackButton from "@/components/racks/addRackItemBtn";
 import RackItem from "@/components/racks/rackItem";
+import RackItemSkeleton from "@/components/racks/skeleton/rackItemSkeleton";
 import useFetch from "@/hooks/useFetch";
 import { rackService } from "@/services/rackService";
 import { GetRackInfoDTO } from "@/types/rack.dto";
 import { router, useFocusEffect } from "expo-router";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  ActivityIndicator,
   FlatList,
   RefreshControl,
   Text,
@@ -16,11 +16,18 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+const SKELETON_COUNT = 3;
+const ERROR_RETRY_DELAY_MS = 30_000;
+
 export default function RacksScreen() {
   const [racks, setRacks] = useState<GetRackInfoDTO[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Controls whether the 30s countdown before showing retry has elapsed
+  const [showRetry, setShowRetry] = useState(false);
+  const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const { refetch: getAllRacks } = useFetch("/api/racks", {
     method: "GET",
@@ -31,6 +38,7 @@ export default function RacksScreen() {
   const fetchRacks = useCallback(async () => {
     try {
       setError(null);
+      setShowRetry(false);
 
       const response = await rackService.getAllUserRack(getAllRacks);
 
@@ -54,12 +62,27 @@ export default function RacksScreen() {
         setRacks([]);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load racks");
+      const message =
+        err instanceof Error ? err.message : "Failed to load racks";
+      setError(message);
       setRacks([]);
+
+      // Start 30s countdown before showing the retry button
+      if (retryTimerRef.current) clearTimeout(retryTimerRef.current);
+      retryTimerRef.current = setTimeout(() => {
+        setShowRetry(true);
+      }, ERROR_RETRY_DELAY_MS);
     } finally {
       setLoading(false);
     }
   }, [getAllRacks]);
+
+  // Clear timer on unmount
+  useEffect(() => {
+    return () => {
+      if (retryTimerRef.current) clearTimeout(retryTimerRef.current);
+    };
+  }, []);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -98,6 +121,15 @@ export default function RacksScreen() {
     router.push("/(tabs)/(racks)/previously-owned");
   }, []);
 
+  const handleRetry = useCallback(() => {
+    setLoading(true);
+    setError(null);
+    setShowRetry(false);
+    fetchRacks();
+  }, [fetchRacks]);
+
+  // ─── Sub-components ────────────────────────────────────────────────────────
+
   const renderHeader = useCallback(
     () => (
       <View className="flex flex-row justify-between items-center w-full mb-2 mt-8 pl-3">
@@ -130,61 +162,101 @@ export default function RacksScreen() {
     [handleCardPress],
   );
 
-  const renderEmpty = useCallback(
-    () => (
-      <View className="flex-1 justify-center items-center py-20">
-        <Text style={typography["h2-bold"]} className="text-gray-400 mb-2">
-          No racks yet
-        </Text>
-        <Text style={typography["subheader"]} className="text-gray-400">
-          Add your first rack to get started
-        </Text>
-      </View>
-    ),
-    [],
-  );
-
   const renderFooter = useCallback(
     () => <AddRackButton onPress={handleAddRack} />,
     [handleAddRack],
   );
 
-  if (loading && !refreshing && racks.length === 0) {
+  // ─── Content area based on state ───────────────────────────────────────────
+
+  const isLoadingState = (loading || refreshing) && racks.length === 0;
+  // While error but 30s hasn't passed yet → still show skeletons (silent retry attempt)
+  const isErrorSilent =
+    !!error && racks.length === 0 && !isLoadingState && !showRetry;
+  // After 30s → hide skeletons, show retry UI
+  const isErrorVisible =
+    !!error && racks.length === 0 && !isLoadingState && showRetry;
+  const isEmptyState = !loading && !error && racks.length === 0;
+
+  if (isLoadingState || isErrorSilent) {
     return (
       <SafeAreaView className="bg-white flex-1">
-        <View className="flex-1 justify-center items-center">
-          <ActivityIndicator size="large" color="#86975A" />
-          <Text style={typography["button"]} className="text-grayText mt-4">
-            Loading racks...
-          </Text>
-        </View>
+        <FlatList
+          data={Array.from({ length: SKELETON_COUNT })}
+          keyExtractor={(_, i) => `skeleton-${i}`}
+          renderItem={() => <RackItemSkeleton />}
+          ListHeaderComponent={renderHeader}
+          contentContainerStyle={{
+            paddingHorizontal: 16,
+            paddingBottom: 20,
+            flexGrow: 1,
+          }}
+          showsVerticalScrollIndicator={false}
+          scrollEnabled={false}
+        />
       </SafeAreaView>
     );
   }
 
-  if (error && racks.length === 0) {
+  if (isErrorVisible) {
     return (
       <SafeAreaView className="bg-white flex-1">
-        <View className="flex-1 justify-center items-center px-6">
-          <Text style={typography["h2-bold"]} className="text-red-500 mb-4">
-            Error Loading Racks
-          </Text>
-          <Text
-            style={typography["subheader"]}
-            className="text-gray-600 mb-6 text-center"
-          >
-            {error}
-          </Text>
-          <TouchableOpacity
-            onPress={fetchRacks}
-            className="bg-primary px-6 py-3 rounded-xl"
-            activeOpacity={0.8}
-          >
-            <Text style={typography["button"]} className="text-white">
-              Retry
-            </Text>
-          </TouchableOpacity>
-        </View>
+        <FlatList
+          data={[]}
+          renderItem={null}
+          ListHeaderComponent={renderHeader}
+          ListEmptyComponent={
+            <View className="flex-1 justify-center items-center py-20 gap-4">
+              <Text
+                style={typography["h2-bold"]}
+                className="text-gray-400 text-center"
+              >
+                Something went wrong
+              </Text>
+              <Text
+                style={typography["subheader"]}
+                className="text-gray-400 text-center px-6"
+              >
+                {error}
+              </Text>
+              <TouchableOpacity
+                onPress={handleRetry}
+                className="bg-primary px-6 py-3 rounded-xl mt-2"
+                activeOpacity={0.8}
+              >
+                <Text style={typography["button"]} className="text-white">
+                  Retry
+                </Text>
+              </TouchableOpacity>
+            </View>
+          }
+          contentContainerStyle={{
+            paddingHorizontal: 16,
+            paddingBottom: 20,
+            flexGrow: 1,
+          }}
+          showsVerticalScrollIndicator={false}
+        />
+      </SafeAreaView>
+    );
+  }
+
+  if (isEmptyState) {
+    return (
+      <SafeAreaView className="bg-white flex-1">
+        <FlatList
+          data={[]}
+          renderItem={null}
+          ListHeaderComponent={renderHeader}
+          ListFooterComponent={renderFooter}
+          ListEmptyComponent={null}
+          contentContainerStyle={{
+            paddingHorizontal: 16,
+            paddingBottom: 20,
+            flexGrow: 1,
+          }}
+          showsVerticalScrollIndicator={false}
+        />
       </SafeAreaView>
     );
   }
@@ -197,7 +269,6 @@ export default function RacksScreen() {
         keyExtractor={(item) => item.id}
         ListHeaderComponent={renderHeader}
         ListFooterComponent={renderFooter}
-        ListEmptyComponent={renderEmpty}
         contentContainerStyle={{
           paddingHorizontal: 16,
           paddingBottom: 20,
