@@ -1,4 +1,5 @@
 import { typography } from "@/assets/fonts/Text";
+import { BottomButton } from "@/components/shared/bottomButton";
 import { bleManager } from "@/utils/bluetooth/bleManager";
 import { Buffer } from "buffer";
 import { CameraView, useCameraPermissions } from "expo-camera";
@@ -96,6 +97,14 @@ export default function AddNewRack2() {
     verifyWithESP32(data);
   };
 
+  const handleScanPress = async () => {
+    if (!permission?.granted) {
+      const res = await requestPermission();
+      if (!res.granted) return;
+    }
+    setScanning(true);
+  };
+
   if (!permission) return <View className="flex-1 bg-white" />;
 
   return (
@@ -113,37 +122,31 @@ export default function AddNewRack2() {
       )}
 
       {!scanning ? (
-        <ScrollView
-          className="flex-1 px-4"
-          contentContainerStyle={{ paddingTop: 34 }}
-        >
-          <View className="mb-9 items-center">
-            <Image
-              source={require("@/assets/images/add-new-rack/plant-rack.png")}
-              className="w-40 h-40"
-            />
-          </View>
-
-          <Text style={typography["h1-bold"]} className="text-black mb-3">
-            Verify Connection
-          </Text>
-          <Text style={typography["subheader"]} className="text-gray-500 mb-6">
-            Scan the QR code on your Nurtura Rack to verify its identity.
-          </Text>
-
-          <TouchableOpacity
-            onPress={async () => {
-              if (!permission.granted) {
-                const res = await requestPermission();
-                if (!res.granted) return;
-              }
-              setScanning(true);
-            }}
-            className="bg-primary p-4 rounded-2xl items-center shadow-sm"
+        <>
+          <ScrollView
+            className="flex-1 px-4"
+            contentContainerStyle={{ paddingTop: 34 }}
           >
-            <Text className="text-white font-bold text-lg">Scan QR Code</Text>
-          </TouchableOpacity>
-        </ScrollView>
+            <View className="mb-9 items-center">
+              <Image
+                source={require("@/assets/images/add-new-rack/plant-rack.png")}
+                className="w-40 h-40"
+              />
+            </View>
+
+            <Text style={typography["h1-bold"]} className="text-black mb-3">
+              Verify Connection
+            </Text>
+            <Text
+              style={typography["subheader"]}
+              className="text-gray-500 mb-6"
+            >
+              Scan the QR code on your Nurtura Rack to verify its identity.
+            </Text>
+          </ScrollView>
+
+          <BottomButton title="Scan QR Code" onPress={handleScanPress} />
+        </>
       ) : (
         <View className="flex-1">
           <CameraView

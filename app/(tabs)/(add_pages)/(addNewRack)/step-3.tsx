@@ -1,17 +1,11 @@
 import { ConfirmationModal } from "@/components/modals/confirmationModal";
+import { BottomButton } from "@/components/shared/bottomButton";
 import { TextInputField } from "@/components/shared/textInputField";
 import { bleManager } from "@/utils/bluetooth/bleManager";
 import { Buffer } from "buffer";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useRef, useState } from "react";
-import {
-  ActivityIndicator,
-  Alert,
-  ScrollView,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { Alert, ScrollView, Text, View } from "react-native";
 import { useBackWarning } from "../../../../hooks/shared/useBackWarning";
 
 const SERVICE_UUID = "4fafc201-1fb5-459e-8fcc-c5c9c331914b";
@@ -33,8 +27,6 @@ export default function AddNewRack3() {
   const { showModal, handleConfirm, handleCancel } = useBackWarning(isDirty);
 
   const cancelMonitor = () => {
-    // Do NOT call cancelTransaction — it triggers a null error code crash on Android
-    // Just null the ref so further callbacks are ignored
     if (subscriptionRef.current) {
       subscriptionRef.current = null;
     }
@@ -65,7 +57,6 @@ export default function AddNewRack3() {
         SERVICE_UUID,
         STATUS_CHAR_UUID,
         async (error, char) => {
-          // If already cleaned up, ignore all further callbacks
           if (!subscriptionRef.current) return;
 
           if (error) {
@@ -87,7 +78,7 @@ export default function AddNewRack3() {
               !isProcessed.current
             ) {
               isProcessed.current = true;
-              subscriptionRef.current = null; // stop processing further callbacks
+              subscriptionRef.current = null;
 
               if (timeoutRef.current) {
                 clearTimeout(timeoutRef.current);
@@ -183,9 +174,12 @@ export default function AddNewRack3() {
   };
 
   return (
-    <View className="flex-1 bg-white p-6">
-      <ScrollView>
-        <Text className="text-2xl font-bold mb-6 mt-10">Connect to WiFi</Text>
+    <View className="flex-1 bg-white">
+      <ScrollView
+        className="flex-1 px-6"
+        contentContainerStyle={{ paddingTop: 40 }}
+      >
+        <Text className="text-2xl font-bold mb-6">Connect to WiFi</Text>
 
         <TextInputField
           label="WiFi Name (SSID)"
@@ -209,28 +203,13 @@ export default function AddNewRack3() {
             Testing connection... This may take up to 30 seconds.
           </Text>
         )}
-
-        <TouchableOpacity
-          onPress={handleConnect}
-          disabled={loading}
-          className={`mt-10 p-4 rounded-2xl items-center ${
-            loading ? "bg-gray-300" : "bg-primary"
-          }`}
-        >
-          {loading ? (
-            <View className="flex-row items-center">
-              <ActivityIndicator color="white" />
-              <Text className="text-white font-bold text-lg ml-2">
-                Connecting...
-              </Text>
-            </View>
-          ) : (
-            <Text className="text-white font-bold text-lg">
-              Send Credentials
-            </Text>
-          )}
-        </TouchableOpacity>
       </ScrollView>
+
+      <BottomButton
+        title="Send Credentials"
+        onPress={handleConnect}
+        disabled={loading}
+      />
 
       <ConfirmationModal
         isVisible={showModal}
