@@ -6,7 +6,7 @@ import useFetch from "@/hooks/useFetch";
 import { rackService } from "@/services/rackService";
 import { GetRackInfoDTO } from "@/types/rack.dto";
 import { router, useFocusEffect } from "expo-router";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useState } from "react";
 import {
   FlatList,
   RefreshControl,
@@ -17,17 +17,12 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const SKELETON_COUNT = 3;
-const ERROR_RETRY_DELAY_MS = 30_000;
 
 export default function RacksScreen() {
   const [racks, setRacks] = useState<GetRackInfoDTO[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  // Controls whether the 30s countdown before showing retry has elapsed
-  const [showRetry, setShowRetry] = useState(false);
-  const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const { refetch: getAllRacks } = useFetch("/api/racks", {
     method: "GET",
@@ -38,7 +33,6 @@ export default function RacksScreen() {
   const fetchRacks = useCallback(async () => {
     try {
       setError(null);
-      setShowRetry(false);
 
       const response = await rackService.getAllUserRack(getAllRacks);
 
@@ -66,23 +60,10 @@ export default function RacksScreen() {
         err instanceof Error ? err.message : "Failed to load racks";
       setError(message);
       setRacks([]);
-
-      // Start 30s countdown before showing the retry button
-      if (retryTimerRef.current) clearTimeout(retryTimerRef.current);
-      retryTimerRef.current = setTimeout(() => {
-        setShowRetry(true);
-      }, ERROR_RETRY_DELAY_MS);
     } finally {
       setLoading(false);
     }
   }, [getAllRacks]);
-
-  // Clear timer on unmount
-  useEffect(() => {
-    return () => {
-      if (retryTimerRef.current) clearTimeout(retryTimerRef.current);
-    };
-  }, []);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -124,7 +105,6 @@ export default function RacksScreen() {
   const handleRetry = useCallback(() => {
     setLoading(true);
     setError(null);
-    setShowRetry(false);
     fetchRacks();
   }, [fetchRacks]);
 
@@ -170,15 +150,10 @@ export default function RacksScreen() {
   // ─── Content area based on state ───────────────────────────────────────────
 
   const isLoadingState = (loading || refreshing) && racks.length === 0;
-  // While error but 30s hasn't passed yet → still show skeletons (silent retry attempt)
-  const isErrorSilent =
-    !!error && racks.length === 0 && !isLoadingState && !showRetry;
-  // After 30s → hide skeletons, show retry UI
-  const isErrorVisible =
-    !!error && racks.length === 0 && !isLoadingState && showRetry;
+  const isErrorState = !!error && racks.length === 0 && !isLoadingState;
   const isEmptyState = !loading && !error && racks.length === 0;
 
-  if (isLoadingState || isErrorSilent) {
+  if (isLoadingState) {
     return (
       <SafeAreaView className="bg-white flex-1">
         <FlatList
@@ -198,7 +173,7 @@ export default function RacksScreen() {
     );
   }
 
-  if (isErrorVisible) {
+  if (isErrorState) {
     return (
       <SafeAreaView className="bg-white flex-1">
         <FlatList
