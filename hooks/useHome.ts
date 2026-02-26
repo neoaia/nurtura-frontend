@@ -86,19 +86,25 @@ export const useHome = () => {
 
       // Adjust these field names based on what your API actually returns
       const racksCount =
-        racksResult?.data?.racks?.length ??
-        racksResult?.data?.data?.length ??
-        0;
-      const plantsCount =
-        plantsResult?.data?.plants?.length ??
-        plantsResult?.data?.data?.length ??
-        0;
+        racksResult?.data?.data?.filter((rack: any) => rack.isActive === true)
+          .length ?? 0;
+      const plantsCount = plantsResult?.data?.meta?.totalItems ?? 0;
 
       setData((prev) => ({
         ...prev,
         summary: [
-          { id: "racks", type: "racks", value: racksCount },
-          { id: "plants", type: "plants", value: plantsCount },
+          {
+            id: "racks",
+            type: "racks",
+            value: racksCount,
+            isActive: !!racksResult?.data?.data,
+          },
+          {
+            id: "plants",
+            type: "plants",
+            value: plantsCount,
+            isActive: !!plantsResult?.data?.data,
+          },
         ],
       }));
     } catch (err) {

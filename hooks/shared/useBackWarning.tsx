@@ -7,7 +7,10 @@ import { useNavigation, useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import { BackHandler } from "react-native";
 
-export const useBackWarning = (isDirty: boolean = false) => {
+export const useBackWarning = (
+  isDirty: boolean = false,
+  onBack?: () => void,
+) => {
   const router = useRouter();
   const navigation = useNavigation();
   const [showModal, setShowModal] = useState(false);
@@ -31,7 +34,11 @@ export const useBackWarning = (isDirty: boolean = false) => {
 
   const handleConfirm = () => {
     setShowModal(false);
-    router.back();
+    if (onBack) {
+      onBack();
+    } else {
+      router.back();
+    }
   };
 
   const handleCancel = () => setShowModal(false);
@@ -46,13 +53,17 @@ export const useBackWarning = (isDirty: boolean = false) => {
             if (isDirty) {
               setShowModal(true);
             } else {
-              router.back();
+              if (onBack) {
+                onBack();
+              } else {
+                router.back();
+              }
             }
           }}
         />
       ),
     });
-  }, [navigation, isDirty]);
+  }, [navigation, isDirty, onBack]);
 
   return { showModal, setShowModal, handleConfirm, handleCancel };
 };

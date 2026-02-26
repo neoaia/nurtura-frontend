@@ -2,12 +2,14 @@ import { typography } from "@/assets/fonts/Text";
 import { BottomButton } from "@/components/shared/bottomButton";
 import { useBackWarning } from "@/hooks/shared/useBackWarning";
 import { bleManager } from "@/utils/bluetooth/bleManager";
+import * as IntentLauncher from "expo-intent-launcher";
 import { router, useFocusEffect } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
   FlatList,
+  Linking,
   PermissionsAndroid,
   Platform,
   Text,
@@ -22,7 +24,17 @@ const SERVICE_UUID = "4fafc201-1fb5-459e-8fcc-c5c9c331914b";
 export default function AddNewRack1() {
   const [devices, setDevices] = useState<any[]>([]);
   const [isScanning, setIsScanning] = useState(false);
-  const { showModal, handleConfirm, handleCancel } = useBackWarning(false);
+  const [isEnablingBluetooth, setIsEnablingBluetooth] = useState(false);
+
+  const handleBack = useCallback(() => {
+    bleManager.stopDeviceScan().catch(() => {});
+    router.replace("/(tabs)/(home)");
+  }, []);
+
+  const { showModal, handleConfirm, handleCancel } = useBackWarning(
+    false,
+    handleBack,
+  );
 
   useFocusEffect(
     useCallback(() => {
@@ -30,12 +42,40 @@ export default function AddNewRack1() {
     }, []),
   );
 
-  const requestPermissions = async () => {
+  const requestPermissions = async (): Promise<boolean> => {
     if (Platform.OS === "ios") return true;
 
+    // Show custom prompt first
+    const userAgreed = await new Promise<boolean>((resolve) => {
+      Alert.alert(
+        "Bluetooth Permission Required",
+        "Nurtura needs Bluetooth access to scan and connect to your rack. Please allow Bluetooth permissions on the next prompt.",
+        [
+          {
+            text: "Deny",
+            style: "cancel",
+            onPress: () => resolve(false),
+          },
+          {
+            text: "Allow",
+            onPress: () => resolve(true),
+          },
+        ],
+      );
+    });
+
+    if (!userAgreed) return false;
+
+    // Now trigger the native permission request
     if (Number(Platform.Version) < 31) {
       const granted = await PermissionsAndroid.request(
         PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+        {
+          title: "Location Permission",
+          message: "Bluetooth scanning requires location permission.",
+          buttonPositive: "Allow",
+          buttonNegative: "Deny",
+        },
       );
       return granted === PermissionsAndroid.RESULTS.GRANTED;
     }
@@ -46,30 +86,75 @@ export default function AddNewRack1() {
       PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
     ]);
 
-    return (
+    const allGranted =
       result["android.permission.BLUETOOTH_CONNECT"] ===
         PermissionsAndroid.RESULTS.GRANTED &&
       result["android.permission.BLUETOOTH_SCAN"] ===
-        PermissionsAndroid.RESULTS.GRANTED
+        PermissionsAndroid.RESULTS.GRANTED;
+
+    if (!allGranted) {
+      const permanentlyDenied =
+        result["android.permission.BLUETOOTH_CONNECT"] ===
+          PermissionsAndroid.RESULTS.NEVER_ASK_AGAIN ||
+        result["android.permission.BLUETOOTH_SCAN"] ===
+          PermissionsAndroid.RESULTS.NEVER_ASK_AGAIN;
+
+      if (permanentlyDenied) {
+        Alert.alert(
+          "Permissions Denied",
+          "Bluetooth permissions were permanently denied. Please enable them in your phone settings.",
+          [
+            { text: "Cancel", style: "cancel" },
+            { text: "Open Settings", onPress: () => Linking.openSettings() },
+          ],
+        );
+      }
+    }
+
+    return allGranted;
+  };
+  const enableBluetooth = async (): Promise<boolean> => {
+    const state = await bleManager.state();
+    if (state === State.PoweredOn) return true;
+
+    if (Platform.OS === "android") {
+      setIsEnablingBluetooth(true);
+      try {
+        await IntentLauncher.startActivityAsync(
+          IntentLauncher.ActivityAction.BLUETOOTH_SETTINGS,
+        );
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+        const newState = await bleManager.state();
+        return newState === State.PoweredOn;
+      } catch (e) {
+        console.log("Failed to open Bluetooth settings:", e);
+        return false;
+      } finally {
+        setIsEnablingBluetooth(false);
+      }
+    }
+
+    Alert.alert(
+      "Bluetooth Off",
+      "Please turn on Bluetooth in your settings to scan for racks.",
+      [
+        { text: "Cancel", style: "cancel" },
+        { text: "Open Settings", onPress: () => Linking.openSettings() },
+      ],
     );
+    return false;
   };
 
   const startScan = async () => {
-    const state = await bleManager.state();
-    if (state !== State.PoweredOn) {
-      Alert.alert("Bluetooth Off", "Please turn on Bluetooth.");
-      return;
-    }
-
+    // Step 1: Request permissions first
     const hasPermission = await requestPermissions();
-    if (!hasPermission) {
-      Alert.alert(
-        "Permissions Required",
-        "Please grant Bluetooth permissions.",
-      );
-      return;
-    }
+    if (!hasPermission) return;
 
+    // Step 2: Enable Bluetooth if off
+    const isBluetoothOn = await enableBluetooth();
+    if (!isBluetoothOn) return;
+
+    // Step 3: Start scanning
     setDevices([]);
     setIsScanning(true);
 
@@ -135,9 +220,11 @@ export default function AddNewRack1() {
 
   const scanButtonTitle = isScanning
     ? "Scanning..."
-    : devices.length > 0
-      ? "Scan Again"
-      : "Search for Racks";
+    : isEnablingBluetooth
+      ? "Enabling Bluetooth..."
+      : devices.length > 0
+        ? "Scan Again"
+        : "Search for Racks";
 
   return (
     <SafeAreaView className="flex-1 bg-white" edges={["bottom"]}>
@@ -149,14 +236,14 @@ export default function AddNewRack1() {
           Select your Nurtura Rack from the list below.
         </Text>
 
-        {isScanning && (
+        {(isScanning || isEnablingBluetooth) && (
           <View className="items-center mb-4">
             <ActivityIndicator size="small" color="#10b981" />
             <Text
               style={typography["subheader"]}
               className="text-grayText mt-2"
             >
-              Scanning...
+              {isEnablingBluetooth ? "Enabling Bluetooth..." : "Scanning..."}
             </Text>
           </View>
         )}
@@ -198,7 +285,7 @@ export default function AddNewRack1() {
       <BottomButton
         title={scanButtonTitle}
         onPress={startScan}
-        disabled={isScanning}
+        disabled={isScanning || isEnablingBluetooth}
       />
     </SafeAreaView>
   );
