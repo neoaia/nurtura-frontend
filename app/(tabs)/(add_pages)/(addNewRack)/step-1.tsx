@@ -1,4 +1,5 @@
 import { typography } from "@/assets/fonts/Text";
+import { BottomButton } from "@/components/shared/bottomButton";
 import { useBackWarning } from "@/hooks/shared/useBackWarning";
 import { bleManager } from "@/utils/bluetooth/bleManager";
 import { router, useFocusEffect } from "expo-router";
@@ -14,6 +15,7 @@ import {
   View,
 } from "react-native";
 import { State } from "react-native-ble-plx";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const SERVICE_UUID = "4fafc201-1fb5-459e-8fcc-c5c9c331914b";
 
@@ -131,67 +133,73 @@ export default function AddNewRack1() {
     };
   }, []);
 
+  const scanButtonTitle = isScanning
+    ? "Scanning..."
+    : devices.length > 0
+      ? "Scan Again"
+      : "Search for Racks";
+
   return (
-    <View className="flex-1 bg-white p-6">
-      <Text style={typography["h1-bold"]} className="mt-10 mb-2">
-        Find your Rack
-      </Text>
-      <Text style={typography["subheader"]} className="mb-6">
-        Select your Nurtura Rack from the list below.
-      </Text>
+    <SafeAreaView className="flex-1 bg-white" edges={["bottom"]}>
+      <View className="flex-1 p-6">
+        <Text style={typography["h1-bold"]} className="mt-10 mb-2">
+          Find your Rack
+        </Text>
+        <Text style={typography["subheader"]} className="mb-6">
+          Select your Nurtura Rack from the list below.
+        </Text>
 
-      {isScanning && (
-        <View className="items-center mb-4">
-          <ActivityIndicator size="small" color="#10b981" />
-          <Text className="text-gray-500 mt-2">Scanning...</Text>
-        </View>
-      )}
-
-      <FlatList
-        data={devices}
-        keyExtractor={(item) => item.id}
-        ListEmptyComponent={
-          !isScanning ? (
-            <View className="p-8 bg-gray-50 rounded-2xl border border-dashed border-gray-200 items-center">
-              <Text className="text-gray-400 italic text-center">
-                No racks found.{"\n"}Make sure your rack is powered on.
-              </Text>
-            </View>
-          ) : null
-        }
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            onPress={() => connectToDevice(item)}
-            className="p-5 bg-gray-50 mb-3 rounded-2xl border border-gray-100 flex-row justify-between items-center"
-          >
-            <View>
-              <Text className="font-bold text-lg">
-                {item.name || "Nurtura Rack"}
-              </Text>
-              <Text className="text-gray-400 text-xs">{item.id}</Text>
-            </View>
-            <View className="bg-primary px-3 py-1 rounded-full">
-              <Text className="text-white text-xs font-bold">Connect</Text>
-            </View>
-          </TouchableOpacity>
+        {isScanning && (
+          <View className="items-center mb-4">
+            <ActivityIndicator size="small" color="#10b981" />
+            <Text
+              style={typography["subheader"]}
+              className="text-grayText mt-2"
+            >
+              Scanning...
+            </Text>
+          </View>
         )}
-      />
 
-      <TouchableOpacity
+        <FlatList
+          data={devices}
+          keyExtractor={(item) => item.id}
+          ListEmptyComponent={
+            !isScanning ? (
+              <View className="p-8 bg-gray-50 rounded-2xl border border-dashed border-gray-200 items-center">
+                <Text
+                  style={typography["subheader"]}
+                  className="text-grayText text-center"
+                >
+                  No racks found.{"\n"}Make sure your rack is powered on.
+                </Text>
+              </View>
+            ) : null
+          }
+          renderItem={({ item }) => (
+            <TouchableOpacity
+              onPress={() => connectToDevice(item)}
+              className="p-5 bg-gray-50 mb-3 rounded-2xl border border-gray-100 flex-row justify-between items-center"
+            >
+              <View>
+                <Text className="font-bold text-lg">
+                  {item.name || "Nurtura Rack"}
+                </Text>
+                <Text className="text-gray-400 text-xs">{item.id}</Text>
+              </View>
+              <View className="bg-primary px-3 py-1 rounded-full">
+                <Text className="text-white text-xs font-bold">Connect</Text>
+              </View>
+            </TouchableOpacity>
+          )}
+        />
+      </View>
+
+      <BottomButton
+        title={scanButtonTitle}
         onPress={startScan}
         disabled={isScanning}
-        className={`p-4 rounded-2xl items-center mt-4 ${
-          isScanning ? "bg-gray-200" : "bg-primary"
-        }`}
-      >
-        <Text className="text-white font-bold">
-          {isScanning
-            ? "Scanning..."
-            : devices.length > 0
-              ? "Scan Again"
-              : "Search for Racks"}
-        </Text>
-      </TouchableOpacity>
-    </View>
+      />
+    </SafeAreaView>
   );
 }

@@ -1,13 +1,13 @@
 import { typography } from "@/assets/fonts/Text";
 import AddRackButton from "@/components/racks/addRackItemBtn";
 import RackItem from "@/components/racks/rackItem";
+import RackItemSkeleton from "@/components/racks/skeleton/rackItemSkeleton";
 import useFetch from "@/hooks/useFetch";
 import { rackService } from "@/services/rackService";
 import { GetRackInfoDTO } from "@/types/rack.dto";
 import { router, useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
 import {
-  ActivityIndicator,
   FlatList,
   RefreshControl,
   Text,
@@ -15,6 +15,8 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+
+const SKELETON_COUNT = 3;
 
 export default function RacksScreen() {
   const [racks, setRacks] = useState<GetRackInfoDTO[]>([]);
@@ -54,7 +56,9 @@ export default function RacksScreen() {
         setRacks([]);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load racks");
+      const message =
+        err instanceof Error ? err.message : "Failed to load racks";
+      setError(message);
       setRacks([]);
     } finally {
       setLoading(false);
@@ -98,6 +102,14 @@ export default function RacksScreen() {
     router.push("/(tabs)/(racks)/previously-owned");
   }, []);
 
+  const handleRetry = useCallback(() => {
+    setLoading(true);
+    setError(null);
+    fetchRacks();
+  }, [fetchRacks]);
+
+  // ─── Sub-components ────────────────────────────────────────────────────────
+
   const renderHeader = useCallback(
     () => (
       <View className="flex flex-row justify-between items-center w-full mb-2 mt-8 pl-3">
@@ -130,61 +142,96 @@ export default function RacksScreen() {
     [handleCardPress],
   );
 
-  const renderEmpty = useCallback(
-    () => (
-      <View className="flex-1 justify-center items-center py-20">
-        <Text style={typography["h2-bold"]} className="text-gray-400 mb-2">
-          No racks yet
-        </Text>
-        <Text style={typography["subheader"]} className="text-gray-400">
-          Add your first rack to get started
-        </Text>
-      </View>
-    ),
-    [],
-  );
-
   const renderFooter = useCallback(
     () => <AddRackButton onPress={handleAddRack} />,
     [handleAddRack],
   );
 
-  if (loading && !refreshing && racks.length === 0) {
+  // ─── Content area based on state ───────────────────────────────────────────
+
+  const isLoadingState = (loading || refreshing) && racks.length === 0;
+  const isErrorState = !!error && racks.length === 0 && !isLoadingState;
+  const isEmptyState = !loading && !error && racks.length === 0;
+
+  if (isLoadingState) {
     return (
       <SafeAreaView className="bg-white flex-1">
-        <View className="flex-1 justify-center items-center">
-          <ActivityIndicator size="large" color="#86975A" />
-          <Text style={typography["button"]} className="text-grayText mt-4">
-            Loading racks...
-          </Text>
-        </View>
+        <FlatList
+          data={Array.from({ length: SKELETON_COUNT })}
+          keyExtractor={(_, i) => `skeleton-${i}`}
+          renderItem={() => <RackItemSkeleton />}
+          ListHeaderComponent={renderHeader}
+          contentContainerStyle={{
+            paddingHorizontal: 16,
+            paddingBottom: 20,
+            flexGrow: 1,
+          }}
+          showsVerticalScrollIndicator={false}
+          scrollEnabled={false}
+        />
       </SafeAreaView>
     );
   }
 
-  if (error && racks.length === 0) {
+  if (isErrorState) {
     return (
       <SafeAreaView className="bg-white flex-1">
-        <View className="flex-1 justify-center items-center px-6">
-          <Text style={typography["h2-bold"]} className="text-red-500 mb-4">
-            Error Loading Racks
-          </Text>
-          <Text
-            style={typography["subheader"]}
-            className="text-gray-600 mb-6 text-center"
-          >
-            {error}
-          </Text>
-          <TouchableOpacity
-            onPress={fetchRacks}
-            className="bg-primary px-6 py-3 rounded-xl"
-            activeOpacity={0.8}
-          >
-            <Text style={typography["button"]} className="text-white">
-              Retry
-            </Text>
-          </TouchableOpacity>
-        </View>
+        <FlatList
+          data={[]}
+          renderItem={null}
+          ListHeaderComponent={renderHeader}
+          ListEmptyComponent={
+            <View className="flex-1 justify-center items-center py-20 gap-4">
+              <Text
+                style={typography["h2-bold"]}
+                className="text-gray-400 text-center"
+              >
+                Something went wrong
+              </Text>
+              <Text
+                style={typography["subheader"]}
+                className="text-gray-400 text-center px-6"
+              >
+                {error}
+              </Text>
+              <TouchableOpacity
+                onPress={handleRetry}
+                className="bg-primary px-6 py-3 rounded-xl mt-2"
+                activeOpacity={0.8}
+              >
+                <Text style={typography["button"]} className="text-white">
+                  Retry
+                </Text>
+              </TouchableOpacity>
+            </View>
+          }
+          contentContainerStyle={{
+            paddingHorizontal: 16,
+            paddingBottom: 20,
+            flexGrow: 1,
+          }}
+          showsVerticalScrollIndicator={false}
+        />
+      </SafeAreaView>
+    );
+  }
+
+  if (isEmptyState) {
+    return (
+      <SafeAreaView className="bg-white flex-1">
+        <FlatList
+          data={[]}
+          renderItem={null}
+          ListHeaderComponent={renderHeader}
+          ListFooterComponent={renderFooter}
+          ListEmptyComponent={null}
+          contentContainerStyle={{
+            paddingHorizontal: 16,
+            paddingBottom: 20,
+            flexGrow: 1,
+          }}
+          showsVerticalScrollIndicator={false}
+        />
       </SafeAreaView>
     );
   }
@@ -197,7 +244,6 @@ export default function RacksScreen() {
         keyExtractor={(item) => item.id}
         ListHeaderComponent={renderHeader}
         ListFooterComponent={renderFooter}
-        ListEmptyComponent={renderEmpty}
         contentContainerStyle={{
           paddingHorizontal: 16,
           paddingBottom: 20,
