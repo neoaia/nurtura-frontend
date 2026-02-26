@@ -18,7 +18,14 @@ const RACK_OPTIONS = [
 
 const AddNewPlant1 = () => {
   const [selectedRack, setSelectedRack] = useState<DropdownOption | null>(null);
-  const { showModal, handleConfirm, handleCancel } = useBackWarning();
+
+  const handleBack = useCallback(() => {
+    router.replace("/(tabs)/(home)");
+  }, []);
+  const { showModal, handleConfirm, handleCancel } = useBackWarning(
+    !!selectedRack,
+    handleBack,
+  );
 
   useFocusEffect(
     useCallback(() => {
@@ -81,7 +88,7 @@ const AddNewPlant1 = () => {
       />
       <ConfirmationModal
         isVisible={showModal}
-        onConfirm={handleBackConfirm}
+        onConfirm={handleConfirm}
         title="Go Back"
         message="All details you have entered will be restarted and gone."
         confirmText="Continue"

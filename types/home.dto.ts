@@ -8,6 +8,7 @@ export interface SummaryCardDTO {
   id: string;
   type: "racks" | "plants";
   value: number | null;
+  isActive?: boolean;
 }
 
 export interface HighlightDTO {

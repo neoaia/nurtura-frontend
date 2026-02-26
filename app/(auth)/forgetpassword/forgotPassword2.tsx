@@ -29,7 +29,7 @@ const ForgotPassword2 = () => {
 
   const allFilled = otp.every((digit) => digit !== "");
 
-  const { refetch: sendOtp } = useFetch("/api/auth/otp/reset-password", {
+  const { refetch: sendOtp } = useFetch("/api/auth/otp/forgot-password", {
     method: "POST",
     autoFetch: false,
     withAuth: false,
@@ -124,7 +124,7 @@ const ForgotPassword2 = () => {
         verifyOtp,
         email as string,
         userCode,
-        "reset-password",
+        "forgot-password",
       );
 
       if (!response.success) {
