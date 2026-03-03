@@ -8,6 +8,7 @@ import {
   onAuthStateChanged,
   signInWithCredential,
   signInWithEmailAndPassword,
+  signInWithCustomToken,
   signOut,
   User
 } from 'firebase/auth';
@@ -34,6 +35,7 @@ interface AuthContextType {
   googleSignUp: () => Promise<{ userData: any }>;
   logout: () => Promise<void>;
   googleSignInAndVerify: () => Promise<{ userData: any }>;
+  signInWithTemporaryToken: (token: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({} as AuthContextType);
@@ -79,6 +81,12 @@ useEffect(() => {
   if (googleLoggedIn) {
       const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
+        const forgotPasswordInProgress = await SecureStore.getItemAsync("forgotPasswordInProgress");
+        if (forgotPasswordInProgress === "true") {
+          setLoading(false);
+          return;
+        }
+
         const firebaseToken = await firebaseUser.getIdToken();
         setUser({
           uid: firebaseUser.uid,
@@ -178,6 +186,10 @@ useEffect(() => {
   const fetchSignInMethods = async (email: string) => {
     return await fetchSignInMethodsForEmail(auth, email);
   };
+
+  const signInWithTemporaryToken = async (token: string) => {
+    await signInWithCustomToken(auth, token);
+  }
 
   const signUp = async (email: string, password: string) => {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
@@ -303,6 +315,7 @@ useEffect(() => {
         email,
         fetchSignInMethods,
         googleSignInAndVerify,
+        signInWithTemporaryToken,
         signUp,
         signIn,
         googleSignIn,

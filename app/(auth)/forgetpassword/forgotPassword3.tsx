@@ -1,3 +1,11 @@
+import { useAuth } from "@/contexts/AuthContext";
+import useFetch from "@/hooks/useFetch";
+import { authService } from "@/services/authService";
+import {
+  cleanInput,
+  isStrongPassword,
+  validatePassword,
+} from "@/utils/validation";
 import { router, useLocalSearchParams } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import React, { useEffect, useState } from "react";
@@ -10,9 +18,6 @@ import {
   TouchableWithoutFeedback,
   View,
 } from "react-native";
-import useFetch from '@/hooks/useFetch';
-import { validatePassword, cleanInput, isStrongPassword } from "@/utils/validation";
-import { authService } from '@/services/authService';
 
 const ForgotPassword3 = () => {
   const [password, setPassword] = useState("");
@@ -21,6 +26,7 @@ const ForgotPassword3 = () => {
   const [loading, setLoading] = useState(false);
 
   const { email } = useLocalSearchParams();
+  const { logout } = useAuth();
 
   const isNextButtonEnabled =
     password.length > 0 &&
@@ -33,17 +39,18 @@ const ForgotPassword3 = () => {
   const isConfirmPasswordValid = isStrongPassword(confirmPassword);
   const passwordsMatch = password === confirmPassword;
 
-  const {
-    refetch: resetPassword
-  } = useFetch('/api/auth/reset-password', {
-    method: 'POST',
+  const { refetch: resetPassword } = useFetch("/api/auth/update-password", {
+    method: "POST",
     autoFetch: false,
-    withAuth: false
+    withAuth: true,
   });
 
   const handleNextPress = async () => {
     if (!email) {
-      Alert.alert("Error", "Email is missing. Please restart the password reset process.");
+      Alert.alert(
+        "Error",
+        "Email is missing. Please restart the password reset process.",
+      );
       return;
     }
 
@@ -52,13 +59,23 @@ const ForgotPassword3 = () => {
     if (!passwordsMatch) return Alert.alert("Error", "Passwords do not match.");
 
     try {
-      const resetResponse = await authService.resetPassword(resetPassword, email as string, password);
+      const resetResponse = await authService.resetPassword(
+        resetPassword,
+        password,
+      );
 
       if (!resetResponse.success) {
-        Alert.alert("Error", resetResponse.message || "Failed to reset password. Please try again.");
+        Alert.alert(
+          "Error",
+          resetResponse.message ||
+            "Failed to reset password. Please try again.",
+        );
         setLoading(false);
         return;
       }
+
+      await SecureStore.deleteItemAsync("forgotPasswordInProgress");
+      await logout();
 
       Alert.alert("Success", "Your password has been reset successfully.", [
         {
@@ -73,33 +90,39 @@ const ForgotPassword3 = () => {
     } finally {
       setLoading(false);
     }
-  }
+  };
 
   const togglePasswordVisibility = () => {
     setIsPasswordVisible(!isPasswordVisible);
-  }
+  };
 
   useEffect(() => {
     const loadPasswords = async () => {
-      const savedPassword = await SecureStore.getItemAsync("forgot_password_new_password");
-      const savedConfirmPassword = await SecureStore.getItemAsync("forgot_password_confirm_password");
+      const savedPassword = await SecureStore.getItemAsync(
+        "forgot_password_new_password",
+      );
+      const savedConfirmPassword = await SecureStore.getItemAsync(
+        "forgot_password_confirm_password",
+      );
 
       if (savedPassword) setPassword(savedPassword);
       if (savedConfirmPassword) setConfirmPassword(savedConfirmPassword);
-    }
+    };
     loadPasswords();
   }, []);
 
   useEffect(() => {
     const savePasswords = () => {
-      if (password) SecureStore.setItemAsync("forgot_password_new_password", password);
-      if (confirmPassword) SecureStore.setItemAsync("forgot_password_confirm_password", confirmPassword);
-    }
+      if (password)
+        SecureStore.setItemAsync("forgot_password_new_password", password);
+      if (confirmPassword)
+        SecureStore.setItemAsync(
+          "forgot_password_confirm_password",
+          confirmPassword,
+        );
+    };
     savePasswords();
   }, [password, confirmPassword]);
-
-
-  
 
   return (
     <View className="flex-1 bg-white px-[16px] pb-[34px] w-screen justify-between h-screen">

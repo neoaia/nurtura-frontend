@@ -150,12 +150,10 @@ export const authService = {
 
   async resetPassword(
     refetch: any,
-    email: string,
     newPassword: string,
   ): Promise<{ success: boolean; message: string }> {
-    logger.log(`Resetting password for: ${email}`);
     try {
-      const response = await refetch({ body: { email, newPassword } });
+      const response = await refetch({ body: { newPassword } });
       logger.debug("Response received", response);
 
       if (response.error) {
@@ -258,7 +256,7 @@ export const authService = {
     email: string,
     code: string,
     purpose: string,
-  ): Promise<{ message: string; success: boolean }> {
+  ): Promise<{ message: string; success: boolean, loginToken: string | null }> {
     logger.log(`Verifying OTP for: ${email}, purpose: ${purpose}`);
     try {
       const response = await refetch({ body: { email, code, purpose } });
@@ -269,22 +267,24 @@ export const authService = {
         return {
           message: response.error?.message || "Server error occurred",
           success: false,
+          loginToken: null,
         };
       }
 
       if (!response.data) {
         logger.warn("No data received");
-        return { message: "No data received", success: false };
+        return { message: "No data received", success: false, loginToken: null };
       }
 
       logger.log("OTP verified successfully");
       return {
         message: response.data?.message || "OTP verification successful",
         success: true,
+        loginToken: response.data?.loginToken,
       };
     } catch (error) {
       logger.error("Exception occurred", error);
-      return { message: `Error verifying OTP: ${error}`, success: false };
+      return { message: `Error verifying OTP: ${error}`, success: false, loginToken: null };
     }
   },
 
