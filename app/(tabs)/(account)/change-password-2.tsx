@@ -22,7 +22,7 @@ export default function ChangePassword2() {
   const [loading, setLoading] = useState(false);
   const [verifiedEmail, setVerifiedEmail] = useState<string>("");
 
-  const { refetch: changePassword } = useFetch("/api/auth/reset-password", {
+  const { refetch: changePassword } = useFetch("/api/auth/update-password", {
     method: "POST",
     autoFetch: false,
     withAuth: true,
@@ -103,7 +103,6 @@ export default function ChangePassword2() {
     try {
       const response = await authService.resetPassword(
         changePassword,
-        verifiedEmail,
         password,
       );
 

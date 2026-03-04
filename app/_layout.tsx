@@ -45,8 +45,11 @@ function RootLayoutNav() {
       const inAuthGroup = segments[0] === "(auth)";
       const inSignupFlow = inAuthGroup && segments[1] === "signup";
       const inLoginScreen = inAuthGroup && segments[1] === "login";
+      const inForgotPasswordFlow = inAuthGroup && segments[1] === "forgetpassword";
       const flag = await SecureStore.getItemAsync(GOOGLE_SIGNUP_FLAG_KEY);
       const isSigningUpFlag = flag === "true";
+
+      const forgotPasswordInProgress = await SecureStore.getItemAsync("forgotPasswordInProgress");
 
       if (!user && !inAuthGroup) {
         router.replace("/(auth)/login");
@@ -55,7 +58,8 @@ function RootLayoutNav() {
         inAuthGroup &&
         !inSignupFlow &&
         !inLoginScreen &&
-        !isSigningUpFlag
+        !isSigningUpFlag &&
+        !inForgotPasswordFlow
       ) {
         router.replace("/(tabs)/(home)");
       }

@@ -1,4 +1,5 @@
 /* eslint-disable react/no-unescaped-entities */
+import { useAuth } from "@/contexts/AuthContext";
 import useFetch from "@/hooks/useFetch";
 import { authService } from "@/services/authService";
 import { createLogger } from "@/utils/logger";
@@ -26,6 +27,8 @@ const ForgotPassword2 = () => {
   const [timer, setTimer] = useState(60);
 
   const inputs = useRef<(TextInput | null)[]>([]);
+
+  const { signInWithTemporaryToken } = useAuth();
 
   const allFilled = otp.every((digit) => digit !== "");
 
@@ -127,6 +130,8 @@ const ForgotPassword2 = () => {
         "forgot-password",
       );
 
+      logger.log("OTP verification response:", response);
+
       if (!response.success) {
         setIsOtpInvalid(true);
         Alert.alert("Error", "Invalid OTP. Please try again.");
@@ -138,6 +143,17 @@ const ForgotPassword2 = () => {
         "forgot_password_verified_email",
         email as string,
       );
+
+      const token = response.loginToken;
+
+      if (token) {
+        await SecureStore.setItemAsync("forgotPasswordInProgress", "true");
+        await signInWithTemporaryToken(token);
+      } else {
+        Alert.alert("Error", "Something went wrong. Please try again.");
+        setLoading(false);
+        return;
+      }
 
       router.push({
         pathname: "/(auth)/forgetpassword/forgotPassword3",
