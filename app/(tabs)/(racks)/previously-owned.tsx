@@ -1,12 +1,15 @@
 import { typography } from "@/assets/fonts/Text";
 import InactiveRackItem from "@/components/racks/inactiveRackItem";
+import RackItemSkeleton from "@/components/racks/skeleton/rackItemSkeleton";
 import useFetch from "@/hooks/useFetch";
 import { rackService } from "@/services/rackService";
 import { GetRackInfoDTO } from "@/types/rack.dto";
-import { router, useFocusEffect, useNavigation } from "expo-router";
+import { router, useFocusEffect } from "expo-router";
 
-import React, { useCallback, useLayoutEffect, useState } from "react";
-import { ActivityIndicator, FlatList, Text, View } from "react-native";
+import React, { useCallback, useState } from "react";
+import { FlatList, Text, View } from "react-native";
+
+const SKELETON_COUNT = 3;
 
 type InactiveRackType = GetRackInfoDTO & {
   createdAt?: string;
@@ -14,7 +17,6 @@ type InactiveRackType = GetRackInfoDTO & {
 };
 
 const PreviouslyOwned = () => {
-  const navigation = useNavigation();
   const [racks, setRacks] = useState<InactiveRackType[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -23,23 +25,6 @@ const PreviouslyOwned = () => {
     autoFetch: false,
     withAuth: true,
   });
-
-  useLayoutEffect(() => {
-    navigation.getParent()?.setOptions({
-      tabBarStyle: { display: "none" },
-    });
-
-    return () => {
-      navigation.getParent()?.setOptions({
-        tabBarStyle: {
-          height: 100,
-          paddingBottom: 10,
-          paddingTop: 15,
-          display: "flex",
-        },
-      });
-    };
-  }, [navigation]);
 
   const fetchRacks = useCallback(async () => {
     try {
@@ -111,7 +96,7 @@ const PreviouslyOwned = () => {
   const renderEmpty = useCallback(
     () => (
       <View className="flex-1 justify-center items-center py-20">
-        <Text style={typography["h2-bold"]} className="text-gray-400 mb-2">
+        <Text style={typography["button-bold"]} className="text-grayText mb-2">
           No previously owned racks
         </Text>
       </View>
@@ -119,31 +104,28 @@ const PreviouslyOwned = () => {
     [],
   );
 
-  if (loading && racks.length === 0) {
-    return (
-      <View className="flex-1 bg-white justify-center items-center">
-        <ActivityIndicator size="large" color="#86975A" />
-        <Text style={typography["button"]} className="text-grayText mt-4">
-          Loading past racks...
-        </Text>
-      </View>
-    );
-  }
-
   return (
     <View className="flex-1 bg-white">
-      <FlatList
-        data={racks}
-        renderItem={renderRackItem}
-        keyExtractor={(item) => item.id}
-        ListEmptyComponent={renderEmpty}
-        contentContainerStyle={{
-          paddingHorizontal: 16,
-          paddingVertical: 16,
-          flexGrow: 1,
-        }}
-        showsVerticalScrollIndicator={false}
-      />
+      {loading ? (
+        <View className="px-4 pt-4">
+          {Array.from({ length: SKELETON_COUNT }).map((_, i) => (
+            <RackItemSkeleton key={i} />
+          ))}
+        </View>
+      ) : (
+        <FlatList
+          data={racks}
+          renderItem={renderRackItem}
+          keyExtractor={(item) => item.id}
+          ListEmptyComponent={renderEmpty}
+          contentContainerStyle={{
+            paddingHorizontal: 16,
+            paddingVertical: 16,
+            flexGrow: 1,
+          }}
+          showsVerticalScrollIndicator={false}
+        />
+      )}
     </View>
   );
 };

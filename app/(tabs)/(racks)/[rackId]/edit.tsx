@@ -1,11 +1,13 @@
-import React, { useCallback, useMemo, useState } from "react";
-import { Alert, ScrollView, View } from "react-native";
-
+import RackNameIcon from "@/assets/images/icons/name.svg";
+import RemovePlantIcon from "@/assets/images/icons/shovel.svg";
+import RemoveRackIcon from "@/assets/images/icons/trash.svg";
 import { ConfirmationModal } from "@/components/modals/confirmationModal";
 import { MenuCard } from "@/components/shared/menubtn";
 import useFetch from "@/hooks/useFetch";
 import { rackService } from "@/services/rackService";
 import { router, useLocalSearchParams } from "expo-router";
+import React, { useCallback, useMemo, useState } from "react";
+import { Alert, ScrollView, View } from "react-native";
 
 const EditRack = () => {
   const { rackId } = useLocalSearchParams<{ rackId: string }>();
@@ -63,20 +65,22 @@ const EditRack = () => {
       {
         title: "Edit Name",
         desc: "Edit how you want to call your Nurtura Rack.",
-        icon: require("@/assets/images/plantcare-icon.png"),
+        icon: RackNameIcon,
         onPress: handleEditNamePress,
       },
       {
         title: "Remove Plant",
         desc: "Remove the plant on your Nurtura Rack.",
-        icon: require("@/assets/images/harvest-icon.png"),
+        icon: RemovePlantIcon,
+        iconSize: 20,
         type: "red" as const,
         onPress: handleRemovePlantPress,
       },
       {
         title: "Remove Nurtura Rack",
         desc: "Remove this rack from your account.",
-        icon: require("@/assets/images/planting-icon.png"),
+        icon: RemoveRackIcon,
+        iconSize: 20,
         type: "red" as const,
         onPress: handleRemoveRackPress,
       },
@@ -92,7 +96,8 @@ const EditRack = () => {
             <MenuCard
               title={item.title}
               description={item.desc}
-              iconSource={item.icon}
+              icon={item.icon}
+              iconSize={item.iconSize}
               type={item.type}
               onPress={item.onPress}
             />

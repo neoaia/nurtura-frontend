@@ -1,24 +1,23 @@
-import React, { useCallback, useEffect, useState } from "react";
-import {
-  ActivityIndicator,
-  Alert,
-  ScrollView,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import React, {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useState,
+} from "react";
+import { Alert, ScrollView, TouchableOpacity, View } from "react-native";
 
-import { typography } from "@/assets/fonts/Text";
-import CloseIcon from "@/assets/images/icons/closeIcon.svg";
+import CancelIcon from "@/assets/buttons/cancel.svg";
+import SaveIcon from "@/assets/buttons/save.svg";
 import EditIcon from "@/assets/images/icons/editIcon.svg";
-import { PrimaryButton } from "@/components/shared/primaryButton";
+import { TextInputFieldSkeleton } from "@/components/shared/skeleton/textInputFieldSkeleton";
 import { TextInputField } from "@/components/shared/textInputField";
 import useFetch from "@/hooks/useFetch";
 import { rackService } from "@/services/rackService";
-import { useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams, useNavigation } from "expo-router";
 
 export default function EditRackName() {
   const { rackId } = useLocalSearchParams<{ rackId: string }>();
+  const navigation = useNavigation();
 
   const [rackData, setRackData] = useState<any>(null);
   const [savedRackName, setSavedRackName] = useState("");
@@ -51,17 +50,14 @@ export default function EditRackName() {
           setRackData(response.rack);
           setSavedRackName(response.rack.name);
           setRackName(response.rack.name);
+          setLoading(false);
         }
       } catch (error) {
         Alert.alert("Error", "Failed to load rack information");
-      } finally {
-        if (isActive) setLoading(false);
       }
     };
 
-    if (rackId) {
-      fetchRackData();
-    }
+    if (rackId) fetchRackData();
 
     return () => {
       isActive = false;
@@ -70,21 +66,18 @@ export default function EditRackName() {
 
   const hasChanges = savedRackName !== rackName && rackName.trim() !== "";
 
-  const handleToggleEdit = useCallback(() => {
-    if (isEditing) {
-      setRackName(savedRackName);
-    }
-    setIsEditing((prev) => !prev);
-  }, [isEditing, savedRackName]);
+  const handleCancel = useCallback(() => {
+    setRackName(savedRackName);
+    setIsEditing(false);
+  }, [savedRackName]);
 
-  const handleSave = async () => {
+  const handleSave = useCallback(async () => {
     if (!rackName.trim()) {
       Alert.alert("Error", "Rack name cannot be empty");
       return;
     }
 
     setSaving(true);
-
     try {
       const response = await rackService.updateRackbyId(updateRack, {
         name: rackName.trim(),
@@ -102,60 +95,67 @@ export default function EditRackName() {
     } finally {
       setSaving(false);
     }
-  };
+  }, [rackName, rackData, updateRack]);
 
-  if (loading) {
-    return (
-      <View className="flex-1 bg-white items-center justify-center">
-        <ActivityIndicator size="large" color="#86975A" />
-        <Text style={typography["subheader"]} className="text-gray-500 mt-4">
-          Loading rack information...
-        </Text>
-      </View>
-    );
-  }
+  useLayoutEffect(() => {
+    if (loading) {
+      navigation.setOptions({ headerRight: undefined });
+      return;
+    }
+
+    if (isEditing) {
+      navigation.setOptions({
+        headerRight: () => (
+          <View className="flex-row items-center gap-4 pr-2">
+            <TouchableOpacity onPress={handleCancel} hitSlop={8}>
+              <CancelIcon width={22} height={22} />
+            </TouchableOpacity>
+            {hasChanges && (
+              <TouchableOpacity
+                onPress={handleSave}
+                disabled={saving}
+                hitSlop={8}
+              >
+                <SaveIcon width={22} height={22} />
+              </TouchableOpacity>
+            )}
+          </View>
+        ),
+      });
+    } else {
+      navigation.setOptions({
+        headerRight: () => (
+          <TouchableOpacity
+            onPress={() => setIsEditing(true)}
+            className="pr-2"
+            hitSlop={8}
+          >
+            <EditIcon width={22} height={22} />
+          </TouchableOpacity>
+        ),
+      });
+    }
+  }, [isEditing, loading, hasChanges, saving]);
 
   return (
     <View className="flex-1 bg-white">
-      <View className="flex-row justify-end px-6 pt-6">
-        <TouchableOpacity onPress={handleToggleEdit}>
-          {isEditing ? (
-            <CloseIcon width={22} height={22} />
-          ) : (
-            <EditIcon width={22} height={22} />
-          )}
-        </TouchableOpacity>
-      </View>
-
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 20 }}
         className="px-6 pt-4"
       >
-        <TextInputField
-          label="Rack Name"
-          value={rackName}
-          onChangeText={setRackName}
-          editable={isEditing}
-          placeholder="Enter rack name"
-        />
-
-        {!isEditing && (
-          <Text style={typography["label"]} className="text-gray-500 mt-2 px-2">
-            Tap the edit icon to change the rack name
-          </Text>
+        {loading ? (
+          <TextInputFieldSkeleton />
+        ) : (
+          <TextInputField
+            label="Rack Name"
+            value={rackName}
+            onChangeText={setRackName}
+            editable={isEditing}
+            placeholder="Enter rack name"
+          />
         )}
       </ScrollView>
-
-      {isEditing && hasChanges && (
-        <View className="px-4 pb-20 bg-white border-t border-gray-100">
-          <PrimaryButton
-            onPress={handleSave}
-            loading={saving}
-            title="Save Changes"
-          />
-        </View>
-      )}
     </View>
   );
 }

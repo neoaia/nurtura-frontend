@@ -1,5 +1,7 @@
 import { MenuCard } from "@/components/shared/menubtn";
 
+import EmailIcon from "@/assets/images/icons/email.svg";
+import PasswordIcon from "@/assets/images/icons/key.svg";
 import { createLogger } from "@/utils/logger";
 import * as SecureStore from "expo-secure-store";
 import React, { useEffect, useState } from "react";
@@ -37,14 +39,14 @@ export default function AccountSecurityScreen() {
     {
       title: "Change Password",
       desc: "Update your password to secure account.",
-      icon: require("@/assets/images/key-icon.png"),
+      icon: PasswordIcon,
       path: "/(tabs)/(account)/change-password-1",
       showCondition: !isGoogleUser,
     },
     {
       title: "Update E-mail",
       desc: "Update your e-mail to stay connected.",
-      icon: require("@/assets/images/mail-icon.png"),
+      icon: EmailIcon,
       path: "/(tabs)/(account)/update-email-1",
       showCondition: !isGoogleUser,
     },
@@ -60,7 +62,7 @@ export default function AccountSecurityScreen() {
             <MenuCard
               title={item.title}
               description={item.desc}
-              iconSource={item.icon}
+              icon={item.icon}
               route={item.path as any}
             />
           </View>

@@ -15,6 +15,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import ArchiveButton from "../../../assets/buttons/archive.svg";
 
 const SKELETON_COUNT = 3;
 
@@ -112,17 +113,13 @@ export default function RacksScreen() {
 
   const renderHeader = useCallback(
     () => (
-      <View className="flex flex-row justify-between items-center w-full mb-2 mt-8 pl-3">
-        <Text
-          style={typography["title-bold"]}
-          className="text-black text-5xl mb-[20px]"
-        >
+      <View className="flex flex-row justify-between items-center w-full mb-5 mt-8 px-3">
+        <Text style={typography["title-bold"]} className="text-black text-5xl">
           Racks
         </Text>
-        <TouchableOpacity onPress={handlePreviouslyOwned}>
-          <Text style={typography["button"]} className="text-primary">
-            Previously Owned
-          </Text>
+
+        <TouchableOpacity onPress={handlePreviouslyOwned} className="pr-1">
+          <ArchiveButton width={22} height={22}></ArchiveButton>
         </TouchableOpacity>
       </View>
     ),
@@ -183,14 +180,14 @@ export default function RacksScreen() {
           ListEmptyComponent={
             <View className="flex-1 justify-center items-center py-20 gap-4">
               <Text
-                style={typography["h2-bold"]}
-                className="text-gray-400 text-center"
+                style={typography["button-bold"]}
+                className="text-grayText text-center"
               >
                 Something went wrong
               </Text>
               <Text
                 style={typography["subheader"]}
-                className="text-gray-400 text-center px-6"
+                className="text-grayText text-center px-6"
               >
                 {error}
               </Text>

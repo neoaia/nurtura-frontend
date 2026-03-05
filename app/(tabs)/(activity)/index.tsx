@@ -1,4 +1,7 @@
 import { typography } from "@/assets/fonts/Text";
+import PlantCareIcon from "@/assets/images/icons/plantCare(Activity).svg";
+import PlantIcon from "@/assets/images/icons/plants(Dashboard).svg";
+import SeedIcon from "@/assets/images/icons/seed.svg";
 import { MenuCard } from "@/components/shared/menubtn";
 import React from "react";
 import { ScrollView, Text, View } from "react-native";
@@ -9,19 +12,20 @@ export default function ActivityScreen() {
     {
       title: "Plant Care Activity",
       desc: "View your watering and grow light activity.",
-      icon: require("@/assets/images/plantcare-icon.png"),
+      icon: PlantCareIcon,
       path: "/(tabs)/(activity)/plant-care",
+      iconSize: 25,
     },
     {
       title: "Harvest Activity",
       desc: "View history of your harvests.",
-      icon: require("@/assets/images/harvest-icon.png"),
+      icon: PlantIcon,
       path: "/(tabs)/(activity)/harvest",
     },
     {
       title: "Planting Activity",
       desc: "View logs based on your planting activity.",
-      icon: require("@/assets/images/planting-icon.png"),
+      icon: SeedIcon,
       path: "/(tabs)/(activity)/planting",
     },
   ];
@@ -44,7 +48,8 @@ export default function ActivityScreen() {
               <MenuCard
                 title={item.title}
                 description={item.desc}
-                iconSource={item.icon}
+                icon={item.icon}
+                iconSize={item.iconSize}
                 route={item.path as any}
               />
             </View>

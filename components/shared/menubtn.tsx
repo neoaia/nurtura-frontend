@@ -1,19 +1,14 @@
 import { typography } from "@/assets/fonts/Text";
 import { router } from "expo-router";
 import React, { useState } from "react";
-import {
-  Image,
-  ImageSourcePropType,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { Image, Text, TouchableOpacity, View } from "react-native";
 
 interface MenuButtonCardProps {
   type?: string;
   title: string;
   description: string;
-  iconSource: ImageSourcePropType;
+  icon: React.FC<{ width?: number; height?: number; color?: string }>;
+  iconSize?: number; // ← dagdag
   route?: string;
   onPress?: () => void;
 }
@@ -22,7 +17,8 @@ export const MenuCard: React.FC<MenuButtonCardProps> = ({
   type,
   title,
   description,
-  iconSource,
+  icon: Icon,
+  iconSize = 22,
   route,
   onPress,
 }) => {
@@ -30,9 +26,7 @@ export const MenuCard: React.FC<MenuButtonCardProps> = ({
 
   const handlePress = async () => {
     if (isLoading) return;
-
     setIsLoading(true);
-
     if (route) {
       router.push(route as any);
       setTimeout(() => setIsLoading(false), 500);
@@ -43,18 +37,18 @@ export const MenuCard: React.FC<MenuButtonCardProps> = ({
   };
 
   const colorStyle = type === "red" ? "bg-[#FFC5C5]" : "bg-[#E5EDCF]";
-  const tintStyle = { tintColor: type === "red" ? "#A72929" : "#86975A" };
+  const iconColor = type === "red" ? "#A72929" : "#86975A";
+  const tintStyle = { tintColor: iconColor };
 
   return (
     <View className="bg-white rounded-2xl px-6 py-8 flex-row items-center border border-gray-100 shadow-md elevation-3 gap-3">
       <View
         className={`p-4 ${colorStyle} rounded-xl justify-center items-center`}
       >
-        <Image
-          source={iconSource}
-          className="w-6 h-6"
-          style={tintStyle}
-          resizeMode="contain"
+        <Icon
+          width={iconSize ?? 22}
+          height={iconSize ?? 22}
+          color={iconColor}
         />
       </View>
 

@@ -2,6 +2,7 @@ import { typography } from "@/assets/fonts/Text";
 import { LogOutRow } from "@/components/settings/logoutTab";
 import { ProfileCard } from "@/components/settings/profileCard";
 import { SettingsRow } from "@/components/settings/settingsTab";
+import ProfileCardSkeleton from "@/components/settings/skeleton/profileCardSkeleton";
 
 import { useAuth } from "@/contexts/AuthContext";
 import useFetch from "@/hooks/useFetch";
@@ -10,7 +11,7 @@ import { useFocusEffect } from "@react-navigation/native";
 import { useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import React, { useCallback, useEffect, useState } from "react";
-import { ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { userService } from "../../../services/userService";
 import { UserDetails } from "../../../types/interface";
@@ -21,6 +22,7 @@ export default function AccountScreen() {
   const [savedValues, setSavedValues] = useState<Partial<UserDetails>>({});
   const [formValues, setFormValues] = useState<Partial<UserDetails>>({});
   const [isGoogleUser, setIsGoogleUser] = useState<boolean>(false);
+  const [isLoadingProfile, setIsLoadingProfile] = useState<boolean>(true);
   const { logout } = useAuth();
   const router = useRouter();
 
@@ -62,6 +64,7 @@ export default function AccountScreen() {
   };
 
   const getUserInfoData = async () => {
+    setIsLoadingProfile(true);
     try {
       const response = await userService.getUser(getUserInfo);
       if (response?.userInfo) {
@@ -76,10 +79,18 @@ export default function AccountScreen() {
           city: response.userInfo.city || "",
         };
         setSavedValues(data);
+        // only stop loading if fetch was successful
+        setIsLoadingProfile(false);
       }
+      // if no userInfo in response, stays loading (per spec)
     } catch (error) {
       console.error("Failed to fetch user info:", error);
+      // on error, stays loading (per spec — temporary)
     }
+  };
+
+  const handleProfilePress = () => {
+    router.push("/(tabs)/(account)/user-info");
   };
 
   useFocusEffect(
@@ -105,19 +116,20 @@ export default function AccountScreen() {
               Account
             </Text>
           </View>
+
           <View className="mb-6 w-full">
-            <TouchableOpacity
-              activeOpacity={0.7}
-              onPress={() => router.push("/(tabs)/(account)/user-info")}
-            >
+            {isLoadingProfile ? (
+              <ProfileCardSkeleton />
+            ) : (
               <ProfileCard
                 name="Profile"
                 username={
                   formValues.firstName + " " + formValues.lastName || " "
                 }
                 iconSource={require("@/assets/images/user-icon-settings.png")}
+                onPress={handleProfilePress}
               />
-            </TouchableOpacity>
+            )}
           </View>
 
           <View className="flex justify-center items-center bg-white">
