@@ -1,8 +1,9 @@
 import { typography } from "@/assets/fonts/Text";
-import { LogOutRow } from "@/components/settings/logoutTab";
+import SecurityIcon from "@/assets/images/icons/lock.svg";
+import LogoutIcon from "@/assets/images/icons/logout.svg";
 import { ProfileCard } from "@/components/settings/profileCard";
-import { SettingsRow } from "@/components/settings/settingsTab";
 import ProfileCardSkeleton from "@/components/settings/skeleton/profileCardSkeleton";
+import { MenuCard } from "@/components/shared/menubtn";
 
 import { useAuth } from "@/contexts/AuthContext";
 import useFetch from "@/hooks/useFetch";
@@ -32,24 +33,11 @@ export default function AccountScreen() {
     withAuth: true,
   });
 
-  const menuItems = [
-    {
-      title: "Account Security",
-      icon: require("@/assets/images/security-icon.png"),
-      path: "/(tabs)/(account)/security",
-      showCondition: !isGoogleUser,
-    },
-  ];
-
-  const visibleMenuItems = menuItems.filter((item) => item.showCondition);
-
   const checkUserProvider = async () => {
     try {
       logger.log("Checking auth provider from storage...");
-
       const authProvider = await SecureStore.getItemAsync("auth_provider");
       logger.log("Auth provider:", authProvider);
-
       if (authProvider === "google") {
         setIsGoogleUser(true);
         logger.log("✓ User is Google-only - hiding Account Security");
@@ -79,13 +67,10 @@ export default function AccountScreen() {
           city: response.userInfo.city || "",
         };
         setSavedValues(data);
-        // only stop loading if fetch was successful
         setIsLoadingProfile(false);
       }
-      // if no userInfo in response, stays loading (per spec)
     } catch (error) {
       console.error("Failed to fetch user info:", error);
-      // on error, stays loading (per spec — temporary)
     }
   };
 
@@ -117,7 +102,7 @@ export default function AccountScreen() {
             </Text>
           </View>
 
-          <View className="mb-6 w-full">
+          <View className="mb-4 w-full">
             {isLoadingProfile ? (
               <ProfileCardSkeleton />
             ) : (
@@ -126,27 +111,29 @@ export default function AccountScreen() {
                 username={
                   formValues.firstName + " " + formValues.lastName || " "
                 }
-                iconSource={require("@/assets/images/user-icon-settings.png")}
                 onPress={handleProfilePress}
               />
             )}
           </View>
 
-          <View className="flex justify-center items-center bg-white">
-            {visibleMenuItems.map((item) => (
-              <View key={item.title} className="w-full mb-3">
-                <SettingsRow
-                  iconSource={item.icon}
-                  label={item.title}
-                  route={item.path as any}
-                />
-              </View>
-            ))}
+          <View className="w-full gap-5 pt-5">
+            {!isGoogleUser && (
+              <MenuCard
+                title="Account Security"
+                description="Manage your password and email."
+                icon={SecurityIcon}
+                iconSize={20}
+                route={"/(tabs)/(account)/security" as any}
+              />
+            )}
 
-            <LogOutRow
-              iconSource={require("@/assets/images/logout-icon.png")}
-              label="Log Out"
-              onPress={() => logout()}
+            <MenuCard
+              type="red"
+              title="Log Out"
+              description="Sign out of your account."
+              icon={LogoutIcon}
+              iconSize={18}
+              onPress={logout}
             />
           </View>
         </View>

@@ -33,7 +33,7 @@ export const SettingsRow: React.FC<SettingsTabProps> = ({
 
   return (
     <TouchableOpacity
-      className={`w-full flex-row items-center justify-between py-3 px-5 bg-white ${
+      className={`w-full flex-row items-center justify-between py-2 px-5 bg-white ${
         isLoading ? "opacity-50" : ""
       }`}
       onPress={handlePress}
@@ -42,7 +42,7 @@ export const SettingsRow: React.FC<SettingsTabProps> = ({
     >
       <View className="flex-row items-center" style={{ gap: 24 }}>
         <Image source={iconSource} className="w-5 h-5" resizeMode="contain" />
-        <Text style={typography["button"]} className="text-black">
+        <Text style={typography["subheader"]} className="text-black">
           {label}
         </Text>
       </View>

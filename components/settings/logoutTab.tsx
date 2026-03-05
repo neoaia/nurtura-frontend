@@ -34,7 +34,7 @@ export const LogOutRow: React.FC<LogOutTabProps> = ({
 
   return (
     <TouchableOpacity
-      className={`w-full flex-row items-center justify-between py-4 px-5 bg-white ${
+      className={`w-full flex-row items-center justify-between py-2 px-5 bg-white ${
         isLoading ? "opacity-50" : ""
       }`}
       onPress={handlePress}
@@ -43,7 +43,7 @@ export const LogOutRow: React.FC<LogOutTabProps> = ({
     >
       <View className="flex-row items-center w-full" style={{ gap: 24 }}>
         <Image source={iconSource} className="w-6 h-6" resizeMode="contain" />
-        <Text style={typography["button"]} className="text-[#D34545]">
+        <Text style={typography["subheader"]} className="text-[#D34545]">
           {isLoading ? "Logging out..." : label}
         </Text>
       </View>
