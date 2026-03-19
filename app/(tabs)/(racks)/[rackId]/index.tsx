@@ -19,10 +19,24 @@ import { Image, ScrollView, Text, View } from "react-native";
 import DateIcon from "../../../../assets/images/icons/date.svg";
 import SoilIcon from "../../../../assets/images/icons/soil.svg";
 
+const formatLabel = (value: string) =>
+  value
+    .split("_")
+    .map((w) => w.charAt(0) + w.slice(1).toLowerCase())
+    .join(" ");
+
+const formatDate = (iso: string) =>
+  new Date(iso).toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+
 const RackInfo = () => {
   const { rackId } = useLocalSearchParams<{ rackId: string }>();
   const [showModal, setShowModal] = useState(false);
   const [rackData, setRackData] = useState<any>(null);
+  const [activePlant, setActivePlant] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   const { reading } = useRackSensor(rackId);
@@ -33,6 +47,15 @@ const RackInfo = () => {
     withAuth: true,
   });
 
+  const { refetch: getPlantById } = useFetch(
+    `/api/plants/${rackData?.currentPlantId ?? "init"}`,
+    {
+      method: "GET",
+      autoFetch: false,
+      withAuth: true,
+    },
+  );
+
   useFocusEffect(
     useCallback(() => {
       let isActive = true;
@@ -40,11 +63,44 @@ const RackInfo = () => {
       const fetchRackData = async () => {
         try {
           if (isActive) setLoading(true);
-          const response = await rackService.getRackbyId(getRackInfo);
-          if (isActive && response?.rack) {
-            setRackData(response.rack);
+
+          const rackResponse = await rackService.getRackbyId(getRackInfo);
+
+          if (!isActive) return;
+
+          if (rackResponse?.rack) {
+            const rack = rackResponse.rack;
+            setRackData(rack);
+
+            const currentPlantId = rack.currentPlantId;
+            if (currentPlantId) {
+              // Fetch plant directly using the ID in the URL
+              const apiUrl = process.env.EXPO_PUBLIC_URL
+                ? `https://${process.env.EXPO_PUBLIC_URL}`
+                : `http://${process.env.EXPO_PUBLIC_LOCAL_IP_ADDRESS}:3000`;
+
+              const { data: plantResult } = await getPlantById();
+              console.log("Plant result:", plantResult);
+
+              if (plantResult?.plant) {
+                setActivePlant({
+                  quantity: rack.quantity ?? 0,
+                  plantedAt: rack.plantedAt ?? null,
+                  harvestedAt: null,
+                  plant: {
+                    id: plantResult.plant.id,
+                    name: plantResult.plant.name,
+                    type: plantResult.plant.category,
+                    recommendedSoil: plantResult.plant.recommendedSoil,
+                  },
+                });
+              }
+            } else {
+              setActivePlant(null);
+            }
           }
         } catch (err) {
+          console.error("Failed to fetch rack data:", err);
         } finally {
           if (isActive) setLoading(false);
         }
@@ -69,7 +125,7 @@ const RackInfo = () => {
           showsVerticalScrollIndicator={false}
           className="bg-white px-4 py-4"
         >
-          {/* Plant image — always visible */}
+          {/* Plant image */}
           <View className="flex-1 justify-center items-center pl-8">
             <Image
               source={require("@/assets/images/plant-images/lettuce.png")}
@@ -94,15 +150,17 @@ const RackInfo = () => {
             <View className="w-full flex-row justify-between items-start mb-6">
               <View className="flex-1 pl-2">
                 <Text style={typography["h1-bold"]} className="text-black">
-                  Lettuce
+                  {activePlant?.plant?.name ?? "No plant assigned"}
                 </Text>
                 <Text style={typography["subheader"]} className="text-grayText">
-                  Leafy Greens
+                  {activePlant?.plant?.type
+                    ? formatLabel(activePlant.plant.type)
+                    : "—"}
                 </Text>
               </View>
               <View className="items-end pr-2">
                 <Text style={typography["h1-bold"]} className="text-black">
-                  3
+                  {activePlant?.quantity ?? 0}
                 </Text>
                 <Text style={typography["subheader"]} className="text-grayText">
                   Seeds
@@ -111,7 +169,7 @@ const RackInfo = () => {
             </View>
           )}
 
-          {/* Sensor indicators — skeleton while loading OR while connecting to socket */}
+          {/* Sensor indicators */}
           <View className="flex-row gap-3 mb-6">
             {loading || reading === null ? (
               <>
@@ -148,12 +206,20 @@ const RackInfo = () => {
               <>
                 <SmallDescription
                   label="Date Planted"
-                  value="July 23, 2025"
+                  value={
+                    activePlant?.plantedAt
+                      ? formatDate(activePlant.plantedAt)
+                      : "—"
+                  }
                   Icon={DateIcon}
                 />
                 <SmallDescription
                   label="Recommended Soil"
-                  value="Loam + Compost + Perlite"
+                  value={
+                    activePlant?.plant?.recommendedSoil
+                      ? formatLabel(activePlant.plant.recommendedSoil)
+                      : "—"
+                  }
                   Icon={SoilIcon}
                 />
               </>
@@ -201,8 +267,6 @@ const RackInfo = () => {
   );
 };
 
-// Small inline helper for the name/seeds shimmer rows
-// (too simple to warrant a separate file)
 const SkimmerLine = ({
   width,
   height,

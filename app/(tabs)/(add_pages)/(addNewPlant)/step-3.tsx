@@ -4,26 +4,29 @@ import { BottomButton } from "@/components/shared/bottomButton";
 import { QuantityPicker } from "@/components/shared/quantityPicker";
 import SmallDescription from "@/components/shared/smallDescription";
 import { useBackWarning } from "@/hooks/shared/useBackWarning";
+import useFetch from "@/hooks/useFetch";
 import { router, useLocalSearchParams } from "expo-router";
-import React from "react";
-import { Image, ScrollView, Text, View } from "react-native";
+import React, { useState } from "react";
+import { Alert, Image, ScrollView, Text, View } from "react-native";
 import RackIcon from "../../../../assets/images/icons/rack(Add).svg";
 import SoilIcon from "../../../../assets/images/icons/soil.svg";
 
 const AddNewPlant3 = () => {
-  const [confirmation, setConfirmation] = React.useState(false);
-  const [seedQuantity, setSeedQuantity] = React.useState(0);
+  const [confirmation, setConfirmation] = useState(false);
+  const [seedQuantity, setSeedQuantity] = useState(0);
+  const [loading, setLoading] = useState(false);
+
   const { showModal, handleConfirm, handleCancel } =
     useBackWarning(!!seedQuantity);
-  // recieve params from step-2
+
   const {
     rackId,
     rackName,
-    rackValue,
     plantId,
     plantName,
     plantCategory,
     plantType,
+    recommendedSoil,
   } = useLocalSearchParams<{
     rackId: string;
     rackName: string;
@@ -32,57 +35,69 @@ const AddNewPlant3 = () => {
     plantName: string;
     plantCategory: string;
     plantType: string;
+    recommendedSoil: string;
   }>();
 
+  const { refetch: assignPlant } = useFetch(`/api/plants/${plantId}/assign`, {
+    method: "POST",
+    autoFetch: false,
+    withAuth: true,
+  });
+
   const handleNextPress = () => {
+    if (!seedQuantity) return;
     setConfirmation(true);
   };
 
-  const handleCancelPress = () => {
+  const handleCancelPress = () => setConfirmation(false);
+
+  const handleConfirmPress = async () => {
     setConfirmation(false);
-  };
+    setLoading(true);
 
-  const handleConfirmPress = () => {
-    setConfirmation(false);
-    console.log("rack id: " + rackId);
-    console.log("rack name: " + rackName);
-    console.log("rack value: " + rackValue);
-    console.log("plant id: " + plantId);
-    console.log("plant name: " + plantName);
-    console.log("plant category: " + plantCategory);
-    console.log("plant type: " + plantType);
-    router.dismissAll();
-    router.push({
-      pathname: "/(tabs)/(add_pages)/(addNewPlant)/successScreen",
-      params: {
-        type: "plant",
-        title: "Plant added successfully!",
-        subtitle: "You can now proceed back to making your account safe.",
-        finishTitle: "Finish",
-        addAnotherTitle: "Add another Plant",
-      },
-    });
-  };
+    try {
+      const { data, error } = await assignPlant({
+        body: {
+          rackId: rackId as string,
+          quantity: seedQuantity,
+          plantedAt: new Date().toISOString(),
+        },
+      });
 
-  const handleSubtractPress = () => {
-    if (seedQuantity > 0) {
-      setSeedQuantity(seedQuantity - 1);
-    }
-  };
+      console.log("Assign plant response:", data, error);
 
-  const handleAddPress = () => {
-    if (seedQuantity < 4) {
-      setSeedQuantity(seedQuantity + 1);
+      if (error) {
+        Alert.alert(
+          "Error",
+          error?.message || "Failed to assign plant. Please try again.",
+        );
+        return;
+      }
+
+      console.log("Plant assigned successfully:", data?.message);
+
+      router.dismissAll();
+      router.push({
+        pathname: "/(tabs)/(add_pages)/(addNewPlant)/successScreen",
+        params: {
+          type: "plant",
+          title: "Plant added successfully!",
+          subtitle: "Your plant has been added to the rack.",
+          finishTitle: "Finish",
+          addAnotherTitle: "Add another Plant",
+        },
+      });
+    } catch (e) {
+      console.error("Failed to assign plant:", e);
+      Alert.alert("Error", "An unexpected error occurred. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <View className="flex-1 bg-white">
-      <ScrollView
-        className="flex-1 px-4"
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{}}
-      >
+      <ScrollView className="flex-1 px-4" showsVerticalScrollIndicator={false}>
         <View className="flex-1 justify-center items-center pl-8">
           <Image
             source={require("@/assets/images/plant-images/lettuce.png")}
@@ -105,7 +120,7 @@ const AddNewPlant3 = () => {
         <View className="flex-col gap-8 mb-8 pl-2">
           <SmallDescription
             label="Recommended Soil"
-            value="Loam + Compost + Perlite"
+            value={recommendedSoil || "Loam + Compost + Perlite"}
             Icon={SoilIcon}
           />
           <SmallDescription
@@ -116,13 +131,23 @@ const AddNewPlant3 = () => {
           <QuantityPicker
             title="Seeds"
             quantity={seedQuantity}
-            onAddPress={handleAddPress}
-            onSubtractPress={handleSubtractPress}
-          ></QuantityPicker>
+            onAddPress={() =>
+              seedQuantity < 4 && setSeedQuantity(seedQuantity + 1)
+            }
+            onSubtractPress={() =>
+              seedQuantity > 0 && setSeedQuantity(seedQuantity - 1)
+            }
+          />
         </View>
       </ScrollView>
 
-      <BottomButton title="Finish" onPress={handleNextPress} />
+      <BottomButton
+        title={loading ? "Adding..." : "Finish"}
+        onPress={handleNextPress}
+        disabled={!seedQuantity || loading}
+      />
+
+      {/* Confirm planting reminder */}
       <ConfirmationModal
         isVisible={confirmation}
         title="Important!"
@@ -130,6 +155,8 @@ const AddNewPlant3 = () => {
         onCancel={handleCancelPress}
         onConfirm={handleConfirmPress}
       />
+
+      {/* Back warning */}
       <ConfirmationModal
         isVisible={showModal}
         onConfirm={handleConfirm}
