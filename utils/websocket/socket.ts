@@ -47,7 +47,7 @@ class SocketService {
       this.socket = io(`${SOCKET_URL}/sensors`, {
         transports: ["websocket", "polling"],
         reconnection: true,
-        reconnectionAttempts: 10,
+        reconnectionAttempts: 3,
         reconnectionDelay: 10000,
         timeout: 30000,
         auth: {
@@ -94,6 +94,20 @@ class SocketService {
       // ─── Disconnected ─────────────────────────────────────────────────────
       this.socket.on("disconnect", (reason) => {
         logger.warn("Socket disconnected", { reason });
+      });
+
+      // ─── Reconnection failed ──────────────────────────────────────────────
+      // Fires when all reconnectionAttempts have been exhausted.
+      // This is a Manager-level event, so it must be listened on socket.io
+      // (the Manager instance), not on the socket itself.
+      this.socket.io.on("reconnect_failed", () => {
+        logger.warn(
+          "Socket reconnection failed — max attempts reached, giving up",
+        );
+        this.isConnecting = false;
+        this.socket?.disconnect();
+        this.socket?.removeAllListeners();
+        this.socket = null;
       });
 
       // ─── Server acknowledgement ───────────────────────────────────────────
