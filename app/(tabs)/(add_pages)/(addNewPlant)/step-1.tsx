@@ -3,29 +3,58 @@ import { ConfirmationModal } from "@/components/modals/confirmationModal";
 import { BottomButton } from "@/components/shared/bottomButton";
 import Dropdown, { DropdownOption } from "@/components/shared/dropdown";
 import { useBackWarning } from "@/hooks/shared/useBackWarning";
+import useFetch from "@/hooks/useFetch";
+import { rackService } from "@/services/rackService";
 import { useFocusEffect } from "@react-navigation/native";
 import { router } from "expo-router";
-import React, { useCallback, useState } from "react";
-import { ScrollView, Text, View } from "react-native";
+import React, { useCallback, useEffect, useState } from "react";
+import { ActivityIndicator, ScrollView, Text, View } from "react-native";
 import RackIcon from "../../../../assets/images/icons/rack(Add).svg";
-
-// mock data beybeh
-const RACK_OPTIONS = [
-  { id: "1", label: "Lettuce Rack", value: "lettuce" },
-  { id: "2", label: "Tomato Setup", value: "tomato" },
-  { id: "3", label: "Basil / Herbs", value: "basil" },
-];
 
 const AddNewPlant1 = () => {
   const [selectedRack, setSelectedRack] = useState<DropdownOption | null>(null);
+  const [rackOptions, setRackOptions] = useState<DropdownOption[]>([]);
+  const [loadingRacks, setLoadingRacks] = useState(false);
 
   const handleBack = useCallback(() => {
     router.replace("/(tabs)/(home)");
   }, []);
+
   const { showModal, handleConfirm, handleCancel } = useBackWarning(
     !!selectedRack,
     handleBack,
   );
+
+  const { refetch: fetchRacks } = useFetch("/api/racks", {
+    method: "GET",
+    autoFetch: false,
+    withAuth: true,
+  });
+
+  const loadRacks = async () => {
+    setLoadingRacks(true);
+    try {
+      const response = await rackService.getAllUserRack(fetchRacks);
+      if (response?.data) {
+        const options = response.data
+          .filter((rack: any) => rack.isActive)
+          .map((rack: any) => ({
+            id: rack.id,
+            label: rack.name,
+            value: rack.id,
+          }));
+        setRackOptions(options);
+      }
+    } catch (e) {
+      console.error("Failed to load racks:", e);
+    } finally {
+      setLoadingRacks(false);
+    }
+  };
+
+  useEffect(() => {
+    loadRacks();
+  }, []);
 
   useFocusEffect(
     useCallback(() => {
@@ -35,7 +64,6 @@ const AddNewPlant1 = () => {
 
   const handleNextPress = () => {
     if (!selectedRack) return;
-
     router.push({
       pathname: "/(tabs)/(add_pages)/(addNewPlant)/step-2",
       params: {
@@ -44,10 +72,6 @@ const AddNewPlant1 = () => {
         rackValue: selectedRack.value,
       },
     });
-  };
-
-  const handleBackConfirm = () => {
-    router.replace("/(tabs)/(home)");
   };
 
   return (
@@ -63,7 +87,6 @@ const AddNewPlant1 = () => {
             Nurtura Rack
           </Text>
         </Text>
-
         <Text
           style={typography["subheader"]}
           className="mb-5 text-gray-700 leading-normal pl-2"
@@ -71,20 +94,24 @@ const AddNewPlant1 = () => {
           Choose which rack you want to add your plant to.
         </Text>
 
-        <Dropdown
-          placeholder="Select your device here"
-          options={RACK_OPTIONS}
-          value={selectedRack?.label}
-          onSelect={(item) => setSelectedRack(item)}
-          label="Selected Rack"
-          Icon={RackIcon}
-        />
+        {loadingRacks ? (
+          <ActivityIndicator color="#10b981" className="mt-4" />
+        ) : (
+          <Dropdown
+            placeholder="Select your device here"
+            options={rackOptions}
+            value={selectedRack?.label}
+            onSelect={(item) => setSelectedRack(item)}
+            label="Selected Rack"
+            Icon={RackIcon}
+          />
+        )}
       </ScrollView>
 
       <BottomButton
         title="Next"
         onPress={handleNextPress}
-        disabled={!selectedRack}
+        disabled={!selectedRack || loadingRacks}
       />
       <ConfirmationModal
         isVisible={showModal}

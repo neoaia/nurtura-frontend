@@ -89,6 +89,14 @@ export interface GetRackInfoResponseDTO {
     isActive: boolean;
     lastSeenAt: string;
     createdAt: string;
+    currentPlantId?: string;
+    quantity?: number;
+    plantedAt?: string;
+    harvestCount?: number;
+    lastActivityAt?: string;
+    lastHarvestAt?: string;
+    updatedAt?: string;
+    userId?: string;
   };
 }
 
