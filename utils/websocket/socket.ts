@@ -6,6 +6,7 @@ import { createLogger } from "@/utils/logger";
 import { io, Socket } from "socket.io-client";
 
 const logger = createLogger("SocketService");
+
 const SOCKET_URL = process.env.EXPO_PUBLIC_LOCAL_IP_ADDRESS
   ? `ws://${process.env.EXPO_PUBLIC_LOCAL_IP_ADDRESS}:3000`
   : "ws://localhost:3000";
@@ -15,30 +16,38 @@ class SocketService {
     null;
   private token: string | null = null;
   private isConnecting: boolean = false;
+
+  // Tracks whether the initial connect() promise has already settled.
+  // Prevents calling resolve/reject multiple times across retry attempts.
+  private connectionSettled: boolean = false;
+
   private eventListeners: Map<
     keyof ServerToClientEvents,
     ServerToClientEvents[keyof ServerToClientEvents][]
   > = new Map();
 
   connect(token: string): Promise<void> {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
+      // ─── Already connected ───────────────────────────────────────────────
       if (this.socket?.connected) {
         logger.log("Socket already connected");
         return resolve();
       }
 
+      // ─── Connection already in progress ──────────────────────────────────
       if (this.isConnecting) {
-        logger.log("Socket connection in progress");
+        logger.log("Socket connection already in progress");
         return resolve();
       }
 
       this.isConnecting = true;
+      this.connectionSettled = false;
       this.token = token;
 
       this.socket = io(`${SOCKET_URL}/sensors`, {
         transports: ["websocket", "polling"],
         reconnection: true,
-        reconnectionAttempts: 10,
+        reconnectionAttempts: 3,
         reconnectionDelay: 10000,
         timeout: 30000,
         auth: {
@@ -46,35 +55,71 @@ class SocketService {
         },
       });
 
+      // ─── Connected ───────────────────────────────────────────────────────
       this.socket.on("connect", () => {
         logger.log("Connected successfully", { socketId: this.socket?.id });
         this.restoreEventListeners();
         this.isConnecting = false;
-        resolve();
+
+        if (!this.connectionSettled) {
+          this.connectionSettled = true;
+          resolve();
+        }
       });
 
+      // ─── Connection error ─────────────────────────────────────────────────
+      // We intentionally do NOT reject the promise here.
+      //
+      // Rejecting would require every caller to wrap connect() in try/catch.
+      // If they forget, the unhandled rejection crashes the app.
+      //
+      // Instead: log a warning, mark connecting as false, and let the
+      // socket's built-in reconnection logic handle recovery silently.
+      // The app stays running and the UI reflects the offline state via
+      // isConnectedToServer().
       this.socket.on("connect_error", (error) => {
-        logger.error("Connection error", error.message);
-        logger.error("Connection details:", {
-          name: error.name,
+        logger.warn("Socket connection failed — will retry automatically", {
           message: error.message,
-          stack: error.stack,
-          type: error.constructor.name,
         });
         this.isConnecting = false;
-        reject(error);
+
+        // Resolve (not reject) so the caller is unblocked and the app
+        // continues to function. The socket will retry on its own.
+        if (!this.connectionSettled) {
+          this.connectionSettled = true;
+          resolve();
+        }
       });
 
+      // ─── Disconnected ─────────────────────────────────────────────────────
       this.socket.on("disconnect", (reason) => {
         logger.warn("Socket disconnected", { reason });
       });
 
+      // ─── Reconnection failed ──────────────────────────────────────────────
+      // Fires when all reconnectionAttempts have been exhausted.
+      // This is a Manager-level event, so it must be listened on socket.io
+      // (the Manager instance), not on the socket itself.
+      this.socket.io.on("reconnect_failed", () => {
+        logger.warn(
+          "Socket reconnection failed — max attempts reached, giving up",
+        );
+        this.isConnecting = false;
+        this.socket?.disconnect();
+        this.socket?.removeAllListeners();
+        this.socket = null;
+      });
+
+      // ─── Server acknowledgement ───────────────────────────────────────────
       this.socket.on("connected", (data) => {
         logger.log("Server acknowledged connection", data);
       });
 
+      // ─── Server-emitted error event ───────────────────────────────────────
+      // This is a logical error from the server (e.g. auth failure),
+      // not a connection error. Log it — do not throw.
       this.socket.on("error", (data) => {
-        logger.error("Socket error event received", data);
+        logger.warn("Socket server error event received", data);
       });
     });
   }
@@ -86,6 +131,7 @@ class SocketService {
       this.socket.removeAllListeners();
       this.socket = null;
       this.token = null;
+      this.connectionSettled = false;
       this.eventListeners.clear();
       logger.log("Socket disconnected successfully");
     }
@@ -93,7 +139,9 @@ class SocketService {
 
   subscribeToRack(rackId: string, userId: string): void {
     if (!this.socket?.connected) {
-      logger.error("Cannot subscribe to rack - socket not connected");
+      logger.warn("Cannot subscribe to rack — socket not connected", {
+        rackId,
+      });
       return;
     }
 
@@ -103,7 +151,9 @@ class SocketService {
 
   unsubscribeFromRack(rackId: string): void {
     if (!this.socket?.connected) {
-      logger.error("Cannot unsubscribe from rack - socket not connected");
+      logger.warn("Cannot unsubscribe from rack — socket not connected", {
+        rackId,
+      });
       return;
     }
 
@@ -120,8 +170,8 @@ class SocketService {
     callback: ServerToClientEvents[K],
   ): void {
     if (!this.socket) {
-      logger.error(
-        `Cannot register event listener for ${event} - socket not initialized`,
+      logger.warn(
+        `Cannot register listener for "${event}" — socket not initialized`,
       );
       return;
     }
@@ -139,8 +189,8 @@ class SocketService {
     callback?: ServerToClientEvents[K],
   ): void {
     if (!this.socket) {
-      logger.error(
-        `Cannot remove event listener for ${event} - socket not initialized`,
+      logger.warn(
+        `Cannot remove listener for "${event}" — socket not initialized`,
       );
       return;
     }
@@ -149,7 +199,6 @@ class SocketService {
       this.socket.off(event, callback as any);
 
       const listeners = this.eventListeners.get(event);
-
       if (listeners) {
         const index = listeners.indexOf(
           callback as ServerToClientEvents[keyof ServerToClientEvents],
@@ -165,11 +214,11 @@ class SocketService {
   }
 
   isConnectedToServer(): boolean {
-    return this.socket?.connected || false;
+    return this.socket?.connected ?? false;
   }
 
   getSocketId(): string | null {
-    return this.socket?.id || null;
+    return this.socket?.id ?? null;
   }
 
   private restoreEventListeners(): void {

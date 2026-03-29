@@ -15,7 +15,7 @@ export default function NotificationScreen() {
     return () => {
       navigation.getParent()?.setOptions({
         tabBarStyle: {
-          height: 100,
+          height: 110,
           paddingBottom: 10,
           paddingTop: 15,
           display: "flex",

@@ -15,7 +15,7 @@ export interface PlantedItemDTO {
   quantity: string;
 }
 
-// For Havrest Summary Cards
+// For Harvest Summary Cards
 export interface HarvestSummaryDTO {
   value: string | number;
   unit: string;
@@ -28,15 +28,15 @@ export interface ActivityDTO {
   type: "water" | "light";
   plantName: string;
   rackName: string;
-  time: string; 
+  time: string;
   amount?: number;
   duration?: string;
 }
 
 // For Charts
 export interface ChartDataPoint {
-  timestamp: number; 
-  value: number;     
+  timestamp: number;
+  value: number;
 }
 
 export interface PlantChartDTO {
@@ -44,6 +44,46 @@ export interface PlantChartDTO {
   data: ChartDataPoint[];
   yLabels: string[];
   tooltipLabel: string;
-  chartWidth?: number; 
+  chartWidth?: number;
   chartColor?: string;
+}
+
+// ─── Rack Activity ────────────────────────────────────────────────────────────
+
+export type RackEventType = "RACK_ADDED" | "RACK_REMOVED" | "RACK_RENAMED";
+
+export interface RackActivityDTO {
+  id: string;
+  rackId: string;
+  eventType: RackEventType;
+  details: string;
+  metadata: Record<string, unknown>;
+  timestamp: string; // ISO 8601
+  rack: {
+    id: string;
+    name: string;
+    macAddress: string;
+  };
+}
+
+export interface RackActivityMetaDTO {
+  currentPage: number;
+  itemsPerPage: number;
+  totalItems: number;
+  totalPages: number;
+  hasNextPage: boolean;
+  hasPreviousPage: boolean;
+}
+
+export interface GetRackActivitiesRequestDTO {
+  page?: number;
+  limit?: number;
+  startDate?: string; // ISO 8601
+  endDate?: string; // ISO 8601
+}
+
+export interface GetRackActivitiesResponseDTO {
+  data: RackActivityDTO[];
+  meta: RackActivityMetaDTO;
+  amount: number;
 }

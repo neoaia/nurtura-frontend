@@ -1,6 +1,7 @@
 import { typography } from "@/assets/fonts/Text";
 import PlantCareIcon from "@/assets/images/icons/plantCare(Activity).svg";
 import PlantIcon from "@/assets/images/icons/plants(Dashboard).svg";
+import RackIcon from "@/assets/images/icons/rack(Add).svg";
 import SeedIcon from "@/assets/images/icons/seed.svg";
 import { MenuCard } from "@/components/shared/menubtn";
 import React from "react";
@@ -27,6 +28,12 @@ export default function ActivityScreen() {
       desc: "View logs based on your planting activity.",
       icon: SeedIcon,
       path: "/(tabs)/(activity)/planting",
+    },
+    {
+      title: "Rack Activity",
+      desc: "View logs based on your rack activity.",
+      icon: RackIcon,
+      path: "/(tabs)/(activity)/rack",
     },
   ];
 

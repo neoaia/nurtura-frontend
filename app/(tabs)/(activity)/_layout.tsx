@@ -51,6 +51,14 @@ export default function ActivityLayout() {
             headerTitleAlign: "left",
           }}
         />
+        <Stack.Screen
+          name="rack"
+          options={{
+            headerShown: true,
+            title: "Rack Activity",
+            headerTitleAlign: "left",
+          }}
+        />
       </Stack>
     </>
   );
