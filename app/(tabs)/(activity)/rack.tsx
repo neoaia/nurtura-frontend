@@ -6,46 +6,75 @@ import {
 import { DateRangePicker } from "@/components/shared/datetimepicker";
 import useFetch from "@/hooks/useFetch";
 import { activityService } from "@/services/activityService";
-import { RackActivityDTO } from "@/types/activity.dto";
+import {
+  GetRackActivitiesResponseDTO,
+  RackActivityDTO,
+} from "@/types/activity.dto";
 import React, { useCallback, useEffect, useState } from "react";
-import { FlatList, RefreshControl, Text, View } from "react-native";
+import { RefreshControl, SectionList, Text, View } from "react-native";
 
 interface ListHeaderProps {
   dateRange: { start: Date | null; end: Date | null };
   setDateRange: (range: { start: Date | null; end: Date | null }) => void;
-  dateToday: Date;
-  formatDate: (date: Date) => string;
 }
 
-const ListHeader: React.FC<ListHeaderProps> = ({
-  dateRange,
-  setDateRange,
-  dateToday,
-  formatDate,
-}) => (
+const ListHeader: React.FC<ListHeaderProps> = ({ dateRange, setDateRange }) => (
   <View className="bg-white">
-    <View className="mt-4">
+    <View className="mt-4 mb-4">
       <DateRangePicker value={dateRange} onChange={setDateRange} />
-    </View>
-
-    <View className="mt-6 mb-4 flex-row justify-between items-center">
-      <Text style={typography["button-bold"]} className="text-black text-lg">
-        {formatDate(dateToday)}
-      </Text>
     </View>
   </View>
 );
 
-// ─── Mapper ───────────────────────────────────────────────────────────────────
-const toActivityItemProps = (item: RackActivityDTO): RackActivityItemProps => {
-  const date = new Date(item.timestamp);
+const groupActivitiesByDate = (
+  data: (RackActivityItemProps & { timestamp: string })[],
+) => {
+  const groups: { [key: string]: RackActivityItemProps[] } = {};
+  const now = new Date();
+  const today = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate(),
+  ).getTime();
+  const yesterday = today - 86400000;
 
-  const time = date.toLocaleTimeString("en-US", {
+  data.forEach((item) => {
+    const itemDate = new Date(item.timestamp).setHours(0, 0, 0, 0);
+    let title = "";
+
+    if (itemDate === today) {
+      title = "Today";
+    } else if (itemDate === yesterday) {
+      title = "Yesterday";
+    } else {
+      title = new Date(itemDate).toLocaleDateString("en-US", {
+        month: "long",
+        day: "numeric",
+        year: "numeric",
+      });
+    }
+
+    if (!groups[title]) groups[title] = [];
+    groups[title].push(item);
+  });
+
+  return Object.keys(groups).map((date) => ({
+    title: date,
+    data: groups[date],
+  }));
+};
+
+const toActivityItemProps = (
+  item: RackActivityDTO,
+): RackActivityItemProps & { timestamp: string } => {
+  const dateObj = new Date(item.timestamp);
+
+  const time = dateObj.toLocaleTimeString("en-US", {
     hour: "2-digit",
     minute: "2-digit",
   });
 
-  const dateStr = date.toLocaleDateString("en-US", {
+  const dateStr = dateObj.toLocaleDateString("en-US", {
     month: "long",
     day: "numeric",
     year: "numeric",
@@ -63,24 +92,22 @@ const toActivityItemProps = (item: RackActivityDTO): RackActivityItemProps => {
     rackNameNew,
     date: dateStr,
     time,
+    timestamp: item.timestamp,
   };
 };
 
-// ─── Screen ───────────────────────────────────────────────────────────────────
-
 const RackActivity = () => {
-  const dateToday = new Date();
-
   const [dateRange, setDateRange] = useState<{
     start: Date | null;
     end: Date | null;
   }>({ start: null, end: null });
 
-  const [activities, setActivities] = useState<RackActivityItemProps[]>([]);
+  const [activities, setActivities] = useState<
+    (RackActivityItemProps & { timestamp: string })[]
+  >([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  // Static URL — query params are passed via refetch({ params }) instead
   const { refetch: getRackActivities } = useFetch("/api/racks/activities", {
     method: "GET",
     autoFetch: false,
@@ -89,16 +116,24 @@ const RackActivity = () => {
 
   const fetchActivities = useCallback(async () => {
     try {
-      const response = await activityService.getRackActivities(
-        getRackActivities,
-        {
+      const startISO = dateRange.start
+        ? new Date(dateRange.start.setHours(0, 0, 0, 0)).toISOString()
+        : undefined;
+      const endISO = dateRange.end
+        ? new Date(dateRange.end.setHours(23, 59, 59, 999)).toISOString()
+        : undefined;
+
+      const response: GetRackActivitiesResponseDTO =
+        await activityService.getRackActivities(getRackActivities, {
           page: 1,
-          limit: 20,
-          ...(dateRange.start && { startDate: dateRange.start.toISOString() }),
-          ...(dateRange.end && { endDate: dateRange.end.toISOString() }),
-        },
-      );
-      setActivities(response.data.map(toActivityItemProps));
+          limit: 50,
+          startDate: startISO,
+          endDate: endISO,
+        });
+
+      if (response && response.data) {
+        setActivities(response.data.map(toActivityItemProps));
+      }
     } catch (error) {
       console.error("Failed to fetch rack activities:", error);
       setActivities([]);
@@ -107,13 +142,10 @@ const RackActivity = () => {
     }
   }, [getRackActivities, dateRange]);
 
-  // Handles both initial load and date range filter changes.
-  // Single trigger avoids the race condition caused by useFocusEffect
-  // and useEffect firing simultaneously on mount.
   useEffect(() => {
     setLoading(true);
     fetchActivities();
-  }, [dateRange]);
+  }, [fetchActivities]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -121,35 +153,36 @@ const RackActivity = () => {
     setRefreshing(false);
   }, [fetchActivities]);
 
-  const formatDate = (date: Date) =>
-    date.toLocaleDateString("en-US", {
-      month: "long",
-      day: "numeric",
-      year: "numeric",
-    });
+  const sections = groupActivitiesByDate(activities);
 
   return (
-    <FlatList
-      data={activities}
+    <SectionList
+      sections={sections}
       keyExtractor={(item) => item.id}
       renderItem={({ item }) => <RackActivityItem {...item} />}
+      renderSectionHeader={({ section: { title } }) => (
+        <View className="bg-white py-3">
+          <Text
+            style={typography["button-bold"]}
+            className="text-black text-lg"
+          >
+            {title}
+          </Text>
+        </View>
+      )}
       ListHeaderComponent={
-        <ListHeader
-          dateRange={dateRange}
-          setDateRange={setDateRange}
-          dateToday={dateToday}
-          formatDate={formatDate}
-        />
+        <ListHeader dateRange={dateRange} setDateRange={setDateRange} />
       }
-      contentContainerStyle={{ paddingBottom: 20, paddingHorizontal: 24 }}
+      contentContainerStyle={{ paddingBottom: 40, paddingHorizontal: 24 }}
       className="bg-white flex-1"
+      stickySectionHeadersEnabled={false}
       showsVerticalScrollIndicator={false}
       refreshControl={
         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
       }
       ListEmptyComponent={() => (
         <View className="items-center mt-10">
-          <Text style={typography["subheader"]} className="text-grayText">
+          <Text style={typography["label"]} className="text-gray-400">
             {loading
               ? "Loading activity..."
               : "No rack activity found for this range."}
