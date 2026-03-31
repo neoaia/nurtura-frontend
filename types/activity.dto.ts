@@ -13,6 +13,7 @@ export interface PlantedItemDTO {
   rackName: string;
   time: string;
   quantity: string;
+  date: Date;
 }
 
 // For Harvest Summary Cards
@@ -31,6 +32,7 @@ export interface ActivityDTO {
   time: string;
   amount?: number;
   duration?: string;
+  date: Date;
 }
 
 // For Charts
