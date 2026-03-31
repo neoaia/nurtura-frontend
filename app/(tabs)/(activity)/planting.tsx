@@ -2,6 +2,8 @@ import { typography } from "@/assets/fonts/Text";
 import { PlantChart } from "@/components/activity/plantChart";
 import { PlantItem } from "@/components/activity/plantingItem";
 import { DateRangePicker } from "@/components/shared/datetimepicker";
+import useFetch from "@/hooks/useFetch";
+import { plantService } from "@/services/plantService";
 import { PlantedItemDTO } from "@/types/activity.dto";
 import React, { useCallback, useEffect, useState } from "react";
 import {
@@ -92,63 +94,90 @@ export default function PlantingScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  const fetchPlants = async () => {
+  // Setup useFetch para sa planting activities
+  const { refetch: getPlantingActivities } = useFetch(
+    "/api/racks/activities/planting",
+    {
+      method: "GET",
+      autoFetch: false,
+      withAuth: true,
+    },
+  );
+
+  const fetchPlants = useCallback(async () => {
     try {
       setLoading(true);
-      const mockPlanting: PlantedItemDTO[] = [
+
+      // Safe date formatting para sa API request
+      const startISO = dateRange.start
+        ? new Date(new Date(dateRange.start).setHours(0, 0, 0, 0)).toISOString()
+        : undefined;
+      const endISO = dateRange.end
+        ? new Date(
+            new Date(dateRange.end).setHours(23, 59, 59, 999),
+          ).toISOString()
+        : undefined;
+
+      // Tawagin ang backend
+      const response = await plantService.getPlantingActivities(
+        getPlantingActivities,
         {
-          id: "1",
-          plantName: "Lettuce",
-          rackName: "Rack A",
-          time: "08:00 AM",
-          quantity: "10",
-          date: new Date(),
+          page: 1,
+          limit: 50,
+          startDate: startISO,
+          endDate: endISO,
         },
-        {
-          id: "2",
-          plantName: "Bakit",
-          rackName: "Rack B",
-          time: "09:30 AM",
-          quantity: "5",
-          date: new Date(Date.now() - 86400000),
-        },
-        {
-          id: "3",
-          plantName: "Mint",
-          rackName: "Rack A",
-          time: "11:00 AM",
-          quantity: "12",
-          date: new Date("2026-03-25"),
-        },
-      ];
+      );
 
-      const filtered = mockPlanting.filter((item) => {
-        if (!dateRange.start || !dateRange.end) return true;
+      if (response && response.data) {
+        // I-map ang response data (kunin ang detalye sa 'metadata' at 'rack')
+        const mappedData: PlantedItemDTO[] = response.data.map((item: any) => {
+          const dateObj = new Date(item.timestamp);
 
-        const itemTime = new Date(item.date).getTime();
-        const startTime = new Date(dateRange.start).setHours(0, 0, 0, 0);
-        const endTime = new Date(dateRange.end).setHours(23, 59, 59, 999);
+          return {
+            id: item.id,
+            plantName: item.metadata?.plantName || "Unknown Plant",
+            // Priority: rack.name kung meron, fallback sa metadata, then id
+            rackName:
+              item.rack?.name ||
+              item.metadata?.rackName ||
+              item.rackId ||
+              "Unknown Rack",
+            time: dateObj.toLocaleTimeString("en-US", {
+              hour: "2-digit",
+              minute: "2-digit",
+            }),
+            date: dateObj,
+            // Kino-convert to string kasi string type ang quantity sa PlantedItemDTO mo
+            quantity: item.metadata?.quantity
+              ? `${item.metadata.quantity}`
+              : "0",
+          };
+        });
 
-        return itemTime >= startTime && itemTime <= endTime;
-      });
+        // Kung gusto mo, pwede mong i-filter dito kung 'PLANT_ADDED' lang ang ipapakita
+        // const addedPlants = mappedData.filter(item => response.data.find(r => r.id === item.id)?.eventType === 'PLANT_ADDED');
+        // setPlants(addedPlants);
 
-      setPlants(filtered);
+        setPlants(mappedData);
+      }
     } catch (error) {
       console.error("Failed to fetch plants:", error);
+      setPlants([]);
     } finally {
       setLoading(false);
     }
-  };
+  }, [dateRange, getPlantingActivities]);
 
   useEffect(() => {
     fetchPlants();
-  }, [dateRange]);
+  }, [fetchPlants]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await fetchPlants();
     setRefreshing(false);
-  }, [dateRange]);
+  }, [fetchPlants]);
 
   const sections = groupPlantsByDate(plants);
 

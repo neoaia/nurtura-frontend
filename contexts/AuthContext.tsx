@@ -1,24 +1,24 @@
-import { auth } from '@/firebase';
-import { GoogleSignin } from '@react-native-google-signin/google-signin';
-import * as SecureStore from 'expo-secure-store';
+import { auth } from "@/firebase";
+import { GoogleSignin } from "@react-native-google-signin/google-signin";
+import * as SecureStore from "expo-secure-store";
 import {
   createUserWithEmailAndPassword,
   fetchSignInMethodsForEmail,
   GoogleAuthProvider,
   onAuthStateChanged,
   signInWithCredential,
-  signInWithEmailAndPassword,
   signInWithCustomToken,
+  signInWithEmailAndPassword,
   signOut,
-  User
-} from 'firebase/auth';
+  User,
+} from "firebase/auth";
 
-import useFetch from '@/hooks/useFetch';
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import useFetch from "@/hooks/useFetch";
+import React, { createContext, useContext, useEffect, useState } from "react";
 
 export interface UserInfo {
-  uid: User['uid'] | null ;
-  email: User['email'] | null;
+  uid: User["uid"] | null;
+  email: User["email"] | null;
   firstName: string | null;
   lastName: string | null;
   token: string | null;
@@ -28,8 +28,11 @@ interface AuthContextType {
   user: UserInfo | null;
   loading: boolean;
   email: string | null;
-  fetchSignInMethods:(email: string) => Promise<string[]>;
-  signUp: (email: string, password: string) => Promise<{ user: any, token: string }>;
+  fetchSignInMethods: (email: string) => Promise<string[]>;
+  signUp: (
+    email: string,
+    password: string,
+  ) => Promise<{ user: any; token: string }>;
   signIn: (email: string, password: string) => Promise<void>;
   googleSignIn: () => Promise<{ userData: any }>;
   googleSignUp: () => Promise<{ userData: any }>;
@@ -48,63 +51,60 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [email, setEmail] = useState<string | null>("");
   const [googleLoggedIn, setGoogleLoggedIn] = useState(true);
 
-  const {
-    refetch: checkProviders
-  } = useFetch('/api/auth/providers', {
-    method: 'GET',
+  const { refetch: checkProviders } = useFetch("/api/auth/providers", {
+    method: "GET",
     autoFetch: false,
     withAuth: false,
   });
 
-  const {
-    refetch: checkEmail
-  } = useFetch('/api/users/exists', {
-    method: 'GET',
+  const { refetch: checkEmail } = useFetch("/api/users/exists", {
+    method: "GET",
     autoFetch: false,
     withAuth: false,
   });
 
   useEffect(() => {
     GoogleSignin.configure({
-      webClientId: `${process.env.EXPO_PUBLIC_WEB_CLIENT_ID}`, 
-      offlineAccess: true, 
-      forceCodeForRefreshToken: true, 
-      scopes: ['profile', 'email'],
+      webClientId: `${process.env.EXPO_PUBLIC_WEB_CLIENT_ID}`,
+      offlineAccess: true,
+      forceCodeForRefreshToken: true,
+      scopes: ["profile", "email"],
     });
   }, []);
 
   if (googleLoggedIn) {
-    
   }
 
-useEffect(() => {
-  if (googleLoggedIn) {
+  useEffect(() => {
+    if (googleLoggedIn) {
       const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      if (firebaseUser) {
-        const forgotPasswordInProgress = await SecureStore.getItemAsync("forgotPasswordInProgress");
-        if (forgotPasswordInProgress === "true") {
-          setLoading(false);
-          return;
+        if (firebaseUser) {
+          const forgotPasswordInProgress = await SecureStore.getItemAsync(
+            "forgotPasswordInProgress",
+          );
+          if (forgotPasswordInProgress === "true") {
+            setLoading(false);
+            return;
+          }
+
+          const firebaseToken = await firebaseUser.getIdToken();
+          setUser({
+            uid: firebaseUser.uid,
+            email: firebaseUser.email,
+            firstName: firebaseUser.displayName?.split(" ")[0] || null,
+            lastName: firebaseUser.displayName?.split(" ")[1] || null,
+            token: firebaseToken,
+          });
+        } else {
+          setUser(null);
         }
 
-        const firebaseToken = await firebaseUser.getIdToken();
-        setUser({
-          uid: firebaseUser.uid,
-          email: firebaseUser.email,
-          firstName: firebaseUser.displayName?.split(" ")[0] || null,
-          lastName: firebaseUser.displayName?.split(" ")[1] || null,
-          token: firebaseToken,
-        });
-      } else {
-        setUser(null);
-      }
+        setLoading(false);
+      });
 
-      setLoading(false);
-    });
-
-  return unsubscribe;
-  }
-}, []);
+      return unsubscribe;
+    }
+  }, []);
 
   const googleSignInAndVerify = async () => {
     try {
@@ -119,10 +119,14 @@ useEffect(() => {
 
       const googleEmail = rawGoogleEmail.trim().toLowerCase();
 
-      const emailResponse = await checkEmail({ params: { email: googleEmail } });
+      const emailResponse = await checkEmail({
+        params: { email: googleEmail },
+      });
 
       if (!emailResponse || emailResponse.error) {
-        throw new Error(emailResponse?.error?.message || "Error checking email.");
+        throw new Error(
+          emailResponse?.error?.message || "Error checking email.",
+        );
       }
 
       const emailAvailable = emailResponse?.data?.available;
@@ -133,24 +137,26 @@ useEffect(() => {
         });
 
         if (!providersResponse || providersResponse.error) {
-          throw new Error(providersResponse?.error?.message || "Error checking providers.");
+          throw new Error(
+            providersResponse?.error?.message || "Error checking providers.",
+          );
         }
 
         const providers = providersResponse?.data?.providers || [];
-        const hasGoogleProvider = providers.includes('google.com');
+        const hasGoogleProvider = providers.includes("google.com");
 
         console.log("Providers for this email:", providers);
 
         if (!hasGoogleProvider) {
           await GoogleSignin.signOut();
           throw new Error(
-            "This email is registered with a password. Please sign in using email and password instead."
+            "This email is registered with a password. Please sign in using email and password instead.",
           );
         }
       }
 
       const idToken = result.data?.idToken;
-      if (!idToken) throw new Error('No ID token returned from Google');
+      if (!idToken) throw new Error("No ID token returned from Google");
 
       const credential = GoogleAuthProvider.credential(idToken);
       const userCredential = await signInWithCredential(auth, credential);
@@ -166,13 +172,12 @@ useEffect(() => {
         email: firebaseUser.email,
         firstName: googleUser?.givenName || null,
         lastName: googleUser?.familyName || null,
-        token: firebaseToken
+        token: firebaseToken,
       };
 
       setUser(userData);
       setGoogleLoggedIn(true);
       return { userData };
-
     } catch (error: any) {
       console.error("Verification Error:", error.message);
       await GoogleSignin.signOut();
@@ -182,17 +187,20 @@ useEffect(() => {
     }
   };
 
-
   const fetchSignInMethods = async (email: string) => {
     return await fetchSignInMethodsForEmail(auth, email);
   };
 
   const signInWithTemporaryToken = async (token: string) => {
     await signInWithCustomToken(auth, token);
-  }
+  };
 
   const signUp = async (email: string, password: string) => {
-    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    const userCredential = await createUserWithEmailAndPassword(
+      auth,
+      email,
+      password,
+    );
 
     const token = await userCredential.user.getIdToken();
 
@@ -207,7 +215,9 @@ useEffect(() => {
   const signIn = async (email: string, password: string) => {
     setEmail(email);
 
-    await signInWithEmailAndPassword(auth, email, password);
+    const user = await signInWithEmailAndPassword(auth, email, password);
+    const token = await user.user.getIdToken();
+    console.log(token);
   };
 
   const googleSignIn = async (): Promise<{ userData: UserInfo }> => {
@@ -215,7 +225,7 @@ useEffect(() => {
       await GoogleSignin.hasPlayServices();
       const result = await GoogleSignin.signIn();
       const idToken = result.data?.idToken;
-      if (!idToken) throw new Error('No ID token returned from Google');
+      if (!idToken) throw new Error("No ID token returned from Google");
 
       const credential = GoogleAuthProvider.credential(idToken);
       const userCredential = await signInWithCredential(auth, credential);
@@ -230,7 +240,7 @@ useEffect(() => {
         email: firebaseUser.email,
         firstName: googleUser?.givenName || null,
         lastName: googleUser?.familyName || null,
-        token: firebaseToken
+        token: firebaseToken,
       });
 
       setEmail(email);
@@ -244,9 +254,8 @@ useEffect(() => {
       };
 
       return { userData };
-
     } catch (error) {
-      console.error('Google Sign-In Error:', error);
+      console.error("Google Sign-In Error:", error);
       throw error;
     }
   };
@@ -276,11 +285,10 @@ useEffect(() => {
       };
 
       return { userData };
-
-      } catch (error: any) {
-        throw new Error(error.message);
-      }
-    };
+    } catch (error: any) {
+      throw new Error(error.message);
+    }
+  };
 
   const logout = async () => {
     try {
@@ -298,7 +306,9 @@ useEffect(() => {
         "fromGoogle",
       ];
 
-      await Promise.all(keysToClear.map((key) => SecureStore.deleteItemAsync(key)));
+      await Promise.all(
+        keysToClear.map((key) => SecureStore.deleteItemAsync(key)),
+      );
 
       await GoogleSignin.signOut();
       await signOut(auth);

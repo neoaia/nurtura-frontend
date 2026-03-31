@@ -88,7 +88,9 @@ const toActivityItemProps = (
   return {
     id: item.id,
     eventType: item.eventType,
-    rackName: item.rack.name,
+    // FIX 1: Nilagyan ko ng optional chaining (?.). Kung walang item.rack,
+    // gagamitin na lang niya muna yung rackId bilang fallback.
+    rackName: item.rack?.name || item.rackId || "Unknown Rack",
     rackNameNew,
     date: dateStr,
     time,
@@ -116,11 +118,15 @@ const RackActivity = () => {
 
   const fetchActivities = useCallback(async () => {
     try {
+      // FIX 2: Gumawa muna tayo ng 'new Date()' copy bago mag .setHours
+      // para hindi ma-mutate yung original state sa Date Picker mo.
       const startISO = dateRange.start
-        ? new Date(dateRange.start.setHours(0, 0, 0, 0)).toISOString()
+        ? new Date(new Date(dateRange.start).setHours(0, 0, 0, 0)).toISOString()
         : undefined;
       const endISO = dateRange.end
-        ? new Date(dateRange.end.setHours(23, 59, 59, 999)).toISOString()
+        ? new Date(
+            new Date(dateRange.end).setHours(23, 59, 59, 999),
+          ).toISOString()
         : undefined;
 
       const response: GetRackActivitiesResponseDTO =
@@ -182,7 +188,7 @@ const RackActivity = () => {
       }
       ListEmptyComponent={() => (
         <View className="items-center mt-10">
-          <Text style={typography["label"]} className="text-gray-400">
+          <Text style={typography["label"]} className="text-grayText">
             {loading
               ? "Loading activity..."
               : "No rack activity found for this range."}
