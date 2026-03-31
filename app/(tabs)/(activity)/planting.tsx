@@ -108,7 +108,6 @@ export default function PlantingScreen() {
     try {
       setLoading(true);
 
-      // Safe date formatting para sa API request
       const startISO = dateRange.start
         ? new Date(new Date(dateRange.start).setHours(0, 0, 0, 0)).toISOString()
         : undefined;
@@ -118,7 +117,6 @@ export default function PlantingScreen() {
           ).toISOString()
         : undefined;
 
-      // Tawagin ang backend
       const response = await plantService.getPlantingActivities(
         getPlantingActivities,
         {
@@ -130,36 +128,55 @@ export default function PlantingScreen() {
       );
 
       if (response && response.data) {
-        // I-map ang response data (kunin ang detalye sa 'metadata' at 'rack')
         const mappedData: PlantedItemDTO[] = response.data.map((item: any) => {
           const dateObj = new Date(item.timestamp);
+          const meta = item.metadata || {};
+          const eventType = item.eventType;
+
+          let finalPlantName = "Unknown Plant";
+          let finalQuantity = "0";
+          let oldPlantName = undefined; // Idinagdag natin ang variable na ito
+
+          if (eventType === "PLANT_ADDED") {
+            finalPlantName = meta.plantName || "Unknown Plant";
+            finalQuantity = meta.quantity ? `${meta.quantity}` : "0";
+          } else if (eventType === "PLANT_CHANGED") {
+            // Kunin ang new plant name at previous plant name sa metadata
+            finalPlantName = meta.newPlantName || "Unknown Plant";
+            oldPlantName = meta.previousPlantName || "Unknown Plant"; // <-- Eto yung luma
+            finalQuantity = meta.quantity ? `${meta.quantity}` : "0";
+          } else if (eventType === "PLANT_REMOVED") {
+            finalPlantName = meta.plantName || "A plant";
+            finalQuantity = meta.quantity ? `${meta.quantity}` : "0";
+          }
 
           return {
             id: item.id,
-            plantName: item.metadata?.plantName || "Unknown Plant",
-            // Priority: rack.name kung meron, fallback sa metadata, then id
+            eventType: item.eventType,
+            plantName: finalPlantName,
+            oldPlantName: oldPlantName, // <-- Ipapasa natin dito!
             rackName:
-              item.rack?.name ||
-              item.metadata?.rackName ||
-              item.rackId ||
-              "Unknown Rack",
+              meta.rackName || item.rack?.name || item.rackId || "Unknown Rack",
             time: dateObj.toLocaleTimeString("en-US", {
               hour: "2-digit",
               minute: "2-digit",
             }),
             date: dateObj,
-            // Kino-convert to string kasi string type ang quantity sa PlantedItemDTO mo
-            quantity: item.metadata?.quantity
-              ? `${item.metadata.quantity}`
-              : "0",
+            quantity: finalQuantity,
           };
         });
 
-        // Kung gusto mo, pwede mong i-filter dito kung 'PLANT_ADDED' lang ang ipapakita
-        // const addedPlants = mappedData.filter(item => response.data.find(r => r.id === item.id)?.eventType === 'PLANT_ADDED');
-        // setPlants(addedPlants);
+        // Kung gusto mong i-filter out yung mga tinanggal (PLANT_REMOVED) sa UI,
+        // i-uncomment mo itong block sa ibaba:
+        /*
+        const filteredData = mappedData.filter((item: any) => {
+          const originalEvent = response.data.find((r: any) => r.id === item.id);
+          return originalEvent?.eventType !== "PLANT_REMOVED";
+        });
+        setPlants(filteredData);
+        */
 
-        setPlants(mappedData);
+        setPlants(mappedData); // Tanggalin ito kung gagamitin mo yung filter sa itaas
       }
     } catch (error) {
       console.error("Failed to fetch plants:", error);

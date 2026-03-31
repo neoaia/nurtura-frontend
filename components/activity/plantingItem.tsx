@@ -3,19 +3,21 @@ import { PlantedItemDTO } from "@/types/activity.dto";
 import React, { useState } from "react";
 import { Image, Text, TouchableOpacity, View } from "react-native";
 
+// In-extend natin para tanggapin ang eventType AT oldPlantName
 interface PlantItemProps {
-  plants: PlantedItemDTO;
+  plants: PlantedItemDTO & { eventType?: string; oldPlantName?: string };
 }
 
 export const PlantItem: React.FC<PlantItemProps> = ({ plants }) => {
   const [isLoading, setIsLoading] = useState(false);
 
   const {
-    plantName,
+    plantName, // Ito ang magsisilbing "newPlant"
     rackName,
     time,
     quantity,
-    // plantImage,
+    eventType,
+    oldPlantName, // Idinagdag natin ito
   } = plants;
 
   const handlePress = async () => {
@@ -27,20 +29,82 @@ export const PlantItem: React.FC<PlantItemProps> = ({ plants }) => {
     }
   };
 
+  const renderSentence = () => {
+    if (eventType === "PLANT_REMOVED") {
+      return (
+        <Text
+          style={typography["subheader"]}
+          className="text-gray-700 leading-5"
+        >
+          <Text style={typography["subheader-bold"]} className="text-black">
+            {plantName}
+          </Text>{" "}
+          has been removed from{" "}
+          <Text style={typography["subheader-bold"]} className="text-black">
+            {rackName}
+          </Text>{" "}
+          rack.{" "}
+          <Text style={typography["subheader"]} className="text-grayText">
+            {time}
+          </Text>
+        </Text>
+      );
+    }
+
+    // BAGONG FORMAT PARA SA PLANT_CHANGED
+    if (eventType === "PLANT_CHANGED") {
+      return (
+        <Text
+          style={typography["subheader"]}
+          className="text-gray-700 leading-5"
+        >
+          <Text style={typography["subheader-bold"]} className="text-black">
+            {rackName}
+          </Text>{" "}
+          rack&apos;s plant has been changed from{" "}
+          <Text style={typography["subheader-bold"]} className="text-black">
+            {oldPlantName || "previous crop"}
+          </Text>{" "}
+          to{" "}
+          <Text style={typography["subheader-bold"]} className="text-black">
+            {plantName}
+          </Text>
+          .{" "}
+          <Text style={typography["subheader"]} className="text-grayText">
+            {time}
+          </Text>
+        </Text>
+      );
+    }
+
+    // Default Format (PLANT_ADDED)
+    return (
+      <Text style={typography["subheader"]} className="text-gray-700 leading-5">
+        <Text style={typography["subheader-bold"]} className="text-black">
+          {quantity} {plantName}
+        </Text>{" "}
+        planted at{" "}
+        <Text style={typography["subheader-bold"]} className="text-black">
+          {rackName}
+        </Text>
+        .{" "}
+        <Text style={typography["subheader"]} className="text-grayText">
+          {time}
+        </Text>
+      </Text>
+    );
+  };
+
   return (
     <TouchableOpacity
       onPress={handlePress}
       disabled={isLoading}
       activeOpacity={0.7}
-      // Kinopya ang wrapper classes mula sa RackActivityItem
-      className={`bg-white mb-1 py-4 w-full flex-row items-center rounded-xl min-h-[84px] ${
+      className={`p-3 bg-white mb-2 py-4 pr-3 pl-4 w-full flex-row items-center rounded-xl border border-gray-100 min-h-[84px] ${
         isLoading ? "opacity-70" : ""
       }`}
     >
-      {/* Badge / Icon Container */}
       <View className="bg-[#E5EDCF] w-12 h-12 mr-4 rounded-xl items-center justify-center">
-        {/* Pwede mong ipalit ang SVG icon dito kung meron kang plant icon, 
-            pero iniwan ko muna ang Image placeholder mo */}
         <Image
           // source={plantImage}
           className="w-7 h-7"
@@ -48,25 +112,7 @@ export const PlantItem: React.FC<PlantItemProps> = ({ plants }) => {
         />
       </View>
 
-      {/* Content Container (Sentence Format gaya ng RackActivityItem) */}
-      <View className="flex-1">
-        <Text
-          style={typography["subheader"]}
-          className="text-gray-700 leading-5"
-        >
-          <Text style={typography["subheader-bold"]} className="text-black">
-            {quantity} {plantName}
-          </Text>{" "}
-          planted at{" "}
-          <Text style={typography["subheader-bold"]} className="text-black">
-            {rackName}
-          </Text>
-          .{" "}
-          <Text style={typography["subheader"]} className="text-grayText">
-            {time}
-          </Text>
-        </Text>
-      </View>
+      <View className="flex-1">{renderSentence()}</View>
     </TouchableOpacity>
   );
 };

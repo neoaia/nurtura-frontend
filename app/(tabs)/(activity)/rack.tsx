@@ -7,8 +7,7 @@ import { DateRangePicker } from "@/components/shared/datetimepicker";
 import useFetch from "@/hooks/useFetch";
 import { activityService } from "@/services/activityService";
 import {
-  GetRackActivitiesResponseDTO,
-  RackActivityDTO,
+  GetRackActivitiesResponseDTO
 } from "@/types/activity.dto";
 import React, { useCallback, useEffect, useState } from "react";
 import { RefreshControl, SectionList, Text, View } from "react-native";
@@ -65,7 +64,7 @@ const groupActivitiesByDate = (
 };
 
 const toActivityItemProps = (
-  item: RackActivityDTO,
+  item: any, // or item: RackActivityDTO kung naka-update na ang interface mo
 ): RackActivityItemProps & { timestamp: string } => {
   const dateObj = new Date(item.timestamp);
 
@@ -80,24 +79,28 @@ const toActivityItemProps = (
     year: "numeric",
   });
 
-  const rackNameNew =
-    item.eventType === "RACK_RENAMED"
-      ? (item.metadata?.newName as string | undefined)
-      : undefined;
+  const isRenamed = item.eventType === "RACK_RENAMED";
+
+  // Kunin ang newName kung RENAMED event ito
+  const rackNameNew = isRenamed ? item.metadata?.newName : undefined;
+
+  // Kung RENAMED, 'oldName' ang kukunin natin. Kung hindi, 'rackName'.
+  const fetchedRackName = isRenamed
+    ? item.metadata?.oldName
+    : item.metadata?.rackName;
 
   return {
     id: item.id,
     eventType: item.eventType,
-    // FIX 1: Nilagyan ko ng optional chaining (?.). Kung walang item.rack,
-    // gagamitin na lang niya muna yung rackId bilang fallback.
-    rackName: item.rack?.name || item.rackId || "Unknown Rack",
+    // Ipapasa natin ang fetchedRackName na nakuha natin sa itaas
+    rackName:
+      fetchedRackName || item.rack?.name || item.rackId || "Unknown Rack",
     rackNameNew,
     date: dateStr,
     time,
     timestamp: item.timestamp,
   };
 };
-
 const RackActivity = () => {
   const [dateRange, setDateRange] = useState<{
     start: Date | null;

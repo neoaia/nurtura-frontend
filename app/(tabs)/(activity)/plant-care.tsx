@@ -128,7 +128,6 @@ export default function PlantCareScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  // Gamitin ang useFetch para sa plant-care endpoint
   const { refetch: getPlantCare } = useFetch(
     "/api/racks/activities/plant-care",
     {
@@ -142,7 +141,6 @@ export default function PlantCareScreen() {
     try {
       setLoading(true);
 
-      // Safe date formatting para hindi mag-mutate
       const startISO = dateRange.start
         ? new Date(new Date(dateRange.start).setHours(0, 0, 0, 0)).toISOString()
         : undefined;
@@ -152,7 +150,6 @@ export default function PlantCareScreen() {
           ).toISOString()
         : undefined;
 
-      // Tawagin ang backend API
       const response = await plantService.getPlantCareActivities(getPlantCare, {
         page: 1,
         limit: 50,
@@ -161,12 +158,16 @@ export default function PlantCareScreen() {
       });
 
       if (response && response.data) {
-        // I-map ang backend response sa ActivityDTO format ng UI mo
-        const mappedData: ActivityDTO[] = response.data.map((item: any) => {
+        // Step 1: Filter muna natin para kunin lang yung mga "_OFF" events
+        const completedEvents = response.data.filter(
+          (item: any) => item.eventType && item.eventType.endsWith("_OFF"),
+        );
+
+        // Step 2: I-map natin diretso sa ActivityDTO[] format
+        const mappedData: ActivityDTO[] = completedEvents.map((item: any) => {
           const dateObj = new Date(item.timestamp);
           const isWater = item.eventType.includes("WATERING");
 
-          // Convert duration sa minutes kung ibinato in milliseconds (e.g. 300000 -> 5 mins)
           const durationMs = item.metadata?.duration;
           let formattedDuration;
           if (durationMs) {
@@ -176,28 +177,25 @@ export default function PlantCareScreen() {
 
           return {
             id: item.id,
-            type: isWater ? "water" : "light",
-            // Subukang kunin ang rule name o fallback sa "Plants"
+            // FIX: Explicit nating sasabihin kay TypeScript na "water" | "light" ito
+            type: (isWater ? "water" : "light") as "water" | "light",
             plantName: item.metadata?.ruleName || "Plants",
-            rackName: item.rack?.name || item.rackId || "Unknown Rack",
+            rackName:
+              item.metadata?.rackName ||
+              item.rack?.name ||
+              item.rackId ||
+              "Unknown Rack",
             time: dateObj.toLocaleTimeString("en-US", {
               hour: "2-digit",
               minute: "2-digit",
             }),
             date: dateObj,
-            amount: item.metadata?.amount, // Kung sakaling mag-return ang API ng exact mL
+            amount: item.metadata?.amount,
             duration: formattedDuration,
           };
         });
 
-        // Filter natin yung mga _ON events (kung ayaw mong i-display pati _OFF)
-        const filteredData = mappedData.filter((a: any) =>
-          response.data
-            .find((orig: any) => orig.id === a.id)
-            ?.eventType.includes("_ON"),
-        );
-
-        setActivities(filteredData);
+        setActivities(mappedData);
       }
     } catch (error) {
       console.error("Failed to fetch plant care activities:", error);
@@ -231,7 +229,6 @@ export default function PlantCareScreen() {
   const lightChartData = activities
     .filter((a) => a.type === "light")
     .map((a, i) => {
-      // Fallback computation kung gusto mong lumabas sa chart ang duration minutes
       const minutes = a.duration ? parseInt(a.duration.split(" ")[0]) : 0;
       return { timestamp: i, value: minutes };
     });
