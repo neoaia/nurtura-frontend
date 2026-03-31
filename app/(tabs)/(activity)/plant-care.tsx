@@ -2,6 +2,7 @@ import { typography } from "@/assets/fonts/Text";
 import { ActivityItem } from "@/components/activity/activityItem";
 import { PlantChart } from "@/components/activity/plantChart";
 import { ActivityButton } from "@/components/activity/sensorToggle";
+import { OnboardingTutorialModal } from "@/components/onboarding/tutorialModal";
 import { DateRangePicker } from "@/components/shared/datetimepicker";
 import { ActivityDTO } from "@/types/activity.dto";
 import React, { useCallback, useEffect, useState } from "react";
@@ -111,6 +112,7 @@ const groupActivitiesByDate = (data: ActivityDTO[]) => {
 };
 
 export default function PlantCareScreen() {
+  const [showTutorial, setShowTutorial] = useState(true);
   const [activeTab, setActiveTab] = useState<"water" | "light">("water");
   const [dateRange, setDateRange] = useState<{
     start: Date | null;
@@ -202,43 +204,52 @@ export default function PlantCareScreen() {
     .map((a, i) => ({ timestamp: i, value: a.amount || 0 }));
 
   return (
-    <SectionList
-      sections={sections}
-      keyExtractor={(item) => item.id}
-      renderItem={({ item }) => <ActivityItem {...item} />}
-      renderSectionHeader={({ section: { title } }) => (
-        <View className="bg-white py-3">
-          <Text
-            style={typography["button-bold"]}
-            className="text-black text-lg"
-          >
-            {title}
-          </Text>
-        </View>
-      )}
-      ListHeaderComponent={
-        <ListHeader
-          dateRange={dateRange}
-          setDateRange={setDateRange}
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
-          waterChartData={waterChartData}
-          lightChartData={lightChartData}
-        />
-      }
-      ListEmptyComponent={() => (
-        <View className="items-center mt-10">
-          <Text style={typography["label"]} className="text-gray-400">
-            {loading ? "Loading..." : `No ${activeTab} activities found.`}
-          </Text>
-        </View>
-      )}
-      contentContainerStyle={{ paddingBottom: 40, paddingHorizontal: 24 }}
-      className="bg-white flex-1"
-      stickySectionHeadersEnabled={false}
-      refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-      }
-    />
+    <View className="flex-1 bg-[#F5F5F5]">
+      <SectionList
+        sections={sections}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => <ActivityItem {...item} />}
+        renderSectionHeader={({ section: { title } }) => (
+          <View className="bg-white py-3">
+            <Text
+              style={typography["button-bold"]}
+              className="text-black text-lg"
+            >
+              {title}
+            </Text>
+          </View>
+        )}
+        ListHeaderComponent={
+          <ListHeader
+            dateRange={dateRange}
+            setDateRange={setDateRange}
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+            waterChartData={waterChartData}
+            lightChartData={lightChartData}
+          />
+        }
+        ListEmptyComponent={() => (
+          <View className="items-center mt-10">
+            <Text style={typography["label"]} className="text-gray-400">
+              {loading ? "Loading..." : `No ${activeTab} activities found.`}
+            </Text>
+          </View>
+        )}
+        contentContainerStyle={{ paddingBottom: 40, paddingHorizontal: 24 }}
+        className="bg-white flex-1"
+        stickySectionHeadersEnabled={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+      />
+      <OnboardingTutorialModal
+        visible={showTutorial}
+        onClose={() => setShowTutorial(false)}
+        title={`Hi Juan, Let's Start Growing!`}
+        subtitle="I'm so excited for you to begin your smart garden journey."
+        position="top"
+      />
+    </View>
   );
 }
