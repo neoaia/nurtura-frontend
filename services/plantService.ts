@@ -5,9 +5,13 @@ import {
   CreatePlantResponseDTO,
   DeletePlantResponseDTO,
   GetAllPlantsResponseDTO,
+  GetPlantCareActivitiesResponseDTO,
+  GetPlantHarvestActivitiesResponseDTO,
   GetPlantHistoryForRackResponseDTO,
   GetPlantInfoResponseDTO,
+  GetPlantingActivitiesResponseDTO,
   HarvestPlantFromRackResponseDTO,
+  PlantActivitiesRequestDTO,
   RemovePlantWithdrawnFromRackResponseDTO,
   UpdatePlantRequestDTO,
   UpdatePlantResponseDTO,
@@ -84,6 +88,36 @@ export const plantService = {
     return handleRequest<RemovePlantWithdrawnFromRackResponseDTO>(
       "Removing plant withdrawn from rack",
       () => refetch(),
+    );
+  },
+
+  async getPlantCareActivities(
+    refetch: any,
+    params?: PlantActivitiesRequestDTO,
+  ): Promise<GetPlantCareActivitiesResponseDTO> {
+    return handleRequest<GetPlantCareActivitiesResponseDTO>(
+      "Fetching plant care activities",
+      () => refetch({ params }),
+    );
+  },
+
+  async getPlantHarvestActivities(
+    refetch: any,
+    params?: PlantActivitiesRequestDTO,
+  ): Promise<GetPlantHarvestActivitiesResponseDTO> {
+    return handleRequest<GetPlantHarvestActivitiesResponseDTO>(
+      "Fetching plant harvest activities",
+      () => refetch({ params }),
+    );
+  },
+
+  async getPlantingActivities(
+    refetch: any,
+    params?: PlantActivitiesRequestDTO,
+  ): Promise<GetPlantingActivitiesResponseDTO> {
+    return handleRequest<GetPlantingActivitiesResponseDTO>(
+      "Fetching planting activities",
+      () => refetch({ params }),
     );
   },
 };

@@ -1,10 +1,11 @@
-import { plantService } from "../services/plantService";
+import { plantService } from "../../services/plantService";
 import {
   CreatePlantRequestDTO,
+  PlantActivitiesRequestDTO,
   UpdatePlantRequestDTO,
-} from "../types/plant.dto";
+} from "../../types/plant.dto";
 
-jest.mock("../utils/logger", () => ({
+jest.mock("../../utils/logger", () => ({
   logger: {
     log: jest.fn(),
     debug: jest.fn(),
@@ -47,6 +48,75 @@ const mockMeta = {
   totalPages: 1,
   hasNextPage: false,
   hasPreviousPage: false,
+};
+
+const mockActivityParams: PlantActivitiesRequestDTO = {
+  page: 1,
+  limit: 10,
+  startDate: "2026-02-01T00:00:00.000Z",
+  endDate: "2026-02-28T23:59:59.999Z",
+};
+
+const mockCareActivityItem = {
+  id: "clx7care001",
+  rackId: "clx2def456",
+  eventType: "WATERING_ON",
+  details: "Watering started. Moisture below threshold",
+  timestamp: "2026-02-11T14:30:00.000Z",
+  rack: {
+    id: "clx2def456",
+    name: "Living Room Farm",
+    macAddress: "A8:BC:CD:0E:EF:F9",
+  },
+  currentPlant: {
+    id: "clx001plant123",
+    name: "Lettuce",
+    category: "LEAFY_GREENS",
+  },
+};
+
+const mockHarvestActivityItem = {
+  id: "clx7harv001",
+  rackId: "clx2def456",
+  eventType: "PLANT_HARVESTED",
+  details: "Harvest 3 of 'Lettuce' from rack 'Living Room Farm'",
+  metadata: {
+    plantId: "clx001plant123",
+    plantName: "Lettuce",
+    rackId: "clx2def456",
+    harvestCount: 3,
+    quantity: 50,
+  },
+  timestamp: "2026-02-11T14:30:00.000Z",
+  rack: {
+    id: "clx2def456",
+    name: "Living Room Farm",
+    macAddress: "A8:BC:CD:0E:EF:F9",
+  },
+  plant: {
+    id: "clx001plant123",
+    name: "Lettuce",
+    category: "LEAFY_GREENS",
+  },
+};
+
+const mockPlantingActivityItem = {
+  id: "clx9h9bi5t001",
+  rackId: "clx2def456",
+  plantId: "clx003plant123",
+  quantity: 10,
+  plantedAt: "2026-01-01T08:00:00.000Z",
+  harvestedAt: "2026-02-01T08:00:00.000Z",
+  plant: {
+    id: "clx003plant123",
+    name: "Lettuce",
+    category: "LEAFY_GREENS",
+  },
+  rack: {
+    id: "clx2def456",
+    name: "Living Room Farm",
+    macAddress: "A8:BC:CD:0E:EF:F9",
+  },
 };
 
 describe("plantService", () => {
@@ -516,12 +586,21 @@ describe("plantService", () => {
   });
 
   describe("assignPlantToRack", () => {
+    const assignBody = {
+      rackId: "clx2def456",
+      quantity: 10,
+      plantedAt: "2026-02-01T08:00:00.000Z",
+    };
+
     it("returns success message on assignment", async () => {
       mockRefetch.mockResolvedValue({
         data: { message: "Plant assigned to rack successfully" },
         status: 200,
       });
-      const result = await plantService.assignPlantToRack(mockRefetch);
+      const result = await plantService.assignPlantToRack(
+        mockRefetch,
+        assignBody,
+      );
       expect(result).toEqual({
         message: "Plant assigned to rack successfully",
       });
@@ -532,31 +611,31 @@ describe("plantService", () => {
         data: { message: "Plant assigned to rack successfully" },
         status: 200,
       });
-      await plantService.assignPlantToRack(mockRefetch);
+      await plantService.assignPlantToRack(mockRefetch, assignBody);
       expect(mockRefetch).toHaveBeenCalledTimes(1);
     });
 
     it("throws when server returns an error", async () => {
       mockRefetch.mockResolvedValue({ error: { message: "Rack is full" } });
-      await expect(plantService.assignPlantToRack(mockRefetch)).rejects.toThrow(
-        "Rack is full",
-      );
+      await expect(
+        plantService.assignPlantToRack(mockRefetch, assignBody),
+      ).rejects.toThrow("Rack is full");
     });
 
     it("throws when plant is already assigned", async () => {
       mockRefetch.mockResolvedValue({
         error: { message: "Plant already assigned to this rack" },
       });
-      await expect(plantService.assignPlantToRack(mockRefetch)).rejects.toThrow(
-        "Plant already assigned to this rack",
-      );
+      await expect(
+        plantService.assignPlantToRack(mockRefetch, assignBody),
+      ).rejects.toThrow("Plant already assigned to this rack");
     });
 
     it("throws when response has no data", async () => {
       mockRefetch.mockResolvedValue({ status: 200 });
-      await expect(plantService.assignPlantToRack(mockRefetch)).rejects.toThrow(
-        "No data received",
-      );
+      await expect(
+        plantService.assignPlantToRack(mockRefetch, assignBody),
+      ).rejects.toThrow("No data received");
     });
 
     it("throws when status is not 200", async () => {
@@ -564,16 +643,16 @@ describe("plantService", () => {
         data: { message: "Assigned" },
         status: 409,
       });
-      await expect(plantService.assignPlantToRack(mockRefetch)).rejects.toThrow(
-        "Unexpected status code: 409",
-      );
+      await expect(
+        plantService.assignPlantToRack(mockRefetch, assignBody),
+      ).rejects.toThrow("Unexpected status code: 409");
     });
 
     it("throws on network error", async () => {
       mockRefetch.mockRejectedValue(new Error("Network error"));
-      await expect(plantService.assignPlantToRack(mockRefetch)).rejects.toThrow(
-        "Network error",
-      );
+      await expect(
+        plantService.assignPlantToRack(mockRefetch, assignBody),
+      ).rejects.toThrow("Network error");
     });
   });
 
@@ -712,6 +791,197 @@ describe("plantService", () => {
       ]);
       expect(r1.message).toBe("Plant removed from rack successfully");
       expect(r2.message).toBe("Plant removed from rack successfully");
+    });
+  });
+
+  describe("getPlantCareActivities", () => {
+    it("returns paginated care activities on success", async () => {
+      mockRefetch.mockResolvedValue({
+        data: {
+          data: [mockCareActivityItem],
+          meta: mockMeta,
+          amount: 1,
+        },
+        status: 200,
+      });
+
+      const result = await plantService.getPlantCareActivities(
+        mockRefetch,
+        mockActivityParams,
+      );
+
+      expect(result.data).toHaveLength(1);
+      expect(result.data[0].eventType).toBe("WATERING_ON");
+      expect(result.amount).toBe(1);
+      expect(mockRefetch).toHaveBeenCalledWith({ params: mockActivityParams });
+    });
+
+    it("throws when server returns an error", async () => {
+      mockRefetch.mockResolvedValue({ error: { message: "Unauthorized" } });
+
+      await expect(
+        plantService.getPlantCareActivities(mockRefetch, mockActivityParams),
+      ).rejects.toThrow("Unauthorized");
+    });
+
+    it("throws when response has no data", async () => {
+      mockRefetch.mockResolvedValue({ status: 200 });
+
+      await expect(
+        plantService.getPlantCareActivities(mockRefetch, mockActivityParams),
+      ).rejects.toThrow("No data received");
+    });
+
+    it("throws when status is not 200", async () => {
+      mockRefetch.mockResolvedValue({
+        data: { data: [], meta: mockMeta, amount: 0 },
+        status: 500,
+      });
+
+      await expect(
+        plantService.getPlantCareActivities(mockRefetch, mockActivityParams),
+      ).rejects.toThrow("Unexpected status code: 500");
+    });
+
+    it("throws on network error", async () => {
+      mockRefetch.mockRejectedValue(new Error("Network error"));
+
+      await expect(
+        plantService.getPlantCareActivities(mockRefetch, mockActivityParams),
+      ).rejects.toThrow("Network error");
+    });
+  });
+
+  describe("getPlantHarvestActivities", () => {
+    it("returns harvest activities with totalHarvestCount", async () => {
+      mockRefetch.mockResolvedValue({
+        data: {
+          data: [mockHarvestActivityItem],
+          meta: mockMeta,
+          amount: 1,
+          totalHarvestCount: 150,
+        },
+        status: 200,
+      });
+
+      const result = await plantService.getPlantHarvestActivities(
+        mockRefetch,
+        mockActivityParams,
+      );
+
+      expect(result.data[0].metadata.harvestCount).toBe(3);
+      expect(result.totalHarvestCount).toBe(150);
+      expect(mockRefetch).toHaveBeenCalledWith({ params: mockActivityParams });
+    });
+
+    it("throws when server returns an error", async () => {
+      mockRefetch.mockResolvedValue({ error: { message: "Forbidden" } });
+
+      await expect(
+        plantService.getPlantHarvestActivities(mockRefetch, mockActivityParams),
+      ).rejects.toThrow("Forbidden");
+    });
+
+    it("throws when response has no data", async () => {
+      mockRefetch.mockResolvedValue({ status: 200 });
+
+      await expect(
+        plantService.getPlantHarvestActivities(mockRefetch, mockActivityParams),
+      ).rejects.toThrow("No data received");
+    });
+
+    it("throws when status is not 200", async () => {
+      mockRefetch.mockResolvedValue({
+        data: { data: [], meta: mockMeta, amount: 0, totalHarvestCount: 0 },
+        status: 401,
+      });
+
+      await expect(
+        plantService.getPlantHarvestActivities(mockRefetch, mockActivityParams),
+      ).rejects.toThrow("Unexpected status code: 401");
+    });
+
+    it("throws on network error", async () => {
+      mockRefetch.mockRejectedValue(new Error("Network error"));
+
+      await expect(
+        plantService.getPlantHarvestActivities(mockRefetch, mockActivityParams),
+      ).rejects.toThrow("Network error");
+    });
+  });
+
+  describe("getPlantingActivities", () => {
+    it("returns planting activities on success", async () => {
+      mockRefetch.mockResolvedValue({
+        data: {
+          data: [mockPlantingActivityItem],
+          meta: mockMeta,
+          amount: 1,
+        },
+        status: 200,
+      });
+
+      const result = await plantService.getPlantingActivities(
+        mockRefetch,
+        mockActivityParams,
+      );
+
+      expect(result.data).toHaveLength(1);
+      expect(result.data[0].plant.name).toBe("Lettuce");
+      expect(mockRefetch).toHaveBeenCalledWith({ params: mockActivityParams });
+    });
+
+    it("supports null harvestedAt values", async () => {
+      mockRefetch.mockResolvedValue({
+        data: {
+          data: [{ ...mockPlantingActivityItem, harvestedAt: null }],
+          meta: mockMeta,
+          amount: 1,
+        },
+        status: 200,
+      });
+
+      const result = await plantService.getPlantingActivities(
+        mockRefetch,
+        mockActivityParams,
+      );
+
+      expect(result.data[0].harvestedAt).toBeNull();
+    });
+
+    it("throws when server returns an error", async () => {
+      mockRefetch.mockResolvedValue({ error: { message: "Unauthorized" } });
+
+      await expect(
+        plantService.getPlantingActivities(mockRefetch, mockActivityParams),
+      ).rejects.toThrow("Unauthorized");
+    });
+
+    it("throws when response has no data", async () => {
+      mockRefetch.mockResolvedValue({ status: 200 });
+
+      await expect(
+        plantService.getPlantingActivities(mockRefetch, mockActivityParams),
+      ).rejects.toThrow("No data received");
+    });
+
+    it("throws when status is not 200", async () => {
+      mockRefetch.mockResolvedValue({
+        data: { data: [], meta: mockMeta, amount: 0 },
+        status: 409,
+      });
+
+      await expect(
+        plantService.getPlantingActivities(mockRefetch, mockActivityParams),
+      ).rejects.toThrow("Unexpected status code: 409");
+    });
+
+    it("throws on network error", async () => {
+      mockRefetch.mockRejectedValue(new Error("Network error"));
+
+      await expect(
+        plantService.getPlantingActivities(mockRefetch, mockActivityParams),
+      ).rejects.toThrow("Network error");
     });
   });
 });
