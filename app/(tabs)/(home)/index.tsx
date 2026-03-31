@@ -3,7 +3,6 @@ import useFetch from "@/hooks/useFetch";
 import { router, useFocusEffect } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
 import {
-  Image,
   ScrollView,
   StatusBar,
   Text,
@@ -11,13 +10,16 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import NotificationIcon from "../../../assets/images/notificationIcon.png";
+import ActiveNotificationIcon from "../../../assets/images/icons/active_notification.svg";
+import InactiveNotificationIcon from "../../../assets/images/icons/inactive_notification.svg";
 import { Highlight } from "../../../components/home/highlight";
 import { RecentActivityBar } from "../../../components/home/recentActivityBar";
 import { SummaryCard } from "../../../components/home/summaryCard";
 import { useHome } from "../../../hooks/useHome";
 import { userService } from "../../../services/userService";
 import { UserDetails } from "../../../types/interface";
+
+const NOTIFICATION_ICON_SIZE = 24;
 
 export default function HomeScreen() {
   const [savedValues, setSavedValues] = useState<Partial<UserDetails>>({});
@@ -31,6 +33,8 @@ export default function HomeScreen() {
     autoFetch: false,
     withAuth: true,
   });
+
+  // ── Handlers ──────────────────────────────────────────────────────────────
 
   const handleNotificationPress = async () => {
     try {
@@ -61,6 +65,8 @@ export default function HomeScreen() {
     }
   };
 
+  // ── Data fetching ──────────────────────────────────────────────────────────
+
   const getUserInfoData = async () => {
     try {
       const response = await userService.getUser(getUserInfo);
@@ -88,85 +94,73 @@ export default function HomeScreen() {
       refetch();
     }, []),
   );
+
   useEffect(() => {
     setFormValues(savedValues);
   }, [savedValues]);
 
+  // ── Loading / error states ─────────────────────────────────────────────────
+
   if (loading) {
     return (
-      <View className="flex-1 bg-[#7a8f5e] items-center justify-center">
-        <Text style={typography.body} className="text-white">
-          Loading...
-        </Text>
+      <View className="flex-1 bg-white items-center justify-center">
+        <Text>Loading...</Text>
       </View>
     );
   }
 
   if (error) {
     return (
-      <View className="flex-1 bg-[#7a8f5e] items-center justify-center px-6">
-        <Text
-          style={typography["h2-bold"]}
-          className="text-white mb-4 text-center"
-        >
-          Oops! Something went wrong
-        </Text>
-        <Text style={typography.body} className="text-white mb-6 text-center">
-          {error}
-        </Text>
-        <TouchableOpacity
-          onPress={refetch}
-          className="bg-white px-6 py-3 rounded-xl"
-          activeOpacity={0.8}
-        >
-          <Text style={typography.button} className="text-[#7a8f5e]">
-            Retry
-          </Text>
+      <View className="flex-1 bg-white items-center justify-center">
+        <Text>{error}</Text>
+        <TouchableOpacity onPress={refetch}>
+          <Text>Retry</Text>
         </TouchableOpacity>
       </View>
     );
   }
 
+  // ── Render ─────────────────────────────────────────────────────────────────
+
   return (
-    <SafeAreaView className="flex-1 bg-primary" edges={["top"]}>
-      <StatusBar barStyle="light-content" />
-      <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+    <SafeAreaView className="flex-1 bg-white">
+      <StatusBar barStyle="dark-content" />
+      <ScrollView className="flex-1 bg-white">
         {/* Header */}
-        <View className="px-10 pt-4 pb-2 flex-row items-center justify-between">
-          <Text style={typography["h1-bold"]} className="text-white">
+        <View className="flex flex-row justify-between items-center px-5 mt-7">
+          <Text style={typography["h1-bold"]} className="text-black">
             Hi {formValues.firstName || data.user.name}!
           </Text>
-          <TouchableOpacity
-            onPress={handleNotificationPress}
-            className="relative p-2"
-            activeOpacity={0.7}
-          >
-            <Image
-              source={NotificationIcon}
-              className="w-6 h-6"
-              resizeMode="contain"
-            />
-
-            {data.user.hasNotifications && (
-              <View className="absolute top-0 right-0 w-3 h-3 bg-red-500 rounded-full border-2 border-white" />
+          <TouchableOpacity onPress={handleNotificationPress}>
+            {data.user.hasNotifications ? (
+              <ActiveNotificationIcon
+                width={NOTIFICATION_ICON_SIZE}
+                height={NOTIFICATION_ICON_SIZE}
+              />
+            ) : (
+              <InactiveNotificationIcon
+                width={NOTIFICATION_ICON_SIZE}
+                height={NOTIFICATION_ICON_SIZE}
+              />
             )}
           </TouchableOpacity>
         </View>
 
-        {/* Content */}
-        <View className="pt-4">
-          <View className="px-4">
+        <View className="flex-1 bg-white">
+          <View className="bg-white py-5 w-full">
             <SummaryCard cards={data.summary} onCardPress={handleCardPress} />
           </View>
 
-          <View className="bg-white rounded-t-2xl p-6 shadow-lg">
+          <View className="px-4">
             <Highlight
               title={data.highlight.title}
               description={data.highlight.description}
               buttonText={data.highlight.buttonText}
               onButtonPress={handleAddRack}
             />
+          </View>
 
+          <View className="px-4">
             <RecentActivityBar activities={data.recentActivity} />
           </View>
         </View>
