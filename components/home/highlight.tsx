@@ -21,7 +21,7 @@ export const Highlight: React.FC<HighlightProps> = ({
   onButtonPress,
 }) => {
   return (
-    <View className="mb-6">
+    <View className="mb-8 ">
       {/* Outer wrapper: gives room above for the image to bleed into */}
       <View style={{ paddingTop: OVERFLOW_AMOUNT, overflow: "hidden" }}>
         <View className="bg-primary rounded-2xl p-6 overflow-visible">
@@ -33,7 +33,7 @@ export const Highlight: React.FC<HighlightProps> = ({
               </Text>
               <Text
                 style={typography.label}
-                className="text-[#E5EDCF] opacity-90 mb-7 max-w-[190px]"
+                className="text-white opacity-80 mb-7 max-w-[190px]"
               >
                 {description}
               </Text>
@@ -56,10 +56,10 @@ export const Highlight: React.FC<HighlightProps> = ({
               <Image
                 source={require("@/assets/nuri/proud.png")}
                 style={{
-                  width: 355,
-                  height: 355,
-                  bottom: -185,
-                  left: 110,
+                  width: 350,
+                  height: 350,
+                  bottom: -170,
+                  left: 108,
                 }}
                 resizeMode="contain"
               />

@@ -1,4 +1,8 @@
 import { typography } from "@/assets/fonts/Text";
+import { HighlightSkeleton } from "@/components/home/skeleton/highlightSkeleton";
+import { RecentActivityBarSkeleton } from "@/components/home/skeleton/recentActivityBarSkeleton";
+import { SummaryCardSkeleton } from "@/components/home/skeleton/summaryCardSkeleton";
+import { ShimmerBlock } from "@/components/shared/skeleton/shimmerBlock";
 import useFetch from "@/hooks/useFetch";
 import { router, useFocusEffect } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
@@ -103,9 +107,34 @@ export default function HomeScreen() {
 
   if (loading) {
     return (
-      <View className="flex-1 bg-white items-center justify-center">
-        <Text>Loading...</Text>
-      </View>
+      <SafeAreaView className="flex-1 bg-white">
+        <StatusBar barStyle="dark-content" />
+        <ScrollView
+          className="flex-1 bg-white"
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Header skeleton */}
+          <View className="flex flex-row justify-between items-center px-5 mt-7">
+            <ShimmerBlock width={160} height={28} borderRadius={8} />
+            <ShimmerBlock width={24} height={24} borderRadius={12} />
+          </View>
+
+          <View className="flex-1 bg-white">
+            <View className="bg-white py-5 w-full">
+              <SummaryCardSkeleton />
+            </View>
+
+            {/* Highlight skeleton */}
+            <View className="px-4">
+              <HighlightSkeleton />
+            </View>
+
+            <View className="px-4 pb-8">
+              <RecentActivityBarSkeleton />
+            </View>
+          </View>
+        </ScrollView>
+      </SafeAreaView>
     );
   }
 
@@ -125,7 +154,10 @@ export default function HomeScreen() {
   return (
     <SafeAreaView className="flex-1 bg-white">
       <StatusBar barStyle="dark-content" />
-      <ScrollView className="flex-1 bg-white">
+      <ScrollView
+        className="flex-1 bg-white"
+        showsVerticalScrollIndicator={false}
+      >
         {/* Header */}
         <View className="flex flex-row justify-between items-center px-5 mt-7">
           <Text style={typography["h1-bold"]} className="text-black">
@@ -160,7 +192,7 @@ export default function HomeScreen() {
             />
           </View>
 
-          <View className="px-4">
+          <View className="px-4 pb-8">
             <RecentActivityBar activities={data.recentActivity} />
           </View>
         </View>

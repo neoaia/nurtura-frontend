@@ -25,7 +25,7 @@ const SUMMARY_CONFIG: Record<
   racks: {
     icon: RacksIcon,
     title: "Racks",
-    subtitle: "Active",
+    subtitle: "Owned",
   },
   plants: {
     icon: PlantsIcon,
@@ -39,7 +39,7 @@ export const SummaryCard: React.FC<SummaryCardProps> = ({
   onCardPress,
 }) => {
   return (
-    <View className="flex-row w-full px-4 mb-6 justify-between">
+    <View className="flex-row w-full px-4 justify-between">
       {cards.map((card, index) => {
         const config = SUMMARY_CONFIG[card.type];
 
@@ -77,22 +77,19 @@ export const SummaryCard: React.FC<SummaryCardProps> = ({
               </View>
 
               {card.value !== null && (
-                <Text
-                  style={typography["title-bold"]}
-                  className="text-[#E5EDCF]"
-                >
+                <Text style={typography["title-bold"]} className="text-white">
                   {card.value}
                 </Text>
               )}
             </View>
 
-            <Text style={typography["h2-bold"]} className="text-[#E5EDCF]">
+            <Text style={typography["h2-bold"]} className="text-white">
               {config.title}
             </Text>
 
             <Text
               style={typography["subheader"]}
-              className="text-[#E5EDCF] opacity-90"
+              className="text-white opacity-80"
             >
               {config.subtitle}
             </Text>
