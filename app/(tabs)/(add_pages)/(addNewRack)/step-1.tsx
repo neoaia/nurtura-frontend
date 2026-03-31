@@ -1,10 +1,9 @@
 import { typography } from "@/assets/fonts/Text";
 import { BottomButton } from "@/components/shared/bottomButton";
-import { useBackWarning } from "@/hooks/shared/useBackWarning";
 import { bleManager } from "@/utils/bluetooth/bleManager";
 import * as IntentLauncher from "expo-intent-launcher";
 import { router, useFocusEffect } from "expo-router";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -18,55 +17,54 @@ import {
 } from "react-native";
 import { State } from "react-native-ble-plx";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { Buffer } from "buffer";
 
 const SERVICE_UUID = "4fafc201-1fb5-459e-8fcc-c5c9c331914b";
+const RESET_CHAR_UUID = "ffffffff-ffff-ffff-ffff-ffffffffffff";
 
 export default function AddNewRack1() {
   const [devices, setDevices] = useState<any[]>([]);
   const [isScanning, setIsScanning] = useState(false);
   const [isEnablingBluetooth, setIsEnablingBluetooth] = useState(false);
+  const lastConnectedIdRef = useRef<string | null>(null);
 
-  const handleBack = useCallback(() => {
-    bleManager.stopDeviceScan().catch(() => {});
-    router.replace("/(tabs)/(home)");
-  }, []);
-
-  const { showModal, handleConfirm, handleCancel } = useBackWarning(
-    false,
-    handleBack,
-  );
-
+  // Stop scanning when screen loses focus, but DON'T disconnect BLE
+  // (BLE disconnect is handled by the step that navigated away)
   useFocusEffect(
     useCallback(() => {
-      handleCancel();
+      return () => {
+        // Cleanup when screen loses focus
+        try {
+          bleManager.stopDeviceScan();
+        } catch (_) { }
+        setIsScanning(false);
+      };
     }, []),
   );
+
+  // Clean up scan on unmount
+  useEffect(() => {
+    return () => {
+      bleManager.stopDeviceScan().catch(() => { });
+    };
+  }, []);
 
   const requestPermissions = async (): Promise<boolean> => {
     if (Platform.OS === "ios") return true;
 
-    // Show custom prompt first
     const userAgreed = await new Promise<boolean>((resolve) => {
       Alert.alert(
         "Bluetooth Permission Required",
         "Nurtura needs Bluetooth access to scan and connect to your rack. Please allow Bluetooth permissions on the next prompt.",
         [
-          {
-            text: "Deny",
-            style: "cancel",
-            onPress: () => resolve(false),
-          },
-          {
-            text: "Allow",
-            onPress: () => resolve(true),
-          },
+          { text: "Deny", style: "cancel", onPress: () => resolve(false) },
+          { text: "Allow", onPress: () => resolve(true) },
         ],
       );
     });
 
     if (!userAgreed) return false;
 
-    // Now trigger the native permission request
     if (Number(Platform.Version) < 31) {
       const granted = await PermissionsAndroid.request(
         PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
@@ -88,16 +86,16 @@ export default function AddNewRack1() {
 
     const allGranted =
       result["android.permission.BLUETOOTH_CONNECT"] ===
-        PermissionsAndroid.RESULTS.GRANTED &&
+      PermissionsAndroid.RESULTS.GRANTED &&
       result["android.permission.BLUETOOTH_SCAN"] ===
-        PermissionsAndroid.RESULTS.GRANTED;
+      PermissionsAndroid.RESULTS.GRANTED;
 
     if (!allGranted) {
       const permanentlyDenied =
         result["android.permission.BLUETOOTH_CONNECT"] ===
-          PermissionsAndroid.RESULTS.NEVER_ASK_AGAIN ||
+        PermissionsAndroid.RESULTS.NEVER_ASK_AGAIN ||
         result["android.permission.BLUETOOTH_SCAN"] ===
-          PermissionsAndroid.RESULTS.NEVER_ASK_AGAIN;
+        PermissionsAndroid.RESULTS.NEVER_ASK_AGAIN;
 
       if (permanentlyDenied) {
         Alert.alert(
@@ -113,6 +111,7 @@ export default function AddNewRack1() {
 
     return allGranted;
   };
+
   const enableBluetooth = async (): Promise<boolean> => {
     const state = await bleManager.state();
     if (state === State.PoweredOn) return true;
@@ -146,15 +145,12 @@ export default function AddNewRack1() {
   };
 
   const startScan = async () => {
-    // Step 1: Request permissions first
     const hasPermission = await requestPermissions();
     if (!hasPermission) return;
 
-    // Step 2: Enable Bluetooth if off
     const isBluetoothOn = await enableBluetooth();
     if (!isBluetoothOn) return;
 
-    // Step 3: Start scanning
     setDevices([]);
     setIsScanning(true);
 
@@ -167,7 +163,6 @@ export default function AddNewRack1() {
           setIsScanning(false);
           return;
         }
-
         if (device) {
           console.log("Found device:", device.name, device.id);
           setDevices((prev) => {
@@ -190,10 +185,9 @@ export default function AddNewRack1() {
 
     try {
       console.log("Connecting to:", device.id);
-
       const connectedDevice = await bleManager.connectToDevice(device.id);
       await connectedDevice.discoverAllServicesAndCharacteristics();
-
+      lastConnectedIdRef.current = device.id;
       console.log("Connected successfully!");
 
       Alert.alert("Connected!", "Proceeding to verification...", [
@@ -208,15 +202,10 @@ export default function AddNewRack1() {
       ]);
     } catch (e: any) {
       console.error("Connection error:", e);
+      lastConnectedIdRef.current = null;
       Alert.alert("Error", "Could not connect to Rack. Try again.");
     }
   };
-
-  useEffect(() => {
-    return () => {
-      bleManager.stopDeviceScan().catch(() => {});
-    };
-  }, []);
 
   const scanButtonTitle = isScanning
     ? "Scanning..."
@@ -239,10 +228,7 @@ export default function AddNewRack1() {
         {(isScanning || isEnablingBluetooth) && (
           <View className="items-center mb-4">
             <ActivityIndicator size="small" color="#10b981" />
-            <Text
-              style={typography["subheader"]}
-              className="text-grayText mt-2"
-            >
+            <Text style={typography["subheader"]} className="text-grayText mt-2">
               {isEnablingBluetooth ? "Enabling Bluetooth..." : "Scanning..."}
             </Text>
           </View>
