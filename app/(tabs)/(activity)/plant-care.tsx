@@ -4,6 +4,8 @@ import { PlantChart } from "@/components/activity/plantChart";
 import { ActivityButton } from "@/components/activity/sensorToggle";
 import { OnboardingTutorialModal } from "@/components/onboarding/tutorialModal";
 import { DateRangePicker } from "@/components/shared/datetimepicker";
+import useFetch from "@/hooks/useFetch";
+import { plantService } from "@/services/plantService";
 import { ActivityDTO } from "@/types/activity.dto";
 import React, { useCallback, useEffect, useState } from "react";
 import {
@@ -126,82 +128,110 @@ export default function PlantCareScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  const fetchActivities = async () => {
+  const { refetch: getPlantCare } = useFetch(
+    "/api/racks/activities/plant-care",
+    {
+      method: "GET",
+      autoFetch: false,
+      withAuth: true,
+    },
+  );
+
+  const fetchActivities = useCallback(async () => {
     try {
       setLoading(true);
-      const mockData: ActivityDTO[] = [
-        {
-          // today
-          id: "1",
-          type: "water",
-          plantName: "Cherry Tomato",
-          rackName: "Greens Rack",
-          time: "09:00 AM",
-          amount: 180,
-          date: new Date(),
-        },
-        {
-          // kahapon
-          id: "2",
-          type: "water",
-          plantName: "Lettuce",
-          rackName: "Rack A",
-          time: "10:30 AM",
-          amount: 120,
-          date: new Date(Date.now() - 86400000),
-        },
-        {
-          // magpakailanman
-          id: "3",
-          type: "light",
-          plantName: "Basil",
-          rackName: "Rack B",
-          time: "08:00 AM",
-          amount: 12,
-          date: new Date("2026-02-15"),
-        },
-      ];
 
-      const filtered = mockData.filter((item) => {
-        if (!dateRange.start || !dateRange.end) return true;
+      const startISO = dateRange.start
+        ? new Date(new Date(dateRange.start).setHours(0, 0, 0, 0)).toISOString()
+        : undefined;
+      const endISO = dateRange.end
+        ? new Date(
+            new Date(dateRange.end).setHours(23, 59, 59, 999),
+          ).toISOString()
+        : undefined;
 
-        const itemTime = new Date(item.date).getTime();
-        const startTime = new Date(dateRange.start).setHours(0, 0, 0, 0);
-        const endTime = new Date(dateRange.end).setHours(23, 59, 59, 999);
-
-        return itemTime >= startTime && itemTime <= endTime;
+      const response = await plantService.getPlantCareActivities(getPlantCare, {
+        page: 1,
+        limit: 50,
+        startDate: startISO,
+        endDate: endISO,
       });
 
-      setActivities(filtered);
+      if (response && response.data) {
+        // Step 1: Filter muna natin para kunin lang yung mga "_OFF" events
+        const completedEvents = response.data.filter(
+          (item: any) => item.eventType && item.eventType.endsWith("_OFF"),
+        );
+
+        // Step 2: I-map natin diretso sa ActivityDTO[] format
+        const mappedData: ActivityDTO[] = completedEvents.map((item: any) => {
+          const dateObj = new Date(item.timestamp);
+          const isWater = item.eventType.includes("WATERING");
+
+          const durationMs = item.metadata?.duration;
+          let formattedDuration;
+          if (durationMs) {
+            const mins = Math.round(durationMs / 60000);
+            formattedDuration = `${mins} mins`;
+          }
+
+          return {
+            id: item.id,
+            // FIX: Explicit nating sasabihin kay TypeScript na "water" | "light" ito
+            type: (isWater ? "water" : "light") as "water" | "light",
+            plantName: item.metadata?.ruleName || "Plants",
+            rackName:
+              item.metadata?.rackName ||
+              item.rack?.name ||
+              item.rackId ||
+              "Unknown Rack",
+            time: dateObj.toLocaleTimeString("en-US", {
+              hour: "2-digit",
+              minute: "2-digit",
+            }),
+            date: dateObj,
+            amount: item.metadata?.amount,
+            duration: formattedDuration,
+          };
+        });
+
+        setActivities(mappedData);
+      }
     } catch (error) {
-      console.error(error);
+      console.error("Failed to fetch plant care activities:", error);
+      setActivities([]);
     } finally {
       setLoading(false);
     }
-  };
+  }, [dateRange, getPlantCare]);
 
   useEffect(() => {
     fetchActivities();
-  }, [dateRange]);
+  }, [fetchActivities]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await fetchActivities();
     setRefreshing(false);
-  }, [dateRange]);
+  }, [fetchActivities]);
 
+  // Tab Filtering (Water vs Light)
   const filteredActivities = activities.filter(
     (item) => item.type === activeTab,
   );
   const sections = groupActivitiesByDate(filteredActivities);
 
+  // Chart Data Preparation
   const waterChartData = activities
     .filter((a) => a.type === "water")
     .map((a, i) => ({ timestamp: i, value: a.amount || 0 }));
 
   const lightChartData = activities
     .filter((a) => a.type === "light")
-    .map((a, i) => ({ timestamp: i, value: a.amount || 0 }));
+    .map((a, i) => {
+      const minutes = a.duration ? parseInt(a.duration.split(" ")[0]) : 0;
+      return { timestamp: i, value: minutes };
+    });
 
   return (
     <View className="flex-1 bg-[#F5F5F5]">

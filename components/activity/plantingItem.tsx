@@ -3,28 +3,96 @@ import { PlantedItemDTO } from "@/types/activity.dto";
 import React, { useState } from "react";
 import { Image, Text, TouchableOpacity, View } from "react-native";
 
+// In-extend natin para tanggapin ang eventType AT oldPlantName
 interface PlantItemProps {
-  plants: PlantedItemDTO;
+  plants: PlantedItemDTO & { eventType?: string; oldPlantName?: string };
 }
 
 export const PlantItem: React.FC<PlantItemProps> = ({ plants }) => {
   const [isLoading, setIsLoading] = useState(false);
 
   const {
-    plantName,
+    plantName, // Ito ang magsisilbing "newPlant"
     rackName,
     time,
     quantity,
-    // weight,
-    // plantImage,
+    eventType,
+    oldPlantName, // Idinagdag natin ito
   } = plants;
 
   const handlePress = async () => {
     setIsLoading(true);
     try {
+      // Your logic here
     } finally {
       setTimeout(() => setIsLoading(false), 500);
     }
+  };
+
+  const renderSentence = () => {
+    if (eventType === "PLANT_REMOVED") {
+      return (
+        <Text
+          style={typography["subheader"]}
+          className="text-gray-700 leading-5"
+        >
+          <Text style={typography["subheader-bold"]} className="text-black">
+            {plantName}
+          </Text>{" "}
+          has been removed from{" "}
+          <Text style={typography["subheader-bold"]} className="text-black">
+            {rackName}
+          </Text>{" "}
+          rack.{" "}
+          <Text style={typography["subheader"]} className="text-grayText">
+            {time}
+          </Text>
+        </Text>
+      );
+    }
+
+    // BAGONG FORMAT PARA SA PLANT_CHANGED
+    if (eventType === "PLANT_CHANGED") {
+      return (
+        <Text
+          style={typography["subheader"]}
+          className="text-gray-700 leading-5"
+        >
+          <Text style={typography["subheader-bold"]} className="text-black">
+            {rackName}
+          </Text>{" "}
+          rack&apos;s plant has been changed from{" "}
+          <Text style={typography["subheader-bold"]} className="text-black">
+            {oldPlantName || "previous crop"}
+          </Text>{" "}
+          to{" "}
+          <Text style={typography["subheader-bold"]} className="text-black">
+            {plantName}
+          </Text>
+          .{" "}
+          <Text style={typography["subheader"]} className="text-grayText">
+            {time}
+          </Text>
+        </Text>
+      );
+    }
+
+    // Default Format (PLANT_ADDED)
+    return (
+      <Text style={typography["subheader"]} className="text-gray-700 leading-5">
+        <Text style={typography["subheader-bold"]} className="text-black">
+          {quantity} {plantName}
+        </Text>{" "}
+        planted at{" "}
+        <Text style={typography["subheader-bold"]} className="text-black">
+          {rackName}
+        </Text>
+        .{" "}
+        <Text style={typography["subheader"]} className="text-grayText">
+          {time}
+        </Text>
+      </Text>
+    );
   };
 
   return (
@@ -32,65 +100,19 @@ export const PlantItem: React.FC<PlantItemProps> = ({ plants }) => {
       onPress={handlePress}
       disabled={isLoading}
       activeOpacity={0.7}
-      className={`bg-white rounded-2xl px-4 py-6 flex-row items-center shadow-md elevation-3 my-2 ${
+      className={`p-3 bg-white mb-2 py-4 pr-3 pl-4 w-full flex-row items-center rounded-xl border border-gray-100 min-h-[84px] ${
         isLoading ? "opacity-70" : ""
       }`}
     >
-      {/* Image Container */}
-      <View className="w-20 h-20 bg-[#e9f2d9] rounded-2xl justify-center items-center">
+      <View className="bg-[#E5EDCF] w-12 h-12 mr-4 rounded-xl items-center justify-center">
         <Image
           // source={plantImage}
-          className="w-20 h-20"
+          className="w-7 h-7"
           resizeMode="contain"
         />
       </View>
 
-      {/* Content Container */}
-      <View className="flex-1 ml-6" style={{ gap: 24 }}>
-        <View style={{ gap: 4 }}>
-          <Text 
-            style={typography["label-bold"]} 
-            className="text-[#86975A]"
-            numberOfLines={1}
-          >
-            {plantName}
-          </Text>
-          <Text 
-            style={typography["label"]} 
-            className="text-[#919191]"
-            numberOfLines={1}
-          >
-            at {rackName}
-          </Text>
-        </View>
-
-        {/* Stats Row */}
-        <View className="flex-row mr-8" style={{ gap: 56 }}>
-          <View className="flex-row items-center" style={{ gap: 6 }}>
-            <Image
-              source={require("@/assets/images/plant-time-icon.png")}
-              className="w-4 h-4"
-              style={{ tintColor: "#7a904a" }}
-              resizeMode="contain"
-            />
-            <Text style={typography["label"]} className="text-[#919191]">
-              {time}
-            </Text>
-          </View>
-
-          <View className="flex-row items-center" style={{ gap: 6 }}>
-            <Image
-              source={require("@/assets/images/planting-icon.png")}
-              className="w-4 h-4"
-              style={{ tintColor: "#7a904a" }}
-              resizeMode="contain"
-            />
-            <Text style={typography["label"]} className="text-[#919191]">
-              {quantity}
-            </Text>
-          </View>
-        </View>
-      </View>
+      <View className="flex-1">{renderSentence()}</View>
     </TouchableOpacity>
   );
 };

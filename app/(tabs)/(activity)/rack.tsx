@@ -7,8 +7,7 @@ import { DateRangePicker } from "@/components/shared/datetimepicker";
 import useFetch from "@/hooks/useFetch";
 import { activityService } from "@/services/activityService";
 import {
-  GetRackActivitiesResponseDTO,
-  RackActivityDTO,
+  GetRackActivitiesResponseDTO
 } from "@/types/activity.dto";
 import React, { useCallback, useEffect, useState } from "react";
 import { RefreshControl, SectionList, Text, View } from "react-native";
@@ -65,7 +64,7 @@ const groupActivitiesByDate = (
 };
 
 const toActivityItemProps = (
-  item: RackActivityDTO,
+  item: any, // or item: RackActivityDTO kung naka-update na ang interface mo
 ): RackActivityItemProps & { timestamp: string } => {
   const dateObj = new Date(item.timestamp);
 
@@ -80,22 +79,28 @@ const toActivityItemProps = (
     year: "numeric",
   });
 
-  const rackNameNew =
-    item.eventType === "RACK_RENAMED"
-      ? (item.metadata?.newName as string | undefined)
-      : undefined;
+  const isRenamed = item.eventType === "RACK_RENAMED";
+
+  // Kunin ang newName kung RENAMED event ito
+  const rackNameNew = isRenamed ? item.metadata?.newName : undefined;
+
+  // Kung RENAMED, 'oldName' ang kukunin natin. Kung hindi, 'rackName'.
+  const fetchedRackName = isRenamed
+    ? item.metadata?.oldName
+    : item.metadata?.rackName;
 
   return {
     id: item.id,
     eventType: item.eventType,
-    rackName: item.rack.name,
+    // Ipapasa natin ang fetchedRackName na nakuha natin sa itaas
+    rackName:
+      fetchedRackName || item.rack?.name || item.rackId || "Unknown Rack",
     rackNameNew,
     date: dateStr,
     time,
     timestamp: item.timestamp,
   };
 };
-
 const RackActivity = () => {
   const [dateRange, setDateRange] = useState<{
     start: Date | null;
@@ -116,11 +121,15 @@ const RackActivity = () => {
 
   const fetchActivities = useCallback(async () => {
     try {
+      // FIX 2: Gumawa muna tayo ng 'new Date()' copy bago mag .setHours
+      // para hindi ma-mutate yung original state sa Date Picker mo.
       const startISO = dateRange.start
-        ? new Date(dateRange.start.setHours(0, 0, 0, 0)).toISOString()
+        ? new Date(new Date(dateRange.start).setHours(0, 0, 0, 0)).toISOString()
         : undefined;
       const endISO = dateRange.end
-        ? new Date(dateRange.end.setHours(23, 59, 59, 999)).toISOString()
+        ? new Date(
+            new Date(dateRange.end).setHours(23, 59, 59, 999),
+          ).toISOString()
         : undefined;
 
       const response: GetRackActivitiesResponseDTO =
@@ -182,7 +191,7 @@ const RackActivity = () => {
       }
       ListEmptyComponent={() => (
         <View className="items-center mt-10">
-          <Text style={typography["label"]} className="text-gray-400">
+          <Text style={typography["label"]} className="text-grayText">
             {loading
               ? "Loading activity..."
               : "No rack activity found for this range."}

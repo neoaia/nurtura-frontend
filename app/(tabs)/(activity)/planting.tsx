@@ -2,6 +2,8 @@ import { typography } from "@/assets/fonts/Text";
 import { PlantChart } from "@/components/activity/plantChart";
 import { PlantItem } from "@/components/activity/plantingItem";
 import { DateRangePicker } from "@/components/shared/datetimepicker";
+import useFetch from "@/hooks/useFetch";
+import { plantService } from "@/services/plantService";
 import { PlantedItemDTO } from "@/types/activity.dto";
 import React, { useCallback, useEffect, useState } from "react";
 import {
@@ -92,63 +94,107 @@ export default function PlantingScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  const fetchPlants = async () => {
+  // Setup useFetch para sa planting activities
+  const { refetch: getPlantingActivities } = useFetch(
+    "/api/racks/activities/planting",
+    {
+      method: "GET",
+      autoFetch: false,
+      withAuth: true,
+    },
+  );
+
+  const fetchPlants = useCallback(async () => {
     try {
       setLoading(true);
-      const mockPlanting: PlantedItemDTO[] = [
+
+      const startISO = dateRange.start
+        ? new Date(new Date(dateRange.start).setHours(0, 0, 0, 0)).toISOString()
+        : undefined;
+      const endISO = dateRange.end
+        ? new Date(
+            new Date(dateRange.end).setHours(23, 59, 59, 999),
+          ).toISOString()
+        : undefined;
+
+      const response = await plantService.getPlantingActivities(
+        getPlantingActivities,
         {
-          id: "1",
-          plantName: "Lettuce",
-          rackName: "Rack A",
-          time: "08:00 AM",
-          quantity: "10",
-          date: new Date(),
+          page: 1,
+          limit: 50,
+          startDate: startISO,
+          endDate: endISO,
         },
-        {
-          id: "2",
-          plantName: "Bakit",
-          rackName: "Rack B",
-          time: "09:30 AM",
-          quantity: "5",
-          date: new Date(Date.now() - 86400000),
-        },
-        {
-          id: "3",
-          plantName: "Mint",
-          rackName: "Rack A",
-          time: "11:00 AM",
-          quantity: "12",
-          date: new Date("2026-03-25"),
-        },
-      ];
+      );
 
-      const filtered = mockPlanting.filter((item) => {
-        if (!dateRange.start || !dateRange.end) return true;
+      if (response && response.data) {
+        const mappedData: PlantedItemDTO[] = response.data.map((item: any) => {
+          const dateObj = new Date(item.timestamp);
+          const meta = item.metadata || {};
+          const eventType = item.eventType;
 
-        const itemTime = new Date(item.date).getTime();
-        const startTime = new Date(dateRange.start).setHours(0, 0, 0, 0);
-        const endTime = new Date(dateRange.end).setHours(23, 59, 59, 999);
+          let finalPlantName = "Unknown Plant";
+          let finalQuantity = "0";
+          let oldPlantName = undefined; // Idinagdag natin ang variable na ito
 
-        return itemTime >= startTime && itemTime <= endTime;
-      });
+          if (eventType === "PLANT_ADDED") {
+            finalPlantName = meta.plantName || "Unknown Plant";
+            finalQuantity = meta.quantity ? `${meta.quantity}` : "0";
+          } else if (eventType === "PLANT_CHANGED") {
+            // Kunin ang new plant name at previous plant name sa metadata
+            finalPlantName = meta.newPlantName || "Unknown Plant";
+            oldPlantName = meta.previousPlantName || "Unknown Plant"; // <-- Eto yung luma
+            finalQuantity = meta.quantity ? `${meta.quantity}` : "0";
+          } else if (eventType === "PLANT_REMOVED") {
+            finalPlantName = meta.plantName || "A plant";
+            finalQuantity = meta.quantity ? `${meta.quantity}` : "0";
+          }
 
-      setPlants(filtered);
+          return {
+            id: item.id,
+            eventType: item.eventType,
+            plantName: finalPlantName,
+            oldPlantName: oldPlantName, // <-- Ipapasa natin dito!
+            rackName:
+              meta.rackName || item.rack?.name || item.rackId || "Unknown Rack",
+            time: dateObj.toLocaleTimeString("en-US", {
+              hour: "2-digit",
+              minute: "2-digit",
+            }),
+            date: dateObj,
+            quantity: finalQuantity,
+          };
+        });
+
+        // Kung gusto mong i-filter out yung mga tinanggal (PLANT_REMOVED) sa UI,
+        // i-uncomment mo itong block sa ibaba:
+        /*
+        const filteredData = mappedData.filter((item: any) => {
+          const originalEvent = response.data.find((r: any) => r.id === item.id);
+          return originalEvent?.eventType !== "PLANT_REMOVED";
+        });
+        setPlants(filteredData);
+        */
+
+        setPlants(mappedData); // Tanggalin ito kung gagamitin mo yung filter sa itaas
+      }
     } catch (error) {
       console.error("Failed to fetch plants:", error);
+      setPlants([]);
     } finally {
       setLoading(false);
     }
-  };
+  }, [dateRange, getPlantingActivities]);
 
   useEffect(() => {
     fetchPlants();
-  }, [dateRange]);
+  }, [fetchPlants]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await fetchPlants();
     setRefreshing(false);
-  }, [dateRange]);
+  }, [fetchPlants]);
 
   const sections = groupPlantsByDate(plants);
 

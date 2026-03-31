@@ -2,6 +2,8 @@ import { typography } from "@/assets/fonts/Text";
 import { HarvestItem } from "@/components/activity/harvestItem";
 import { PlantChart } from "@/components/activity/plantChart";
 import { DateRangePicker } from "@/components/shared/datetimepicker";
+import useFetch from "@/hooks/useFetch";
+import { plantService } from "@/services/plantService";
 import { BasePlantItemDTO } from "@/types/activity.dto";
 import React, { useCallback, useEffect, useState } from "react";
 import {
@@ -72,6 +74,7 @@ const ListHeader: React.FC<ListHeaderProps> = ({
       <PlantChart
         title="Harvesting"
         data={harvestChartData}
+        // Pwede mong gawing dynamic itong yLabels depende sa max value later
         yLabels={["15", "10", "5", "0"]}
         tooltipLabel=""
         chartWidth={screenWidth - 48}
@@ -94,66 +97,82 @@ export default function HarvestScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  const fetchHarvests = async () => {
+  // Setup useFetch gamit ang harvest endpoint
+  const { refetch: getHarvestActivities } = useFetch(
+    "/api/racks/activities/harvest",
+    {
+      method: "GET",
+      autoFetch: false,
+      withAuth: true,
+    },
+  );
+
+  const fetchHarvests = useCallback(async () => {
     try {
       setLoading(true);
 
-      const mockHarvesting: HarvestData[] = [
+      // Safe date formatting para hindi ma-mutate ang main state
+      const startISO = dateRange.start
+        ? new Date(new Date(dateRange.start).setHours(0, 0, 0, 0)).toISOString()
+        : undefined;
+      const endISO = dateRange.end
+        ? new Date(
+            new Date(dateRange.end).setHours(23, 59, 59, 999),
+          ).toISOString()
+        : undefined;
+
+      // Tawagin ang endpoint mula sa plantService
+      const response = await plantService.getPlantHarvestActivities(
+        getHarvestActivities,
         {
-          id: "1",
-          plantName: "Hatdog Tomato",
-          rackName: "Greens",
-          time: "09:18 AM",
-          date: new Date(),
-          weight: 12,
+          page: 1,
+          limit: 50,
+          startDate: startISO,
+          endDate: endISO,
         },
-        {
-          id: "2",
-          plantName: "Lettuce Lettuce",
-          rackName: "Greens",
-          time: "09:20 AM",
-          date: new Date(Date.now() - 86400000),
-          weight: 8,
-        },
-        {
-          id: "3",
-          plantName: "Spinach ni Nuri",
-          rackName: "Greens",
-          time: "10:00 AM",
-          date: new Date("2026-03-25"),
-          weight: 15,
-        },
-      ];
+      );
 
-      const filtered = mockHarvesting.filter((item) => {
-        if (!dateRange.start || !dateRange.end) return true;
+      if (response && response.data) {
+        // I-map ang response data (kunin ang detalye sa 'metadata')
+        const mappedData: HarvestData[] = response.data.map((item: any) => {
+          const dateObj = new Date(item.timestamp);
 
-        const itemTime = new Date(item.date).getTime();
-        const startTime = new Date(dateRange.start).setHours(0, 0, 0, 0);
-        const endTime = new Date(dateRange.end).setHours(23, 59, 59, 999);
+          return {
+            id: item.id,
+            plantName: item.metadata?.plantName || "Unknown Plant",
+            rackName: item.metadata?.rackName || item.rackId || "Unknown Rack",
+            time: dateObj.toLocaleTimeString("en-US", {
+              hour: "2-digit",
+              minute: "2-digit",
+            }),
+            date: dateObj,
+            // Kino-convert natin yung 'quantity' from API to 'weight' for the UI
+            weight: item.metadata?.quantity || 0,
+          };
+        });
 
-        return itemTime >= startTime && itemTime <= endTime;
-      });
-
-      setHarvests(filtered);
+        setHarvests(mappedData);
+      }
     } catch (error) {
-      console.error(error);
+      console.error("Failed to fetch harvest activities:", error);
+      setHarvests([]);
     } finally {
       setLoading(false);
     }
-  };
+  }, [dateRange, getHarvestActivities]);
 
   useEffect(() => {
     fetchHarvests();
-  }, [dateRange]);
+  }, [fetchHarvests]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await fetchHarvests();
     setRefreshing(false);
-  }, [dateRange]);
+  }, [fetchHarvests]);
 
   const sections = groupHarvestsByDate(harvests);
+
   const harvestChartData = harvests.map((item, index) => ({
     timestamp: index,
     value: item.weight,
