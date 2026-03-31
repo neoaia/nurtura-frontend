@@ -72,8 +72,8 @@ const ListHeader: React.FC<ListHeaderProps> = ({
       <PlantChart
         title="Harvesting"
         data={harvestChartData}
-        yLabels={["15kg", "10kg", "5kg", "0kg"]}
-        tooltipLabel="kg"
+        yLabels={["15", "10", "5", "0"]}
+        tooltipLabel=""
         chartWidth={screenWidth - 48}
         chartColor="#86975A"
       />
