@@ -1,4 +1,5 @@
 import { typography } from "@/assets/fonts/Text";
+import { Ionicons } from "@expo/vector-icons";
 import {
   BottomSheetBackdrop,
   BottomSheetModal,
@@ -18,7 +19,7 @@ interface DropdownProps {
   value?: string;
   options: DropdownOption[];
   onSelect: (item: DropdownOption) => void;
-  label?: string; // Added label prop
+  label?: string;
   Icon?: React.FC<{ width?: number; height?: number }>;
 }
 
@@ -27,7 +28,7 @@ const Dropdown: React.FC<DropdownProps> = ({
   value,
   options,
   onSelect,
-  label = "Selected Rack", // Default label
+  label,
   Icon,
 }) => {
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
@@ -59,34 +60,23 @@ const Dropdown: React.FC<DropdownProps> = ({
         <TouchableOpacity
           onPress={handlePresentModalPress}
           activeOpacity={0.7}
-          className="bg-white rounded-2xl p-5 shadow-sm border-[2px] border-gray-100 w-full"
+          className="flex-row items-center justify-between border-[2px] border-grayText rounded-xl py-3 px-4 bg-white"
         >
-          <View className="flex-row justify-between items-center">
-            <View className="flex-row items-center gap-4 flex-1">
-              <View className="w-14 h-14 bg-[#E5EDCF] rounded-xl items-center justify-center">
-                {Icon && <Icon width={20} height={20} />}
-              </View>
-              <View className="flex-1">
-                {value && (
-                  <Text
-                    style={typography["subheader"]}
-                    className="text-grayText mb-1"
-                  >
-                    {label}
-                  </Text>
-                )}
-                <Text
-                  style={
-                    value ? typography["button-bold"] : typography["subheader"]
-                  }
-                  className={`${value ? "text-black" : "text-grayText"}`}
-                  numberOfLines={1}
-                >
-                  {value || placeholder}
-                </Text>
-              </View>
-            </View>
+          <View className="flex-row items-center">
+            {Icon ? (
+              <Icon width={20} height={20} />
+            ) : (
+              <Ionicons name="layers-outline" size={20} color="#666" />
+            )}
+            <Text
+              style={typography["subheader"]}
+              className="ml-3 text-black"
+              numberOfLines={1}
+            >
+              {value || placeholder}
+            </Text>
           </View>
+          <Ionicons name="chevron-down" size={20} color="#666" />
         </TouchableOpacity>
       </View>
 

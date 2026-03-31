@@ -90,7 +90,7 @@ export const RackActivityItem: React.FC<RackActivityItemProps> = (props) => {
   const config = EVENT_CONFIG[eventType];
 
   return (
-    <View className="p-3 bg-white mb-2 py-4 pr-3 pl-4 w-full flex-row items-center rounded-xl shadow-sm border border-gray-100 min-h-[84px]">
+    <View className="bg-white mb-1 py-4 w-full flex-row items-center rounded-xl min-h-[84px]">
       {/* Badge / Icon placeholder */}
       <View
         style={{ backgroundColor: config.badgeColor }}

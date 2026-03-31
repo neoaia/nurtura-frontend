@@ -13,6 +13,7 @@ import {
   Text,
   View,
 } from "react-native";
+// import RackIcon from "@/assets/images/icons/rack(gray).svg";
 
 const screenWidth = Dimensions.get("window").width;
 

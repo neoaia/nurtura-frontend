@@ -21,7 +21,7 @@ export const OnboardingTutorialModal = ({
   footerText = "Tap anywhere to continue",
   position = "center",
   children,
-  characterImage = require("../../assets/images/nuri/waving.png"),
+  characterImage = require("@/assets//nuri/waving.png"),
 }: OnboardingModalProps) => {
   const positionClasses = {
     top: "justify-start pt-20",
