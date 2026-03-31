@@ -9,7 +9,7 @@ import useFetch from "./useFetch";
 
 const mockApiResponse: DashboardResponseDTO = {
   user: {
-    name: "Juan",
+    name: "User",
     hasNotifications: true,
   },
   summary: [
@@ -18,8 +18,8 @@ const mockApiResponse: DashboardResponseDTO = {
   ],
   highlight: {
     title: "Farm Efficiently",
-    description: "Start growing your plant with Nurtura Racks.",
-    buttonText: "Add a Rack",
+    description: "Start growing your plant with Nurtura Racks",
+    buttonText: "Add Rack",
   },
   recentActivity: [
     {
