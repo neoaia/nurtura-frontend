@@ -1,10 +1,17 @@
 import React from "react";
-import { Image, Text, View } from "react-native";
+import { Text, View } from "react-native";
 import { typography } from "../../assets/fonts/Text";
-import ClockIcon from "../../assets/images/clockIcon.png";
-import LightIcon from "../../assets/images/lightUsedIcon.png";
-import WaterIcon from "../../assets/images/wateredIcon.png";
 import { ActivityDTO } from "../../types/home.dto";
+
+// Water SVGs
+import WaterActivityIcon from "../../assets/images/icons/home/water_activity/activity_main.svg";
+import WaterDurationIcon from "../../assets/images/icons/home/water_activity/duration.svg";
+import WaterClockIcon from "../../assets/images/icons/home/water_activity/time.svg";
+
+// Light SVGs
+import LightActivityIcon from "../../assets/images/icons/home/light_activity/activity_main.svg";
+import LightDurationIcon from "../../assets/images/icons/home/light_activity/duration.svg";
+import LightClockIcon from "../../assets/images/icons/home/light_activity/time.svg";
 
 interface RecentActivityBarProps {
   activities: ActivityDTO[];
@@ -13,10 +20,28 @@ interface RecentActivityBarProps {
 const getIconConfig = (type: ActivityDTO["type"]) => {
   const configs: Record<
     ActivityDTO["type"],
-    { icon: any; bgColor: string; textColor: string }
+    {
+      ActivityIcon: React.FC<{ width: number; height: number }>;
+      ClockIcon: React.FC<{ width: number; height: number }>;
+      DurationIcon: React.FC<{ width: number; height: number }>;
+      bgColor: string;
+      textColor: string;
+    }
   > = {
-    water: { icon: WaterIcon, bgColor: "#CFE6ED", textColor: "#619AAC" },
-    light: { icon: LightIcon, bgColor: "#F1EEA2", textColor: "#D6C125" },
+    water: {
+      ActivityIcon: WaterActivityIcon,
+      ClockIcon: WaterClockIcon,
+      DurationIcon: WaterDurationIcon,
+      bgColor: "#CFE6ED",
+      textColor: "#619AAC",
+    },
+    light: {
+      ActivityIcon: LightActivityIcon,
+      ClockIcon: LightClockIcon,
+      DurationIcon: LightDurationIcon,
+      bgColor: "#F1EEA2",
+      textColor: "#D6C125",
+    },
   };
   return configs[type];
 };
@@ -41,7 +66,13 @@ export const RecentActivityBar: React.FC<RecentActivityBarProps> = ({
           </View>
         ) : (
           activities.map((activity) => {
-            const iconConfig = getIconConfig(activity.type);
+            const {
+              ActivityIcon,
+              ClockIcon,
+              DurationIcon,
+              bgColor,
+              textColor,
+            } = getIconConfig(activity.type);
 
             return (
               <View
@@ -49,14 +80,10 @@ export const RecentActivityBar: React.FC<RecentActivityBarProps> = ({
                 className="p-3 bg-white mb-2 py-5 pr-3 pl-3 w-full flex-row items-center rounded-xl shadow-sm border border-gray-100"
               >
                 <View
-                  style={{ backgroundColor: iconConfig.bgColor }}
+                  style={{ backgroundColor: bgColor }}
                   className="rounded-2xl p-3 mr-6 w-14 h-14 items-center justify-center"
                 >
-                  <Image
-                    source={iconConfig.icon}
-                    className="w-5 h-5"
-                    resizeMode="contain"
-                  />
+                  <ActivityIcon width={20} height={20} />
                 </View>
 
                 <View className="flex-1">
@@ -68,7 +95,7 @@ export const RecentActivityBar: React.FC<RecentActivityBarProps> = ({
                     <Text
                       style={{
                         ...typography["subheader-bold"],
-                        color: iconConfig.textColor,
+                        color: textColor,
                       }}
                     >
                       {activity.plant}
@@ -77,23 +104,21 @@ export const RecentActivityBar: React.FC<RecentActivityBarProps> = ({
 
                   <View className="flex-row items-center gap-10">
                     <View className="flex-row items-center">
-                      <Image
-                        source={ClockIcon}
-                        className="w-4 h-4 mr-2"
-                        resizeMode="contain"
-                      />
-                      <Text style={typography.label} className="text-gray-600">
+                      <ClockIcon width={16} height={16} />
+                      <Text
+                        style={typography.label}
+                        className="text-gray-600 ml-2"
+                      >
                         {activity.timestamp}
                       </Text>
                     </View>
 
                     <View className="flex-row items-center">
-                      <Image
-                        source={iconConfig.icon}
-                        className="w-4 h-4 mr-2"
-                        resizeMode="contain"
-                      />
-                      <Text style={typography.label} className="text-gray-600">
+                      <DurationIcon width={16} height={16} />
+                      <Text
+                        style={typography.label}
+                        className="text-gray-600 ml-2"
+                      >
                         {activity.duration}
                       </Text>
                     </View>
