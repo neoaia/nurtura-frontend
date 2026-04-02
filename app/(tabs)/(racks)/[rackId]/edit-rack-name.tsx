@@ -1,8 +1,8 @@
 import React, {
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useState,
+    useCallback,
+    useEffect,
+    useLayoutEffect,
+    useState,
 } from "react";
 import { Alert, ScrollView, TouchableOpacity, View } from "react-native";
 
@@ -26,13 +26,13 @@ export default function EditRackName() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  const { refetch: getRackInfo } = useFetch(`/api/racks/${rackId}`, {
+  const { refetch: getRackInfo } = useFetch(`/racks/${rackId}`, {
     method: "GET",
     autoFetch: false,
     withAuth: true,
   });
 
-  const { refetch: updateRack } = useFetch(`/api/racks/${rackId}`, {
+  const { refetch: updateRack } = useFetch(`/racks/${rackId}`, {
     method: "PATCH",
     autoFetch: false,
     withAuth: true,

@@ -1,8 +1,6 @@
 import { typography } from "@/assets/fonts/Text";
-import { HighlightSkeleton } from "@/components/home/skeleton/highlightSkeleton";
 import { RecentActivityBarSkeleton } from "@/components/home/skeleton/recentActivityBarSkeleton";
 import { SummaryCardSkeleton } from "@/components/home/skeleton/summaryCardSkeleton";
-import { ShimmerBlock } from "@/components/shared/skeleton/shimmerBlock";
 import useFetch from "@/hooks/useFetch";
 import { router, useFocusEffect } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
@@ -29,21 +27,28 @@ export default function HomeScreen() {
   const [savedValues, setSavedValues] = useState<Partial<UserDetails>>({});
   const [formValues, setFormValues] = useState<Partial<UserDetails>>({});
 
-  const { data, loading, error, refetch, addRack, getNotifications } =
-    useHome();
+  const {
+    user,
+    highlight,
+    summary,
+    recentActivity,
+    isSummaryLoading,
+    isActivityLoading,
+    error,
+    refetch,
+    addRack,
+    getNotifications,
+  } = useHome();
 
-  const { refetch: getUserInfo } = useFetch("/api/users", {
+  const { refetch: getUserInfo } = useFetch("/users", {
     method: "GET",
     autoFetch: false,
     withAuth: true,
   });
 
-  // ── Handlers ──────────────────────────────────────────────────────────────
-
   const handleNotificationPress = async () => {
     try {
-      const notifications = await getNotifications();
-      console.log("Notifications:", notifications);
+      await getNotifications();
       router.push("/notifications");
     } catch (error) {
       console.error("Failed to load notifications:", error);
@@ -51,7 +56,6 @@ export default function HomeScreen() {
   };
 
   const handleCardPress = (cardType: string) => {
-    console.log("Card pressed:", cardType);
     if (cardType === "racks") router.push("/(tabs)/(racks)");
     if (cardType === "plants") router.push("/(tabs)/(plants)");
   };
@@ -59,23 +63,17 @@ export default function HomeScreen() {
   const handleAddRack = async () => {
     try {
       const result = await addRack({ name: "New Rack" });
-      if (result.success) {
-        console.log("Rack added successfully");
-        // TODO: Show success message to user
-      }
+      if (result.success) console.log("Rack added successfully");
     } catch (error) {
       console.error("Failed to add rack:", error);
-      // TODO: Show error message to user
     }
   };
-
-  // ── Data fetching ──────────────────────────────────────────────────────────
 
   const getUserInfoData = async () => {
     try {
       const response = await userService.getUser(getUserInfo);
       if (response?.userInfo) {
-        const data = {
+        setSavedValues({
           firstName: response.userInfo.firstName || "",
           middleName: response.userInfo.middleName || "",
           lastName: response.userInfo.lastName || "",
@@ -84,8 +82,7 @@ export default function HomeScreen() {
           street: response.userInfo.street || "",
           barangay: response.userInfo.barangay || "",
           city: response.userInfo.city || "",
-        };
-        setSavedValues(data);
+        });
       }
     } catch (error) {
       console.error("Failed to fetch user info:", error);
@@ -103,53 +100,20 @@ export default function HomeScreen() {
     setFormValues(savedValues);
   }, [savedValues]);
 
-  // ── Loading / error states ─────────────────────────────────────────────────
-
-  if (loading) {
-    return (
-      <SafeAreaView className="flex-1 bg-white">
-        <StatusBar barStyle="dark-content" />
-        <ScrollView
-          className="flex-1 bg-white"
-          showsVerticalScrollIndicator={false}
-        >
-          {/* Header skeleton */}
-          <View className="flex flex-row justify-between items-center px-5 mt-7">
-            <ShimmerBlock width={160} height={28} borderRadius={8} />
-            <ShimmerBlock width={24} height={24} borderRadius={12} />
-          </View>
-
-          <View className="flex-1 bg-white">
-            <View className="bg-white py-5 w-full">
-              <SummaryCardSkeleton />
-            </View>
-
-            {/* Highlight skeleton */}
-            <View className="px-4">
-              <HighlightSkeleton />
-            </View>
-
-            <View className="px-4 pb-8">
-              <RecentActivityBarSkeleton />
-            </View>
-          </View>
-        </ScrollView>
-      </SafeAreaView>
-    );
-  }
-
+  // Global Error state na lang ang ibinabato dito
   if (error) {
     return (
       <View className="flex-1 bg-white items-center justify-center">
-        <Text>{error}</Text>
-        <TouchableOpacity onPress={refetch}>
-          <Text>Retry</Text>
+        <Text className="text-red-500 mb-4">{error}</Text>
+        <TouchableOpacity
+          onPress={refetch}
+          className="px-4 py-2 bg-blue-500 rounded"
+        >
+          <Text className="text-white">Retry</Text>
         </TouchableOpacity>
       </View>
     );
   }
-
-  // ── Render ─────────────────────────────────────────────────────────────────
 
   return (
     <SafeAreaView className="flex-1 bg-white">
@@ -158,13 +122,13 @@ export default function HomeScreen() {
         className="flex-1 bg-white"
         showsVerticalScrollIndicator={false}
       >
-        {/* Header */}
+        {/* Header - Laging lumalabas agad habang hinihintay ang iba */}
         <View className="flex flex-row justify-between items-center px-5 mt-7">
           <Text style={typography["h1-bold"]} className="text-black">
-            Hi {formValues.firstName || data.user.name}!
+            Hi {formValues.firstName || user.name}!
           </Text>
           <TouchableOpacity onPress={handleNotificationPress}>
-            {data.user.hasNotifications ? (
+            {user.hasNotifications ? (
               <ActiveNotificationIcon
                 width={NOTIFICATION_ICON_SIZE}
                 height={NOTIFICATION_ICON_SIZE}
@@ -178,22 +142,33 @@ export default function HomeScreen() {
           </TouchableOpacity>
         </View>
 
-        <View className="flex-1 bg-white">
+        <View className="flex-1 bg-white mt-2">
+          {/* Seryoso ang UX dito: Kung loading ang summary, skeleton lang muna */}
           <View className="bg-white py-5 w-full">
-            <SummaryCard cards={data.summary} onCardPress={handleCardPress} />
+            {isSummaryLoading ? (
+              <SummaryCardSkeleton />
+            ) : (
+              <SummaryCard cards={summary} onCardPress={handleCardPress} />
+            )}
           </View>
 
+          {/* Highlight Section (assuming static ito or mabilis makuha) */}
           <View className="px-4">
             <Highlight
-              title={data.highlight.title}
-              description={data.highlight.description}
-              buttonText={data.highlight.buttonText}
+              title={highlight.title}
+              description={highlight.description}
+              buttonText={highlight.buttonText}
               onButtonPress={handleAddRack}
             />
           </View>
 
-          <View className="px-4 pb-8">
-            <RecentActivityBar activities={data.recentActivity} />
+          {/* Activity Section - Hiwalay na loading state din */}
+          <View className="px-4 pb-8 mt-2">
+            {isActivityLoading ? (
+              <RecentActivityBarSkeleton />
+            ) : (
+              <RecentActivityBar activities={recentActivity} />
+            )}
           </View>
         </View>
       </ScrollView>

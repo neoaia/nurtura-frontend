@@ -31,7 +31,7 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
       onRequestClose={onCancel}
     >
       <View className="flex-1 justify-center items-center bg-black/50 px-4">
-        <View className="bg-white rounded-2xl p-6 w-full max-w-sm">
+        <View className="bg-white rounded-2xl p-4 w-full max-w-sm">
           <Text
             style={typography["h2-bold"]}
             className="text-black text-center mb-3 mt-2"

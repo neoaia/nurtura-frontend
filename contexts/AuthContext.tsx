@@ -2,15 +2,15 @@ import { auth } from "@/firebase";
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
 import * as SecureStore from "expo-secure-store";
 import {
-  createUserWithEmailAndPassword,
-  fetchSignInMethodsForEmail,
-  GoogleAuthProvider,
-  onAuthStateChanged,
-  signInWithCredential,
-  signInWithCustomToken,
-  signInWithEmailAndPassword,
-  signOut,
-  User,
+    createUserWithEmailAndPassword,
+    fetchSignInMethodsForEmail,
+    GoogleAuthProvider,
+    onAuthStateChanged,
+    signInWithCredential,
+    signInWithCustomToken,
+    signInWithEmailAndPassword,
+    signOut,
+    User,
 } from "firebase/auth";
 
 import useFetch from "@/hooks/useFetch";
@@ -51,13 +51,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [email, setEmail] = useState<string | null>("");
   const [googleLoggedIn, setGoogleLoggedIn] = useState(true);
 
-  const { refetch: checkProviders } = useFetch("/api/auth/providers", {
+  const { refetch: checkProviders } = useFetch("/auth/providers", {
     method: "GET",
     autoFetch: false,
     withAuth: false,
   });
 
-  const { refetch: checkEmail } = useFetch("/api/users/exists", {
+  const { refetch: checkEmail } = useFetch("/users/exists", {
     method: "GET",
     autoFetch: false,
     withAuth: false,

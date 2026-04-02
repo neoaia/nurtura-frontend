@@ -1,11 +1,45 @@
 import { typography } from "@/assets/fonts/Text";
+import useFetch from "@/hooks/useFetch";
+import { rackService } from "@/services/rackService";
 import { Stack, router, useLocalSearchParams } from "expo-router";
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { Image, TextStyle, TouchableOpacity, View } from "react-native";
 
 export default function RackIDLayout() {
   const { rackId } = useLocalSearchParams<{ rackId: string }>();
   const [isLoading, setIsLoading] = useState(false);
+  const [rackName, setRackName] = useState("Loading..."); // Default text habang nagfe-fetch
+
+  const { refetch: getRackInfo } = useFetch(`/racks/${rackId}`, {
+    method: "GET",
+    autoFetch: false,
+    withAuth: true,
+  });
+
+  // Fetch rack name para sa header
+  useEffect(() => {
+    let isActive = true;
+
+    const fetchRackData = async () => {
+      try {
+        const rackResponse = await rackService.getRackbyId(getRackInfo);
+        if (isActive && rackResponse?.rack?.name) {
+          setRackName(rackResponse.rack.name);
+        } else if (isActive) {
+          setRackName(`Rack ${rackId}`); // Fallback
+        }
+      } catch (err) {
+        console.error("Failed to fetch rack name:", err);
+        if (isActive) setRackName(`Rack ${rackId}`); // Fallback on error
+      }
+    };
+
+    if (rackId) fetchRackData();
+
+    return () => {
+      isActive = false;
+    };
+  }, [rackId]);
 
   const handleNavigation = useCallback(
     (pathname: string) => {
@@ -41,7 +75,7 @@ export default function RackIDLayout() {
       <Stack.Screen
         name="index"
         options={{
-          title: `Rack ${rackId}`,
+          title: rackName, // <-- Dito natin pinalitan para magamit yung fetched name
           headerTitleAlign: "left",
           headerRight: () => (
             <View className="flex-row items-center pr-2 gap-1">

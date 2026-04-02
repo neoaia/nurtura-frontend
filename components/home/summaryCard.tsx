@@ -29,8 +29,8 @@ const SUMMARY_CONFIG: Record<
   },
   plants: {
     icon: PlantsIcon,
-    title: "Plants",
-    subtitle: "All Types",
+    title: "Seeds",
+    subtitle: "Planted",
   },
 };
 

@@ -7,11 +7,11 @@ import { plantService } from "@/services/plantService";
 import { BasePlantItemDTO } from "@/types/activity.dto";
 import React, { useCallback, useEffect, useState } from "react";
 import {
-  Dimensions,
-  RefreshControl,
-  SectionList,
-  Text,
-  View,
+    Dimensions,
+    RefreshControl,
+    SectionList,
+    Text,
+    View,
 } from "react-native";
 
 const screenWidth = Dimensions.get("window").width;
@@ -99,7 +99,7 @@ export default function HarvestScreen() {
 
   // Setup useFetch gamit ang harvest endpoint
   const { refetch: getHarvestActivities } = useFetch(
-    "/api/racks/activities/harvest",
+    "/racks/activities/harvest",
     {
       method: "GET",
       autoFetch: false,

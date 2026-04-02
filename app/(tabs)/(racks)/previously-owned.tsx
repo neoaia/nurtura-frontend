@@ -20,7 +20,7 @@ const PreviouslyOwned = () => {
   const [racks, setRacks] = useState<InactiveRackType[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const { refetch: getAllRacks } = useFetch("/api/racks", {
+  const { refetch: getAllRacks } = useFetch("/racks", {
     method: "GET",
     autoFetch: false,
     withAuth: true,

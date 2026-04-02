@@ -9,7 +9,7 @@ import { useFocusEffect } from "@react-navigation/native";
 import { router } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
 import { ActivityIndicator, ScrollView, Text, View } from "react-native";
-import RackIcon from "../../../../assets/images/icons/rack(Add).svg";
+import RackIcon from "../../../../assets/images/icons/rack(gray).svg";
 
 const AddNewPlant1 = () => {
   const [selectedRack, setSelectedRack] = useState<DropdownOption | null>(null);
@@ -25,7 +25,7 @@ const AddNewPlant1 = () => {
     handleBack,
   );
 
-  const { refetch: fetchRacks } = useFetch("/api/racks", {
+  const { refetch: fetchRacks } = useFetch("/racks", {
     method: "GET",
     autoFetch: false,
     withAuth: true,

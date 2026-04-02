@@ -2,21 +2,21 @@ import { useAuth } from "@/contexts/AuthContext";
 import useFetch from "@/hooks/useFetch";
 import { authService } from "@/services/authService";
 import {
-  cleanInput,
-  isStrongPassword,
-  validatePassword,
+    cleanInput,
+    isStrongPassword,
+    validatePassword,
 } from "@/utils/validation";
 import { router, useLocalSearchParams } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import React, { useEffect, useState } from "react";
 import {
-  Alert,
-  Image,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  TouchableWithoutFeedback,
-  View,
+    Alert,
+    Image,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    TouchableWithoutFeedback,
+    View,
 } from "react-native";
 
 const ForgotPassword3 = () => {
@@ -39,7 +39,7 @@ const ForgotPassword3 = () => {
   const isConfirmPasswordValid = isStrongPassword(confirmPassword);
   const passwordsMatch = password === confirmPassword;
 
-  const { refetch: resetPassword } = useFetch("/api/auth/update-password", {
+  const { refetch: resetPassword } = useFetch("/auth/update-password", {
     method: "POST",
     autoFetch: false,
     withAuth: true,

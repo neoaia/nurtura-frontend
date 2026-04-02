@@ -7,11 +7,11 @@ import { plantService } from "@/services/plantService";
 import { PlantedItemDTO } from "@/types/activity.dto";
 import React, { useCallback, useEffect, useState } from "react";
 import {
-  Dimensions,
-  RefreshControl,
-  SectionList,
-  Text,
-  View,
+    Dimensions,
+    RefreshControl,
+    SectionList,
+    Text,
+    View,
 } from "react-native";
 
 const screenWidth = Dimensions.get("window").width;
@@ -96,7 +96,7 @@ export default function PlantingScreen() {
 
   // Setup useFetch para sa planting activities
   const { refetch: getPlantingActivities } = useFetch(
-    "/api/racks/activities/planting",
+    "/racks/activities/planting",
     {
       method: "GET",
       autoFetch: false,

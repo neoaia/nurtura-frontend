@@ -38,7 +38,7 @@ const AddNewPlant3 = () => {
     recommendedSoil: string;
   }>();
 
-  const { refetch: assignPlant } = useFetch(`/api/plants/${plantId}/assign`, {
+  const { refetch: assignPlant } = useFetch(`/plants/${plantId}/assign`, {
     method: "POST",
     autoFetch: false,
     withAuth: true,

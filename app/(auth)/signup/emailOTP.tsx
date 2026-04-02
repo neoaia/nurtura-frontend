@@ -8,12 +8,12 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  Alert,
-  NativeSyntheticEvent,
-  Text,
-  TextInput,
-  TextInputKeyPressEventData,
-  View,
+    Alert,
+    NativeSyntheticEvent,
+    Text,
+    TextInput,
+    TextInputKeyPressEventData,
+    View,
 } from "react-native";
 import { OTPInput } from "../../../components/auth/otpInput";
 import "../../globals.css";
@@ -32,13 +32,13 @@ const EmailOTP = () => {
   const router = useRouter();
   const { email } = useLocalSearchParams();
 
-  const { refetch: sendOtp } = useFetch("/api/auth/otp/registration", {
+  const { refetch: sendOtp } = useFetch("/auth/otp/registration", {
     method: "POST",
     autoFetch: false,
     withAuth: false,
   });
 
-  const { refetch: verifyOtp } = useFetch("/api/auth/otp/verify", {
+  const { refetch: verifyOtp } = useFetch("/auth/otp/verify", {
     method: "POST",
     autoFetch: false,
     withAuth: false,

@@ -19,7 +19,7 @@ const Layout = () => {
           headerShown: false,
           tabBarShowLabel: false,
           tabBarStyle: {
-            height: 110,
+            height: 100,
             paddingBottom: 10,
             paddingTop: 15,
             display: hideTabBar ? "none" : "flex",
