@@ -1,7 +1,7 @@
 import { typography } from "@/assets/fonts/Text";
 import PlantCareIcon from "@/assets/images/icons/plantCare(Activity).svg";
 import PlantIcon from "@/assets/images/icons/plants(Dashboard).svg";
-import { ConfirmationModal } from "@/components/modals/confirmationModal";
+import { HarvestModal } from "@/components/modals/harvestModal";
 import PlantStatusIndicators from "@/components/racks/plantStatusIndicators";
 import { PlantStatusIndicatorsSkeleton } from "@/components/racks/skeleton/plantStatusIndicatorsSkeleton";
 import { BottomButton } from "@/components/shared/bottomButton";
@@ -256,13 +256,12 @@ const RackInfo = () => {
         <BottomButton title="Mark as Harvested" onPress={handleHarvestPress} />
       </View>
 
-      <ConfirmationModal
+      <HarvestModal
         isVisible={showModal}
-        title="Record Harvest?"
-        message="This will be recorded on your activity."
+        title="Harvest Plant"
         onCancel={handleCancel}
         onConfirm={handleSubmit}
-      />
+      ></HarvestModal>
     </>
   );
 };
