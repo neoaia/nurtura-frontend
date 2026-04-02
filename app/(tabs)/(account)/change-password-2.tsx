@@ -5,9 +5,9 @@ import useFetch from "@/hooks/useFetch";
 import { authService } from "@/services/authService";
 import { createLogger } from "@/utils/logger";
 import {
-  cleanInput,
-  isStrongPassword,
-  validatePassword,
+    cleanInput,
+    isStrongPassword,
+    validatePassword,
 } from "@/utils/validation";
 import { router } from "expo-router";
 import * as SecureStore from "expo-secure-store";
@@ -22,7 +22,7 @@ export default function ChangePassword2() {
   const [loading, setLoading] = useState(false);
   const [verifiedEmail, setVerifiedEmail] = useState<string>("");
 
-  const { refetch: changePassword } = useFetch("/api/auth/update-password", {
+  const { refetch: changePassword } = useFetch("/auth/update-password", {
     method: "POST",
     autoFetch: false,
     withAuth: true,

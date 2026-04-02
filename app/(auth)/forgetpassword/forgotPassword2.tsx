@@ -7,13 +7,13 @@ import { router, useLocalSearchParams } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
-  Alert,
-  NativeSyntheticEvent,
-  Text,
-  TextInput,
-  TextInputKeyPressEventData,
-  TouchableOpacity,
-  View,
+    Alert,
+    NativeSyntheticEvent,
+    Text,
+    TextInput,
+    TextInputKeyPressEventData,
+    TouchableOpacity,
+    View,
 } from "react-native";
 
 const logger = createLogger("ForgotPassword2");
@@ -32,13 +32,13 @@ const ForgotPassword2 = () => {
 
   const allFilled = otp.every((digit) => digit !== "");
 
-  const { refetch: sendOtp } = useFetch("/api/auth/otp/forgot-password", {
+  const { refetch: sendOtp } = useFetch("/auth/otp/forgot-password", {
     method: "POST",
     autoFetch: false,
     withAuth: false,
   });
 
-  const { refetch: verifyOtp } = useFetch("/api/auth/otp/verify", {
+  const { refetch: verifyOtp } = useFetch("/auth/otp/verify", {
     method: "POST",
     autoFetch: false,
     withAuth: false,

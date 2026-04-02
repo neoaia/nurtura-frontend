@@ -5,7 +5,7 @@ import { AuthProvider, useAuth } from "../../contexts/AuthContext";
 const mockCheckProviders = jest.fn();
 const mockCheckEmail = jest.fn();
 const mockUseFetch = jest.fn((url: string) => {
-  if (url === "/api/auth/providers") {
+  if (url === "/auth/providers") {
     return { refetch: mockCheckProviders };
   }
   return { refetch: mockCheckEmail };

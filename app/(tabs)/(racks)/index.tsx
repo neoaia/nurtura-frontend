@@ -8,11 +8,11 @@ import { GetRackInfoDTO } from "@/types/rack.dto";
 import { router, useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
 import {
-  FlatList,
-  RefreshControl,
-  Text,
-  TouchableOpacity,
-  View,
+    FlatList,
+    RefreshControl,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import ArchiveButton from "../../../assets/buttons/archive.svg";
@@ -25,7 +25,7 @@ export default function RacksScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const { refetch: getAllRacks } = useFetch("/api/racks", {
+  const { refetch: getAllRacks } = useFetch("/racks", {
     method: "GET",
     autoFetch: false,
     withAuth: true,

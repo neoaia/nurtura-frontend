@@ -33,7 +33,7 @@ describe("useFetch integration", () => {
     });
 
     const { result } = renderHook(() =>
-      useFetch("/api/plants/activities/care", {
+      useFetch("/plants/activities/care", {
         method: "GET",
         autoFetch: false,
         withAuth: true,
@@ -49,7 +49,7 @@ describe("useFetch integration", () => {
 
     expect(mockedAxios).toHaveBeenCalledWith(
       expect.objectContaining({
-        url: "https://api.example.com/api/plants/activities/care",
+        url: "https:/api.example.com/plants/activities/care",
         method: "GET",
         params: { page: 1, limit: 10 },
         headers: expect.objectContaining({
@@ -72,7 +72,7 @@ describe("useFetch integration", () => {
     });
 
     const { result } = renderHook(() =>
-      useFetch("/api/plants", { method: "POST", autoFetch: false }),
+      useFetch("/plants", { method: "POST", autoFetch: false }),
     );
 
     await act(async () => {
@@ -100,7 +100,7 @@ describe("useFetch integration", () => {
     });
 
     const { result } = renderHook(() =>
-      useFetch("/api/protected", { method: "GET", autoFetch: false }),
+      useFetch("/protected", { method: "GET", autoFetch: false }),
     );
 
     await act(async () => {

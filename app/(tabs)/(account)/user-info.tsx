@@ -21,13 +21,13 @@ export default function UserInformationScreen() {
 
   const navigation = useNavigation();
 
-  const { refetch: getUserInfo } = useFetch("/api/users", {
+  const { refetch: getUserInfo } = useFetch("/users", {
     method: "GET",
     autoFetch: false,
     withAuth: true,
   });
 
-  const { refetch: updateUserInfo } = useFetch("/api/users", {
+  const { refetch: updateUserInfo } = useFetch("/users", {
     method: "PATCH",
     autoFetch: false,
     withAuth: true,

@@ -1,21 +1,21 @@
-import useFetch from '@/hooks/useFetch';
-import { cleanInput, validateEmail } from '@/utils/validation';
+import useFetch from "@/hooks/useFetch";
+import { authService } from "@/services/authService";
+import { createLogger } from "@/utils/logger";
+import { cleanInput, validateEmail } from "@/utils/validation";
 import { useFocusEffect } from "@react-navigation/native";
 import { router } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import React, { useCallback, useEffect, useState } from "react";
 import {
-  Alert,
-  BackHandler,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    Alert,
+    BackHandler,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
-import { authService } from '@/services/authService';
-import { createLogger } from '@/utils/logger';
 
-const logger = createLogger('ForgotPassword1');
+const logger = createLogger("ForgotPassword1");
 
 const ForgotPassword1 = () => {
   const [isEmailValid, setIsEmailValid] = useState(false);
@@ -27,25 +27,21 @@ const ForgotPassword1 = () => {
 
   const isNextButtonEnabled = email.length > 0 && isEmailValid;
 
-  const {
-    refetch: checkEmailExists
-  } = useFetch('/api/users/exists', {
-    method: 'GET',
+  const { refetch: checkEmailExists } = useFetch("/users/exists", {
+    method: "GET",
     autoFetch: false,
-    withAuth: false
+    withAuth: false,
   });
 
-  const {
-    refetch: checkSignInMethods
-  } = useFetch('/api/auth/providers', {
-    method: 'GET',
+  const { refetch: checkSignInMethods } = useFetch("/auth/providers", {
+    method: "GET",
     autoFetch: false,
-    withAuth: false
+    withAuth: false,
   });
 
   const validateEmailFormat = (email: string): string[] => {
     const errors: string[] = [];
-    
+
     if (!email) {
       errors.push("Email is required");
       return errors;
@@ -59,7 +55,7 @@ const ForgotPassword1 = () => {
       errors.push("Email address is too long");
     }
 
-    const [localPart, domain] = email.split('@');
+    const [localPart, domain] = email.split("@");
     if (localPart?.length > 64) {
       errors.push("Email local part is too long");
     }
@@ -72,10 +68,10 @@ const ForgotPassword1 = () => {
     setEmail(cleanValue);
     setEmailError("");
     setValidationErrors([]);
-    
+
     const errors = validateEmailFormat(cleanValue);
     setValidationErrors(errors);
-    
+
     if (errors.length === 0) {
       setIsEmailValid(true);
     } else {
@@ -86,14 +82,14 @@ const ForgotPassword1 = () => {
   useEffect(() => {
     const clearStorageOnFirstMount = async () => {
       if (isFirstMount) {
-        logger.log('Clearing storage on first mount');
+        logger.log("Clearing storage on first mount");
         try {
           await SecureStore.deleteItemAsync("forgot_password_email");
           await SecureStore.deleteItemAsync("forgot_password_verified_email");
           await SecureStore.deleteItemAsync("forgot_password_new_password");
           await SecureStore.deleteItemAsync("forgot_password_confirm_password");
         } catch (error) {
-          logger.error('Error clearing storage', error);
+          logger.error("Error clearing storage", error);
         }
         setIsFirstMount(false);
       }
@@ -104,9 +100,11 @@ const ForgotPassword1 = () => {
 
   useEffect(() => {
     const loadSavedEmail = async () => {
-      logger.debug('Loading saved email from storage');
+      logger.debug("Loading saved email from storage");
       try {
-        const savedEmail = await SecureStore.getItemAsync("forgot_password_email");
+        const savedEmail = await SecureStore.getItemAsync(
+          "forgot_password_email",
+        );
         if (savedEmail) {
           logger.log(`Loaded saved email: ${savedEmail}`);
           setEmail(savedEmail);
@@ -116,7 +114,7 @@ const ForgotPassword1 = () => {
           }
         }
       } catch (error) {
-        logger.error('Error loading saved email', error);
+        logger.error("Error loading saved email", error);
       }
     };
     loadSavedEmail();
@@ -125,44 +123,48 @@ const ForgotPassword1 = () => {
   useFocusEffect(
     useCallback(() => {
       const backAction = () => {
-        logger.log('Back button pressed');
-        Alert.alert(
-          "Go back?", 
-          "Your process will be deleted and cleared.", 
-          [
-            { text: "Cancel", style: "cancel" },
-            {
-              text: "Yes",
-              style: "destructive",
-              onPress: async () => {
-                logger.log('User confirmed going back, clearing storage');
-                try {
-                  await SecureStore.deleteItemAsync("forgot_password_email");
-                  await SecureStore.deleteItemAsync("forgot_password_verified_email");
-                  await SecureStore.deleteItemAsync("forgot_password_new_password");
-                  await SecureStore.deleteItemAsync("forgot_password_confirm_password");
-                } catch (error) {
-                  logger.error('Error clearing storage on back', error);
-                }
-                router.back();
-              },
+        logger.log("Back button pressed");
+        Alert.alert("Go back?", "Your process will be deleted and cleared.", [
+          { text: "Cancel", style: "cancel" },
+          {
+            text: "Yes",
+            style: "destructive",
+            onPress: async () => {
+              logger.log("User confirmed going back, clearing storage");
+              try {
+                await SecureStore.deleteItemAsync("forgot_password_email");
+                await SecureStore.deleteItemAsync(
+                  "forgot_password_verified_email",
+                );
+                await SecureStore.deleteItemAsync(
+                  "forgot_password_new_password",
+                );
+                await SecureStore.deleteItemAsync(
+                  "forgot_password_confirm_password",
+                );
+              } catch (error) {
+                logger.error("Error clearing storage on back", error);
+              }
+              router.back();
             },
-          ]
-        );
+          },
+        ]);
 
         return true;
       };
 
-      const backHandler = BackHandler.addEventListener("hardwareBackPress", backAction);
+      const backHandler = BackHandler.addEventListener(
+        "hardwareBackPress",
+        backAction,
+      );
 
       return () => backHandler.remove();
-    }, [])
+    }, []),
   );
 
-const handleNextPress = async () => {
-    
+  const handleNextPress = async () => {
     if (!isNextButtonEnabled) {
-      logger.warn('Next button disabled - invalid email');
+      logger.warn("Next button disabled - invalid email");
       return;
     }
 
@@ -172,56 +174,67 @@ const handleNextPress = async () => {
     try {
       const formatErrors = validateEmailFormat(email);
       if (formatErrors.length > 0) {
-        logger.warn('Email validation failed', { errors: formatErrors });
+        logger.warn("Email validation failed", { errors: formatErrors });
         setEmailError(formatErrors[0]);
         return;
       }
 
-      const emailResponse = await authService.emailAvailable(checkEmailExists, email);
+      const emailResponse = await authService.emailAvailable(
+        checkEmailExists,
+        email,
+      );
 
       if (!emailResponse.success) {
-        logger.warn('Email availability check failed');
+        logger.warn("Email availability check failed");
         Alert.alert("Error", "Unable to verify email. Please try again.");
         return;
       }
 
       if (emailResponse.available) {
-        logger.warn('Email not registered');
+        logger.warn("Email not registered");
         setEmailError("No account found with this email address.");
         return;
       }
 
-      const providerResponse = await authService.getProvider(checkSignInMethods, email);
+      const providerResponse = await authService.getProvider(
+        checkSignInMethods,
+        email,
+      );
 
       if (!providerResponse.success) {
-        logger.warn('Provider check failed');
-        Alert.alert("Error", "Unable to verify sign-in methods. Please try again.");
+        logger.warn("Provider check failed");
+        Alert.alert(
+          "Error",
+          "Unable to verify sign-in methods. Please try again.",
+        );
         return;
       }
 
-      const providers = Array.isArray(providerResponse.provider) 
-        ? providerResponse.provider 
-        : (providerResponse.provider ? [providerResponse.provider] : []);
-      
-      logger.debug('Providers retrieved', { providers });
+      const providers = Array.isArray(providerResponse.provider)
+        ? providerResponse.provider
+        : providerResponse.provider
+          ? [providerResponse.provider]
+          : [];
+
+      logger.debug("Providers retrieved", { providers });
 
       await SecureStore.setItemAsync("forgot_password_email", email);
 
-      if (providers.includes('google.com') && providers.length === 1) {
-        logger.log('Google-only account detected');
+      if (providers.includes("google.com") && providers.length === 1) {
+        logger.log("Google-only account detected");
         Alert.alert(
-          "Google Account", 
+          "Google Account",
           "This email is associated with a Google account. Please reset your password using Google instead.",
           [
             { text: "OK", style: "default" },
-            { 
-              text: "Use Google", 
+            {
+              text: "Use Google",
               onPress: () => {
-                logger.log('User chose Google, navigating to login');
-                router.replace('/(auth)/login');
-              }
-            }
-          ]
+                logger.log("User chose Google, navigating to login");
+                router.replace("/(auth)/login");
+              },
+            },
+          ],
         );
         return;
       }
@@ -230,13 +243,14 @@ const handleNextPress = async () => {
         pathname: "/(auth)/forgetpassword/forgotPassword2",
         params: { email },
       });
-
     } catch (error) {
-      logger.error('Unexpected error in handleNextPress', error);
-      
+      logger.error("Unexpected error in handleNextPress", error);
+
       if (error instanceof Error) {
-        if (error.message.includes('Network')) {
-          setEmailError("Network error. Please check your connection and try again.");
+        if (error.message.includes("Network")) {
+          setEmailError(
+            "Network error. Please check your connection and try again.",
+          );
         } else {
           setEmailError("An unexpected error occurred. Please try again.");
         }

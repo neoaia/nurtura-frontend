@@ -25,7 +25,7 @@ const AddNewPlant1 = () => {
     handleBack,
   );
 
-  const { refetch: fetchRacks } = useFetch("/api/racks", {
+  const { refetch: fetchRacks } = useFetch("/racks", {
     method: "GET",
     autoFetch: false,
     withAuth: true,

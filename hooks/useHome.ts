@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
 import {
-  AddRackRequestDTO,
-  AddRackResponseDTO,
-  DashboardResponseDTO,
-  NotificationsResponseDTO,
+    AddRackRequestDTO,
+    AddRackResponseDTO,
+    DashboardResponseDTO,
+    NotificationsResponseDTO,
 } from "../types/home.dto";
 import useFetch from "./useFetch";
 
@@ -54,19 +54,19 @@ export const useHome = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const { refetch: fetchRacks } = useFetch("/api/racks", {
+  const { refetch: fetchRacks } = useFetch("/racks", {
     method: "GET",
     autoFetch: false,
     withAuth: true,
   });
 
-  const { refetch: fetchPlants } = useFetch("/api/plants", {
+  const { refetch: fetchPlants } = useFetch("/plants", {
     method: "GET",
     autoFetch: false,
     withAuth: true,
   });
 
-  const { refetch: addRackRequest } = useFetch("/api/racks", {
+  const { refetch: addRackRequest } = useFetch("/racks", {
     method: "POST",
     autoFetch: false,
     withAuth: true,

@@ -7,11 +7,11 @@ import useFetch from "@/hooks/useFetch";
 import { router, useFocusEffect } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
 import {
-  ScrollView,
-  StatusBar,
-  Text,
-  TouchableOpacity,
-  View,
+    ScrollView,
+    StatusBar,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import ActiveNotificationIcon from "../../../assets/images/icons/active_notification.svg";
@@ -32,7 +32,7 @@ export default function HomeScreen() {
   const { data, loading, error, refetch, addRack, getNotifications } =
     useHome();
 
-  const { refetch: getUserInfo } = useFetch("/api/users", {
+  const { refetch: getUserInfo } = useFetch("/users", {
     method: "GET",
     autoFetch: false,
     withAuth: true,

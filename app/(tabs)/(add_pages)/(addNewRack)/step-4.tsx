@@ -19,7 +19,7 @@ export default function AddNewRack4() {
   const [loading, setLoading] = useState(false);
   const [showBackConfirm, setShowBackConfirm] = useState(false);
 
-  const { refetch: registerRack } = useFetch("/api/racks", {
+  const { refetch: registerRack } = useFetch("/racks", {
     method: "POST",
     autoFetch: false,
     withAuth: true,

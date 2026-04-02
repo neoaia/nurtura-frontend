@@ -41,14 +41,14 @@ const RackInfo = () => {
 
   const { reading } = useRackSensor(rackId);
 
-  const { refetch: getRackInfo } = useFetch(`/api/racks/${rackId}`, {
+  const { refetch: getRackInfo } = useFetch(`/racks/${rackId}`, {
     method: "GET",
     autoFetch: false,
     withAuth: true,
   });
 
   const { refetch: getPlantById } = useFetch(
-    `/api/plants/${rackData?.currentPlantId ?? "init"}`,
+    `/plants/${rackData?.currentPlantId ?? "init"}`,
     {
       method: "GET",
       autoFetch: false,
