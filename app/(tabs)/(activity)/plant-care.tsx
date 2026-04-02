@@ -2,7 +2,6 @@ import { typography } from "@/assets/fonts/Text";
 import { ActivityItem } from "@/components/activity/activityItem";
 import { PlantChart } from "@/components/activity/plantChart";
 import { ActivityButton } from "@/components/activity/sensorToggle";
-import { OnboardingTutorialModal } from "@/components/onboarding/tutorialModal";
 import { DateRangePicker } from "@/components/shared/datetimepicker";
 import useFetch from "@/hooks/useFetch";
 import { plantService } from "@/services/plantService";
@@ -272,13 +271,6 @@ export default function PlantCareScreen() {
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
-      />
-      <OnboardingTutorialModal
-        visible={showTutorial}
-        onClose={() => setShowTutorial(false)}
-        title={`Hi Juan, Let's Start Growing!`}
-        subtitle="I'm so excited for you to begin your smart garden journey."
-        position="top"
       />
     </View>
   );
