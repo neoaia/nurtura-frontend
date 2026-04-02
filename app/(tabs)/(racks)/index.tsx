@@ -8,11 +8,11 @@ import { GetRackInfoDTO } from "@/types/rack.dto";
 import { router, useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
 import {
-    FlatList,
-    RefreshControl,
-    Text,
-    TouchableOpacity,
-    View,
+  FlatList,
+  RefreshControl,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import ArchiveButton from "../../../assets/buttons/archive.svg";

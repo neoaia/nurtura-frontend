@@ -18,6 +18,7 @@ import React, { useCallback, useState } from "react";
 import { Image, ScrollView, Text, View } from "react-native";
 import DateIcon from "../../../../assets/images/icons/date.svg";
 import SoilIcon from "../../../../assets/images/icons/soil.svg";
+import { PLANT_IMAGES } from "../../../../utils/constants";
 
 const formatLabel = (value: string) =>
   value
@@ -35,7 +36,6 @@ const formatDate = (iso: string) =>
 const RackInfo = () => {
   const { rackId } = useLocalSearchParams<{ rackId: string }>();
   const [showModal, setShowModal] = useState(false);
-  const [rackData, setRackData] = useState<any>(null);
   const [activePlant, setActivePlant] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -46,15 +46,6 @@ const RackInfo = () => {
     autoFetch: false,
     withAuth: true,
   });
-
-  const { refetch: getPlantById } = useFetch(
-    `/plants/${rackData?.currentPlantId ?? "init"}`,
-    {
-      method: "GET",
-      autoFetch: false,
-      withAuth: true,
-    },
-  );
 
   useFocusEffect(
     useCallback(() => {
@@ -68,36 +59,26 @@ const RackInfo = () => {
 
           if (!isActive) return;
 
-          if (rackResponse?.rack) {
-            const rack = rackResponse.rack;
-            setRackData(rack);
+          const rack = rackResponse?.rack;
+          if (!rack) return;
 
-            const currentPlantId = rack.currentPlantId;
-            if (currentPlantId) {
-              // Fetch plant directly using the ID in the URL
-              const apiUrl = process.env.EXPO_PUBLIC_URL
-                ? `https://${process.env.EXPO_PUBLIC_URL}`
-                : `http://${process.env.EXPO_PUBLIC_LOCAL_IP_ADDRESS}:3000`;
-
-              const { data: plantResult } = await getPlantById();
-              console.log("Plant result:", plantResult);
-
-              if (plantResult?.plant) {
-                setActivePlant({
-                  quantity: rack.quantity ?? 0,
-                  plantedAt: rack.plantedAt ?? null,
-                  harvestedAt: null,
-                  plant: {
-                    id: plantResult.plant.id,
-                    name: plantResult.plant.name,
-                    type: plantResult.plant.category,
-                    recommendedSoil: plantResult.plant.recommendedSoil,
-                  },
-                });
-              }
-            } else {
-              setActivePlant(null);
-            }
+          if (rack.currentPlant) {
+            setActivePlant({
+              quantity: rack.quantity ?? 0,
+              plantedAt: rack.plantedAt ?? null,
+              plant: {
+                id: rack.currentPlantId,
+                name: rack.currentPlant.name,
+                type: rack.currentPlant.category,
+                recommendedSoil: rack.currentPlant.recommendedSoil,
+              },
+            });
+          } else {
+            setActivePlant({
+              quantity: rack.quantity ?? 0,
+              plantedAt: rack.plantedAt ?? null,
+              plant: null,
+            });
           }
         } catch (err) {
           console.error("Failed to fetch rack data:", err);
@@ -118,6 +99,15 @@ const RackInfo = () => {
   const handleCancel = useCallback(() => setShowModal(false), []);
   const handleHarvestPress = useCallback(() => setShowModal(true), []);
 
+  // 👇 Dito natin kukunin yung tamang image galing sa in-import mong constants
+  const plantName = activePlant?.plant?.name?.toLowerCase();
+
+  // Kung walang match sa constants mo, mag-fall back siya sa default
+  const imageSource =
+    plantName && PLANT_IMAGES[plantName]
+      ? PLANT_IMAGES[plantName]
+      : PLANT_IMAGES.default; // Make sure may 'default' key sa constants mo!
+
   return (
     <>
       <View className="flex-1 bg-white">
@@ -125,16 +115,16 @@ const RackInfo = () => {
           showsVerticalScrollIndicator={false}
           className="bg-white px-4 py-4"
         >
-          {/* Plant image */}
           <View className="flex-1 justify-center items-center pl-8">
             <Image
-              source={require("@/assets/images/plant-images/lettuce.png")}
+              // 👇 Ipasa ang source
+              source={imageSource}
               className="w-72 h-72"
               resizeMode="contain"
             />
           </View>
 
-          {/* Plant name + seeds */}
+          {/* Plant name + seed count */}
           {loading ? (
             <View className="w-full flex-row justify-between items-start mb-6 px-2 gap-4">
               <View className="flex-1 gap-2">
@@ -169,7 +159,7 @@ const RackInfo = () => {
             </View>
           )}
 
-          {/* Sensor indicators */}
+          {/* Sensor readings */}
           <View className="flex-row gap-3 mb-6">
             {loading || reading === null ? (
               <>
@@ -195,7 +185,7 @@ const RackInfo = () => {
             )}
           </View>
 
-          {/* Small descriptions */}
+          {/* Date planted + recommended soil */}
           <View className="flex-col gap-8 mt-6 mb-8 pl-2">
             {loading ? (
               <>
@@ -261,7 +251,7 @@ const RackInfo = () => {
         title="Harvest Plant"
         onCancel={handleCancel}
         onConfirm={handleSubmit}
-      ></HarvestModal>
+      />
     </>
   );
 };

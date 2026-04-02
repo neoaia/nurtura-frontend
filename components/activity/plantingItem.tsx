@@ -51,7 +51,6 @@ export const PlantItem: React.FC<PlantItemProps> = ({ plants }) => {
       );
     }
 
-    // BAGONG FORMAT PARA SA PLANT_CHANGED
     if (eventType === "PLANT_CHANGED") {
       return (
         <Text
@@ -77,7 +76,6 @@ export const PlantItem: React.FC<PlantItemProps> = ({ plants }) => {
       );
     }
 
-    // Default Format (PLANT_ADDED)
     return (
       <Text style={typography["subheader"]} className="text-gray-700 leading-5">
         <Text style={typography["subheader-bold"]} className="text-black">
@@ -100,7 +98,7 @@ export const PlantItem: React.FC<PlantItemProps> = ({ plants }) => {
       onPress={handlePress}
       disabled={isLoading}
       activeOpacity={0.7}
-      className={`p-3 bg-white mb-2 py-4 pr-3 pl-4 w-full flex-row items-center rounded-xl border border-gray-100 min-h-[84px] ${
+      className={` bg-white w-full flex-row items-center rounded-xl min-h-[84px] ${
         isLoading ? "opacity-70" : ""
       }`}
     >
