@@ -99,8 +99,8 @@ export default function ActivityScreen() {
           title: "Rack Activity",
           tutorialDesc: "Track all rack updates and interactions — growth, care actions, and status changes in one view.",
           image: require("@/assets/nuri/joyful.png"),
-          positionStyle: { top: 30, left: -60 },
-          marginTop: TITLE_SECTION_HEIGHT + (CARD_HEIGHT_WITH_MARGIN * 2),
+          positionStyle: { bottom: 345, left: -60 },
+          marginTop: TITLE_SECTION_HEIGHT + (CARD_HEIGHT_WITH_MARGIN * 3),
           component: (
             <MenuCard
               title={menuItems[3].title} 
