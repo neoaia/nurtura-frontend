@@ -28,7 +28,7 @@ export default function LoginScreen() {
   const navigation = useNavigation();
 
   const { refetch: checkNeedsOnboarding } = useFetch(
-    "/api/auth/onboarding-status",
+    "/auth/onboarding-status",
     {
       method: "GET",
       autoFetch: false,

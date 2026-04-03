@@ -27,7 +27,7 @@ export default function AccountScreen() {
   const { logout } = useAuth();
   const router = useRouter();
 
-  const { refetch: getUserInfo } = useFetch("/api/users", {
+  const { refetch: getUserInfo } = useFetch("/users", {
     method: "GET",
     autoFetch: false,
     withAuth: true,

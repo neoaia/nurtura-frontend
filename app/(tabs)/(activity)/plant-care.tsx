@@ -8,11 +8,11 @@ import { plantService } from "@/services/plantService";
 import { ActivityDTO } from "@/types/activity.dto";
 import React, { useCallback, useEffect, useState } from "react";
 import {
-  Dimensions,
-  RefreshControl,
-  SectionList,
-  Text,
-  View,
+    Dimensions,
+    RefreshControl,
+    SectionList,
+    Text,
+    View,
 } from "react-native";
 
 const screenWidth = Dimensions.get("window").width;
@@ -127,14 +127,11 @@ export default function PlantCareScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  const { refetch: getPlantCare } = useFetch(
-    "/api/racks/activities/plant-care",
-    {
-      method: "GET",
-      autoFetch: false,
-      withAuth: true,
-    },
-  );
+  const { refetch: getPlantCare } = useFetch("/racks/activities/plant-care", {
+    method: "GET",
+    autoFetch: false,
+    withAuth: true,
+  });
 
   const fetchActivities = useCallback(async () => {
     try {

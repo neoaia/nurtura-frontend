@@ -81,22 +81,32 @@ export interface GetRackInfoResponseDTO {
   message: string;
   rack: {
     id: string;
+    userId: string;
     name: string;
     macAddress: string;
-    mqttTopic?: string;
-    description?: string;
-    status: string;
+    mqttTopic: string;
+    description: string;
+    currentPlantId: string | null;
+
+    currentPlant?: {
+      name: string;
+      category: string;
+      recommendedSoil: string;
+      description: string;
+    } | null;
+
+    quantity: number;
+    plantedAt: string | null;
+    lastHarvestAt: string | null;
+    harvestCount: number;
     isActive: boolean;
+    status: string;
+    lastActivityAt: string;
     lastSeenAt: string;
+    lastWateredAt: string;
+    lastLightOnAt: string;
     createdAt: string;
-    currentPlantId?: string;
-    quantity?: number;
-    plantedAt?: string;
-    harvestCount?: number;
-    lastActivityAt?: string;
-    lastHarvestAt?: string;
-    updatedAt?: string;
-    userId?: string;
+    updatedAt: string;
   };
 }
 

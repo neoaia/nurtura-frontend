@@ -54,14 +54,14 @@ const CreateAccount = () => {
   const isNextButtonEnabled = email.length > 0 && isEmailValid;
   const isGoogleButtonEnabled = isCheckedTS && isCheckedPP;
 
-  const { refetch: checkEmailExists } = useFetch("/api/users/exists", {
+  const { refetch: checkEmailExists } = useFetch("/users/exists", {
     method: "GET",
     autoFetch: false,
     withAuth: false,
   });
 
   const { refetch: checkNeedsOnboarding } = useFetch(
-    "/api/auth/onboarding-status",
+    "/auth/onboarding-status",
     {
       method: "GET",
       autoFetch: false,

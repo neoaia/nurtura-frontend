@@ -34,13 +34,13 @@ export default function UpdateEmailScreen1() {
   const { showModal, handleConfirm, handleCancel } =
     useBackWarning(!hasStartedOtp);
 
-  const { refetch: sendOtp } = useFetch("/api/auth/otp/registration", {
+  const { refetch: sendOtp } = useFetch("/auth/otp/registration", {
     method: "POST",
     autoFetch: false,
     withAuth: false,
   });
 
-  const { refetch: verifyOtp } = useFetch("/api/auth/otp/verify", {
+  const { refetch: verifyOtp } = useFetch("/auth/otp/verify", {
     method: "POST",
     autoFetch: false,
     withAuth: false,

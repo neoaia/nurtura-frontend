@@ -6,15 +6,15 @@ import { auth } from "@/firebase";
 import useFetch from "@/hooks/useFetch";
 import { authService } from "@/services/authService";
 import {
-  cleanAlphaInput,
-  cleanAlphanumericInput,
-  cleanNameInput,
+    cleanAlphaInput,
+    cleanAlphanumericInput,
+    cleanNameInput,
 } from "@/utils/validation";
 import { useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { useEffect, useState } from "react";
 import { Alert, Text, View } from "react-native";
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 
 const USER_INFO_STORAGE_KEY = "temp_user_info";
 const SSO_INFO_STORAGE_KEY = "sso_temp_user_info";
@@ -66,7 +66,7 @@ const CreateUserInfo = () => {
     checkIfLastNameHasValue &&
     checkIfAddressHasValue;
 
-  const { refetch: createAccount } = useFetch("/api/users", {
+  const { refetch: createAccount } = useFetch("/users", {
     method: "POST",
     autoFetch: false,
     withAuth: true,
@@ -261,8 +261,8 @@ const CreateUserInfo = () => {
         className="flex-1"
         contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 34 }}
         showsVerticalScrollIndicator={false}
-        extraScrollHeight={100} 
-        enableOnAndroid={true} 
+        extraScrollHeight={100}
+        enableOnAndroid={true}
         extraHeight={135}
         keyboardShouldPersistTaps="handled"
       >

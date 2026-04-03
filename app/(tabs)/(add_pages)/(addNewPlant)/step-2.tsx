@@ -51,7 +51,7 @@ const AddNewPlant2 = () => {
     rackValue: string;
   }>();
 
-  const { refetch: fetchPlants } = useFetch("/api/plants", {
+  const { refetch: fetchPlants } = useFetch("/plants", {
     method: "GET",
     autoFetch: false,
     withAuth: true,

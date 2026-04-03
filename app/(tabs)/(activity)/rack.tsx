@@ -1,14 +1,12 @@
 import { typography } from "@/assets/fonts/Text";
 import {
-  RackActivityItem,
-  RackActivityItemProps,
+    RackActivityItem,
+    RackActivityItemProps,
 } from "@/components/activity/rackActivityItem";
 import { DateRangePicker } from "@/components/shared/datetimepicker";
 import useFetch from "@/hooks/useFetch";
 import { activityService } from "@/services/activityService";
-import {
-  GetRackActivitiesResponseDTO
-} from "@/types/activity.dto";
+import { GetRackActivitiesResponseDTO } from "@/types/activity.dto";
 import React, { useCallback, useEffect, useState } from "react";
 import { RefreshControl, SectionList, Text, View } from "react-native";
 
@@ -113,7 +111,7 @@ const RackActivity = () => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  const { refetch: getRackActivities } = useFetch("/api/racks/activities", {
+  const { refetch: getRackActivities } = useFetch("/racks/activities", {
     method: "GET",
     autoFetch: false,
     withAuth: true,

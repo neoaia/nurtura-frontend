@@ -37,13 +37,13 @@ export default function ChangePassword1() {
 
   const allFilled = otp.every((digit) => digit !== "");
 
-  const { refetch: sendOtp } = useFetch("/api/auth/otp/password-reset", {
+  const { refetch: sendOtp } = useFetch("/auth/otp/password-reset", {
     method: "POST",
     autoFetch: false,
     withAuth: true,
   });
 
-  const { refetch: verifyOtp } = useFetch("/api/auth/otp/verify", {
+  const { refetch: verifyOtp } = useFetch("/auth/otp/verify", {
     method: "POST",
     autoFetch: false,
     withAuth: true,

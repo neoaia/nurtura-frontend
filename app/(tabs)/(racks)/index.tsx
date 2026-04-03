@@ -25,7 +25,7 @@ export default function RacksScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const { refetch: getAllRacks } = useFetch("/api/racks", {
+  const { refetch: getAllRacks } = useFetch("/racks", {
     method: "GET",
     autoFetch: false,
     withAuth: true,

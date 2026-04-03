@@ -20,7 +20,7 @@ export default function UpdateEmailScreen2() {
   const [isEmailValid, setIsEmailValid] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  const { refetch: checkEmailExists } = useFetch("/api/users/exists", {
+  const { refetch: checkEmailExists } = useFetch("/users/exists", {
     method: "GET",
     autoFetch: false,
     withAuth: true,

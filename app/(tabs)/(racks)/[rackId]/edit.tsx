@@ -16,7 +16,7 @@ const EditRack = () => {
   const [removeRackModal, setRemoveRackModal] = useState(false);
 
   // ✅ 1. I-setup ang useFetch para sa DELETE request
-  const { refetch: deleteRackReq } = useFetch(`/api/racks/${rackId}`, {
+  const { refetch: deleteRackReq } = useFetch(`/racks/${rackId}`, {
     method: "DELETE",
     autoFetch: false,
     withAuth: true,

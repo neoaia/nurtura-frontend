@@ -64,7 +64,7 @@ const Dropdown: React.FC<DropdownProps> = ({
         >
           <View className="flex-row items-center">
             {Icon ? (
-              <Icon width={20} height={20} />
+              <Icon width={17} height={17} />
             ) : (
               <Ionicons name="layers-outline" size={20} color="#666" />
             )}
