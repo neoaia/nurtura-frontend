@@ -30,6 +30,8 @@ interface ListHeaderProps {
   setActiveTab: (tab: "water" | "light") => void;
   waterChartData: { timestamp: number; value: number }[];
   lightChartData: { timestamp: number; value: number }[];
+  selectedRack: DropdownOption | null;
+  setSelectedRack: (rack: DropdownOption | null) => void;
 }
 
 const ListHeader: React.FC<ListHeaderProps> = ({
@@ -39,8 +41,9 @@ const ListHeader: React.FC<ListHeaderProps> = ({
   setActiveTab,
   waterChartData,
   lightChartData,
+  selectedRack,
+  setSelectedRack,
 }) => {
-  const [selectedRack, setSelectedRack] = useState<DropdownOption | null>(null);
   const [rackOptions, setRackOptions] = useState<DropdownOption[]>([]);
   const [loadingRacks, setLoadingRacks] = useState(false);
 
@@ -240,6 +243,7 @@ export default function PlantCareScreen() {
     start: null,
     end: null,
   });
+  const [selectedRack, setSelectedRack] = useState<DropdownOption | null>(null);
 
   const [activities, setActivities] = useState<ActivityDTO[]>([]);
   const [loading, setLoading] = useState(true);
@@ -250,6 +254,12 @@ export default function PlantCareScreen() {
     autoFetch: false,
     withAuth: true,
   });
+
+  useEffect(() => {
+    return () => {
+      setSelectedRack(null);
+    };
+  }, []);
 
   const fetchActivities = useCallback(async () => {
     try {
@@ -268,6 +278,7 @@ export default function PlantCareScreen() {
         limit: 50,
         startDate: startISO,
         endDate: endISO,
+        rackId: selectedRack?.value,
       });
 
       if (response?.data) {
@@ -300,7 +311,7 @@ export default function PlantCareScreen() {
     } finally {
       setLoading(false);
     }
-  }, [dateRange, getPlantCare]);
+  }, [dateRange, selectedRack, getPlantCare]);
 
   useEffect(() => {
     fetchActivities();
@@ -351,6 +362,8 @@ export default function PlantCareScreen() {
             setActiveTab={setActiveTab}
             waterChartData={waterChartData}
             lightChartData={lightChartData}
+            selectedRack={selectedRack}
+            setSelectedRack={setSelectedRack}
           />
         }
         ListEmptyComponent={() => (

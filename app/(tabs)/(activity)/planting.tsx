@@ -24,6 +24,8 @@ interface ListHeaderProps {
   dateRange: { start: Date | null; end: Date | null };
   setDateRange: (range: { start: Date | null; end: Date | null }) => void;
   plantingChartData: { timestamp: number; value: number }[];
+  selectedRack: DropdownOption | null;
+  setSelectedRack: (rack: DropdownOption | null) => void;
 }
 
 const groupPlantsByDate = (data: PlantedItemDTO[]) => {
@@ -66,8 +68,9 @@ const ListHeader: React.FC<ListHeaderProps> = ({
   dateRange,
   setDateRange,
   plantingChartData,
+  selectedRack,
+  setSelectedRack,
 }) => {
-  const [selectedRack, setSelectedRack] = useState<DropdownOption | null>(null);
   const [rackOptions, setRackOptions] = useState<DropdownOption[]>([]);
   const [loadingRacks, setLoadingRacks] = useState(false);
 
@@ -135,6 +138,7 @@ export default function PlantingScreen() {
     start: Date | null;
     end: Date | null;
   }>({ start: null, end: null });
+  const [selectedRack, setSelectedRack] = useState<DropdownOption | null>(null);
   const [tutorialStep, setTutorialStep] = useState(1);
   const TOTAL_STEPS = 2;
   const [plants, setPlants] = useState<PlantedItemDTO[]>([]);
@@ -149,6 +153,12 @@ export default function PlantingScreen() {
       withAuth: true,
     },
   );
+
+  useEffect(() => {
+    return () => {
+      setSelectedRack(null);
+    };
+  }, []);
 
   const handleNextStep = () => {
     setTutorialStep((prev) => (prev < TOTAL_STEPS ? prev + 1 : 0));
@@ -243,6 +253,7 @@ export default function PlantingScreen() {
           limit: 50,
           startDate: startISO,
           endDate: endISO,
+          rackId: selectedRack?.value,
         },
       );
 
@@ -303,7 +314,7 @@ export default function PlantingScreen() {
     } finally {
       setLoading(false);
     }
-  }, [dateRange, getPlantingActivities]);
+  }, [dateRange, selectedRack, getPlantingActivities]);
 
   useEffect(() => {
     fetchPlants();
@@ -347,6 +358,8 @@ export default function PlantingScreen() {
               dateRange={dateRange}
               setDateRange={setDateRange}
               plantingChartData={plantingChartData}
+              selectedRack={selectedRack}
+              setSelectedRack={setSelectedRack}
             />
           </View>
         }

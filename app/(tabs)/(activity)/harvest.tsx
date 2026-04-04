@@ -26,6 +26,8 @@ interface ListHeaderProps {
   dateRange: { start: Date | null; end: Date | null };
   setDateRange: (range: { start: Date | null; end: Date | null }) => void;
   harvestChartData: { timestamp: number; value: number }[];
+  selectedRack: DropdownOption | null;
+  setSelectedRack: (rack: DropdownOption | null) => void;
 }
 
 const groupHarvestsByDate = (data: HarvestData[]) => {
@@ -64,8 +66,9 @@ const ListHeader: React.FC<ListHeaderProps> = ({
   dateRange,
   setDateRange,
   harvestChartData,
+  selectedRack,
+  setSelectedRack,
 }) => {
-  const [selectedRack, setSelectedRack] = useState<DropdownOption | null>(null);
   const [rackOptions, setRackOptions] = useState<DropdownOption[]>([]);
   const [loadingRacks, setLoadingRacks] = useState(false);
 
@@ -134,6 +137,7 @@ export default function HarvestScreen() {
     start: Date | null;
     end: Date | null;
   }>({ start: null, end: null });
+  const [selectedRack, setSelectedRack] = useState<DropdownOption | null>(null);
   const [harvests, setHarvests] = useState<HarvestData[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -146,6 +150,12 @@ export default function HarvestScreen() {
       withAuth: true,
     },
   );
+
+  useEffect(() => {
+    return () => {
+      setSelectedRack(null);
+    };
+  }, []);
 
   const handleNextStep = () => {
     setTutorialStep((prev) => (prev < TOTAL_STEPS ? prev + 1 : 0));
@@ -237,6 +247,7 @@ export default function HarvestScreen() {
           limit: 50,
           startDate: startISO,
           endDate: endISO,
+          rackId: selectedRack?.value,
         },
       );
 
@@ -259,7 +270,7 @@ export default function HarvestScreen() {
     } finally {
       setLoading(false);
     }
-  }, [dateRange, getHarvestActivities]);
+  }, [dateRange, selectedRack, getHarvestActivities]);
 
   useEffect(() => {
     fetchHarvests();
@@ -299,6 +310,8 @@ export default function HarvestScreen() {
               dateRange={dateRange}
               setDateRange={setDateRange}
               harvestChartData={harvestChartData}
+              selectedRack={selectedRack}
+              setSelectedRack={setSelectedRack}
             />
           </View>
         }

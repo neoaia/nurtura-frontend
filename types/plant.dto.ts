@@ -39,6 +39,7 @@ export interface PlantActivitiesRequestDTO {
   limit?: number;
   startDate?: string;
   endDate?: string;
+  rackId?: string;
 }
 
 export interface PlantActivitiesMetaDTO {

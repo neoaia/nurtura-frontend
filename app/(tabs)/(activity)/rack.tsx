@@ -1,7 +1,7 @@
 import { typography } from "@/assets/fonts/Text";
 import {
-    RackActivityItem,
-    RackActivityItemProps,
+  RackActivityItem,
+  RackActivityItemProps,
 } from "@/components/activity/rackActivityItem";
 import { OnboardingTutorialModal } from "@/components/onboarding/tutorialModal";
 import { DateRangePicker } from "@/components/shared/datetimepicker";
@@ -12,11 +12,11 @@ import { rackService } from "@/services/rackService";
 import { GetRackActivitiesResponseDTO } from "@/types/activity.dto";
 import React, { useCallback, useEffect, useState } from "react";
 import {
-    Dimensions,
-    RefreshControl,
-    SectionList,
-    Text,
-    View,
+  Dimensions,
+  RefreshControl,
+  SectionList,
+  Text,
+  View,
 } from "react-native";
 import RackIcon from "../../../assets/images/icons/rack(gray).svg";
 
@@ -25,10 +25,16 @@ const screenWidth = Dimensions.get("window").width;
 interface ListHeaderProps {
   dateRange: { start: Date | null; end: Date | null };
   setDateRange: (range: { start: Date | null; end: Date | null }) => void;
+  selectedRack: DropdownOption | null;
+  setSelectedRack: (rack: DropdownOption | null) => void;
 }
 
-const ListHeader: React.FC<ListHeaderProps> = ({ dateRange, setDateRange }) => {
-  const [selectedRack, setSelectedRack] = useState<DropdownOption | null>(null);
+const ListHeader: React.FC<ListHeaderProps> = ({
+  dateRange,
+  setDateRange,
+  selectedRack,
+  setSelectedRack,
+}) => {
   const [rackOptions, setRackOptions] = useState<DropdownOption[]>([]);
   const [loadingRacks, setLoadingRacks] = useState(false);
 
@@ -153,6 +159,7 @@ export default function RackActivity() {
     start: Date | null;
     end: Date | null;
   }>({ start: null, end: null });
+  const [selectedRack, setSelectedRack] = useState<DropdownOption | null>(null);
   const [tutorialStep, setTutorialStep] = useState(1);
   const TOTAL_STEPS = 2;
 
@@ -167,6 +174,12 @@ export default function RackActivity() {
     autoFetch: false,
     withAuth: true,
   });
+
+  useEffect(() => {
+    return () => {
+      setSelectedRack(null);
+    };
+  }, []);
 
   const handleNextStep = () => {
     setTutorialStep((prev) => (prev < TOTAL_STEPS ? prev + 1 : 0));
@@ -237,6 +250,7 @@ export default function RackActivity() {
           limit: 50,
           startDate: startISO,
           endDate: endISO,
+          rackId: selectedRack?.value,
         });
 
       if (response && response.data) {
@@ -248,7 +262,7 @@ export default function RackActivity() {
     } finally {
       setLoading(false);
     }
-  }, [getRackActivities, dateRange]);
+  }, [getRackActivities, selectedRack, dateRange]);
 
   useEffect(() => {
     setLoading(true);
@@ -285,7 +299,12 @@ export default function RackActivity() {
         )}
         ListHeaderComponent={
           <View className="px-6">
-            <ListHeader dateRange={dateRange} setDateRange={setDateRange} />
+            <ListHeader
+              dateRange={dateRange}
+              setDateRange={setDateRange}
+              selectedRack={selectedRack}
+              setSelectedRack={setSelectedRack}
+            />
           </View>
         }
         contentContainerStyle={{ paddingBottom: 40 }}
