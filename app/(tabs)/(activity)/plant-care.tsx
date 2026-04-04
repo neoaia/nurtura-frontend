@@ -4,11 +4,21 @@ import { PlantChart } from "@/components/activity/plantChart";
 import { ActivityButton } from "@/components/activity/sensorToggle";
 import { OnboardingTutorialModal } from "@/components/onboarding/tutorialModal";
 import { DateRangePicker } from "@/components/shared/datetimepicker";
+import Dropdown, { DropdownOption } from "@/components/shared/dropdown";
 import useFetch from "@/hooks/useFetch";
 import { plantService } from "@/services/plantService";
 import { ActivityDTO } from "@/types/activity.dto";
 import React, { useCallback, useEffect, useState } from "react";
-import { Dimensions, RefreshControl, SectionList, Text, View } from "react-native";
+import {
+  Dimensions,
+  RefreshControl,
+  SectionList,
+  Text,
+  View,
+} from "react-native";
+
+import { rackService } from "@/services/rackService";
+import RackIcon from "../../../assets/images/icons/rack(gray).svg";
 
 const screenWidth = Dimensions.get("window").width;
 const CHART_SECTION_HEIGHT = 420;
@@ -30,10 +40,53 @@ const ListHeader: React.FC<ListHeaderProps> = ({
   waterChartData,
   lightChartData,
 }) => {
+  const [selectedRack, setSelectedRack] = useState<DropdownOption | null>(null);
+  const [rackOptions, setRackOptions] = useState<DropdownOption[]>([]);
+  const [loadingRacks, setLoadingRacks] = useState(false);
+
+  const { refetch: fetchRacks } = useFetch("/racks", {
+    method: "GET",
+    autoFetch: false,
+    withAuth: true,
+  });
+
+  const loadRacks = async () => {
+    setLoadingRacks(true);
+    try {
+      const response = await rackService.getAllUserRack(fetchRacks);
+      if (response?.data) {
+        const options = response.data
+          .filter((rack: any) => rack.isActive)
+          .map((rack: any) => ({
+            id: rack.id,
+            label: rack.name,
+            value: rack.id,
+          }));
+        setRackOptions(options);
+      }
+    } catch (e) {
+      console.error("Failed to load racks:", e);
+    } finally {
+      setLoadingRacks(false);
+    }
+  };
+
+  useEffect(() => {
+    loadRacks();
+  }, []);
+
   return (
     <View className="bg-white">
-      <View className="mt-4">
+      <View className="mt-4 gap-3">
         <DateRangePicker value={dateRange} onChange={setDateRange} />
+        <Dropdown
+          placeholder="Select your device here"
+          options={rackOptions}
+          value={selectedRack?.label}
+          onSelect={(item) => setSelectedRack(item)}
+          label="Selected Rack"
+          Icon={RackIcon}
+        ></Dropdown>
       </View>
 
       <View className="mt-6 mb-3 items-center">
@@ -75,7 +128,11 @@ const ListHeader: React.FC<ListHeaderProps> = ({
 const groupActivitiesByDate = (data: ActivityDTO[]) => {
   const groups: { [key: string]: ActivityDTO[] } = {};
   const now = new Date();
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const today = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate(),
+  ).getTime();
   const yesterday = today - 86400000;
 
   data.forEach((item) => {
@@ -111,7 +168,7 @@ export default function PlantCareScreen() {
   const handleNextStep = () => {
     setTutorialStep((prev) => {
       const next = prev + 1;
-      return next > TOTAL_STEPS ? 0 : next; 
+      return next > TOTAL_STEPS ? 0 : next;
     });
   };
 
@@ -149,11 +206,11 @@ export default function PlantCareScreen() {
           desc: "Review specific details for each activity.",
           image: require("@/assets/nuri/pointing-up.png"),
           position: { bottom: 0, right: -50 },
-          offset: 580, 
+          offset: 580,
           component: (
             <View style={{ width: screenWidth }} className="px-6">
-              <Text 
-                style={typography["button-bold"]} 
+              <Text
+                style={typography["button-bold"]}
                 className="text-black text-lg mb-3"
               >
                 February 10, 2026
@@ -176,7 +233,10 @@ export default function PlantCareScreen() {
 
   const currentTutorial = getTutorialContent(tutorialStep);
   const [activeTab, setActiveTab] = useState<"water" | "light">("water");
-  const [dateRange, setDateRange] = useState<{ start: Date | null; end: Date | null }>({
+  const [dateRange, setDateRange] = useState<{
+    start: Date | null;
+    end: Date | null;
+  }>({
     start: null,
     end: null,
   });
@@ -194,8 +254,14 @@ export default function PlantCareScreen() {
   const fetchActivities = useCallback(async () => {
     try {
       setLoading(true);
-      const startISO = dateRange.start ? new Date(new Date(dateRange.start).setHours(0, 0, 0, 0)).toISOString() : undefined;
-      const endISO = dateRange.end ? new Date(new Date(dateRange.end).setHours(23, 59, 59, 999)).toISOString() : undefined;
+      const startISO = dateRange.start
+        ? new Date(new Date(dateRange.start).setHours(0, 0, 0, 0)).toISOString()
+        : undefined;
+      const endISO = dateRange.end
+        ? new Date(
+            new Date(dateRange.end).setHours(23, 59, 59, 999),
+          ).toISOString()
+        : undefined;
 
       const response = await plantService.getPlantCareActivities(getPlantCare, {
         page: 1,
@@ -214,11 +280,17 @@ export default function PlantCareScreen() {
               id: item.id,
               type: (isWater ? "water" : "light") as "water" | "light",
               plantName: item.metadata?.ruleName || "Plants",
-              rackName: item.metadata?.rackName || item.rack?.name || "Unknown Rack",
-              time: dateObj.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }),
+              rackName:
+                item.metadata?.rackName || item.rack?.name || "Unknown Rack",
+              time: dateObj.toLocaleTimeString("en-US", {
+                hour: "2-digit",
+                minute: "2-digit",
+              }),
               date: dateObj,
               amount: item.metadata?.amount,
-              duration: item.metadata?.duration ? `${Math.round(item.metadata.duration / 60000)} mins` : undefined,
+              duration: item.metadata?.duration
+                ? `${Math.round(item.metadata.duration / 60000)} mins`
+                : undefined,
             };
           });
         setActivities(mappedData);
@@ -240,11 +312,20 @@ export default function PlantCareScreen() {
     setRefreshing(false);
   }, [fetchActivities]);
 
-  const filteredActivities = activities.filter((item) => item.type === activeTab);
+  const filteredActivities = activities.filter(
+    (item) => item.type === activeTab,
+  );
   const sections = groupActivitiesByDate(filteredActivities);
 
-  const waterChartData = activities.filter((a) => a.type === "water").map((a, i) => ({ timestamp: i, value: a.amount || 0 }));
-  const lightChartData = activities.filter((a) => a.type === "light").map((a, i) => ({ timestamp: i, value: a.duration ? parseInt(a.duration) : 0 }));
+  const waterChartData = activities
+    .filter((a) => a.type === "water")
+    .map((a, i) => ({ timestamp: i, value: a.amount || 0 }));
+  const lightChartData = activities
+    .filter((a) => a.type === "light")
+    .map((a, i) => ({
+      timestamp: i,
+      value: a.duration ? parseInt(a.duration) : 0,
+    }));
 
   return (
     <View className="flex-1 bg-[#F5F5F5]">
@@ -254,7 +335,10 @@ export default function PlantCareScreen() {
         renderItem={({ item }) => <ActivityItem {...item} />}
         renderSectionHeader={({ section: { title } }) => (
           <View className="bg-white py-3 px-6">
-            <Text style={typography["button-bold"]} className="text-black text-lg">
+            <Text
+              style={typography["button-bold"]}
+              className="text-black text-lg"
+            >
               {title}
             </Text>
           </View>
@@ -277,9 +361,11 @@ export default function PlantCareScreen() {
           </View>
         )}
         contentContainerStyle={{ paddingBottom: 40 }}
-        className="bg-white flex-1"
+        className="bg-white flex-1 px-6"
         stickySectionHeadersEnabled={false}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
       />
 
       {tutorialStep > 0 && currentTutorial && (
