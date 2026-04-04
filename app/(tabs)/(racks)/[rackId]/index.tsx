@@ -15,7 +15,7 @@ import { rackService } from "@/services/rackService";
 import { useFocusEffect } from "@react-navigation/native";
 import { useLocalSearchParams } from "expo-router";
 import React, { useCallback, useState } from "react";
-import { Image, ScrollView, Text, View } from "react-native";
+import { Alert, Image, ScrollView, Text, View } from "react-native";
 import DateIcon from "../../../../assets/images/icons/date.svg";
 import SoilIcon from "../../../../assets/images/icons/soil.svg";
 import { PLANT_IMAGES } from "../../../../utils/constants";
@@ -38,15 +38,60 @@ const RackInfo = () => {
   const [showModal, setShowModal] = useState(false);
   const [activePlant, setActivePlant] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [harvesting, setHarvesting] = useState(false);
 
   const { reading } = useRackSensor(rackId);
 
+  // ── Rack fetch ─────────────────────────────────────────────────────────────
   const { refetch: getRackInfo } = useFetch(`/racks/${rackId}`, {
     method: "GET",
     autoFetch: false,
     withAuth: true,
   });
 
+  // ── Harvest endpoints (per API docs) ──────────────────────────────────────
+  // key 2 → POST /racks/{rackId}/harvest        (Harvest All)
+  // key 1 → POST /racks/{rackId}/harvest-leaves (Harvest Leaves only)
+  // key 3 → POST /racks/{rackId}/harvest-seeds  (Take Some Seeds)
+  const { refetch: refetchHarvest } = useFetch(`/racks/${rackId}/harvest`, {
+    method: "POST",
+    autoFetch: false,
+    withAuth: true,
+  });
+
+  const { refetch: refetchHarvestLeaves } = useFetch(
+    `/racks/${rackId}/harvest-leaves`,
+    { method: "POST", autoFetch: false, withAuth: true },
+  );
+
+  const { refetch: refetchHarvestSeeds } = useFetch(
+    `/racks/${rackId}/harvest-seeds`,
+    { method: "POST", autoFetch: false, withAuth: true },
+  );
+
+  // ── Shared rack state setter ───────────────────────────────────────────────
+  const applyRackData = useCallback((rack: any) => {
+    if (rack.currentPlant) {
+      setActivePlant({
+        quantity: rack.quantity ?? 0,
+        plantedAt: rack.plantedAt ?? null,
+        plant: {
+          id: rack.currentPlantId,
+          name: rack.currentPlant.name,
+          type: rack.currentPlant.category,
+          recommendedSoil: rack.currentPlant.recommendedSoil,
+        },
+      });
+    } else {
+      setActivePlant({
+        quantity: rack.quantity ?? 0,
+        plantedAt: rack.plantedAt ?? null,
+        plant: null,
+      });
+    }
+  }, []);
+
+  // ── Load rack data on focus ────────────────────────────────────────────────
   useFocusEffect(
     useCallback(() => {
       let isActive = true;
@@ -54,32 +99,10 @@ const RackInfo = () => {
       const fetchRackData = async () => {
         try {
           if (isActive) setLoading(true);
-
           const rackResponse = await rackService.getRackbyId(getRackInfo);
-
           if (!isActive) return;
-
           const rack = rackResponse?.rack;
-          if (!rack) return;
-
-          if (rack.currentPlant) {
-            setActivePlant({
-              quantity: rack.quantity ?? 0,
-              plantedAt: rack.plantedAt ?? null,
-              plant: {
-                id: rack.currentPlantId,
-                name: rack.currentPlant.name,
-                type: rack.currentPlant.category,
-                recommendedSoil: rack.currentPlant.recommendedSoil,
-              },
-            });
-          } else {
-            setActivePlant({
-              quantity: rack.quantity ?? 0,
-              plantedAt: rack.plantedAt ?? null,
-              plant: null,
-            });
-          }
+          if (rack) applyRackData(rack);
         } catch (err) {
           console.error("Failed to fetch rack data:", err);
         } finally {
@@ -88,25 +111,67 @@ const RackInfo = () => {
       };
 
       if (rackId) fetchRackData();
-
       return () => {
         isActive = false;
       };
     }, [rackId]),
   );
 
-  const handleSubmit = useCallback(() => setShowModal(false), []);
+  // ── Harvest confirm ────────────────────────────────────────────────────────
+  const handleHarvestConfirm = useCallback(
+    async (selectedKey: number, seedQuantity: number) => {
+      const plantId = activePlant?.plant?.id;
+      if (!plantId) return;
+
+      setShowModal(false);
+      setHarvesting(true);
+
+      try {
+        if (selectedKey === 1) {
+          // Harvest Leaves only
+          await rackService.harvestLeaves(refetchHarvestLeaves, { plantId });
+        } else if (selectedKey === 2) {
+          // Harvest All
+          await rackService.harvestPlant(refetchHarvest, { plantId });
+        } else if (selectedKey === 3) {
+          // Take Some Seeds
+          await rackService.harvestSeeds(refetchHarvestSeeds, {
+            plantId,
+            quantity: seedQuantity,
+          });
+        }
+
+        Alert.alert("Success", "Harvest recorded successfully.");
+
+        // Refresh rack state after harvest
+        const rackResponse = await rackService.getRackbyId(getRackInfo);
+        const rack = rackResponse?.rack;
+        if (rack) applyRackData(rack);
+      } catch (err) {
+        console.error("Harvest failed:", err);
+        Alert.alert("Error", "Failed to record harvest. Please try again.");
+      } finally {
+        setHarvesting(false);
+      }
+    },
+    [
+      activePlant,
+      refetchHarvest,
+      refetchHarvestLeaves,
+      refetchHarvestSeeds,
+      getRackInfo,
+      applyRackData,
+    ],
+  );
+
   const handleCancel = useCallback(() => setShowModal(false), []);
   const handleHarvestPress = useCallback(() => setShowModal(true), []);
 
-  // 👇 Dito natin kukunin yung tamang image galing sa in-import mong constants
   const plantName = activePlant?.plant?.name?.toLowerCase();
-
-  // Kung walang match sa constants mo, mag-fall back siya sa default
   const imageSource =
     plantName && PLANT_IMAGES[plantName]
       ? PLANT_IMAGES[plantName]
-      : PLANT_IMAGES.default; // Make sure may 'default' key sa constants mo!
+      : PLANT_IMAGES.default;
 
   return (
     <>
@@ -117,7 +182,6 @@ const RackInfo = () => {
         >
           <View className="flex-1 justify-center items-center pl-8">
             <Image
-              // 👇 Ipasa ang source
               source={imageSource}
               className="w-72 h-72"
               resizeMode="contain"
@@ -243,14 +307,19 @@ const RackInfo = () => {
           </View>
         </ScrollView>
 
-        <BottomButton title="Mark as Harvested" onPress={handleHarvestPress} />
+        <BottomButton
+          title={harvesting ? "Harvesting..." : "Mark as Harvested"}
+          onPress={handleHarvestPress}
+          disabled={harvesting || loading || !activePlant?.plant}
+        />
       </View>
 
       <HarvestModal
+        currentSeeds={activePlant?.quantity ?? 0}
         isVisible={showModal}
         title="Harvest Plant"
         onCancel={handleCancel}
-        onConfirm={handleSubmit}
+        onConfirm={handleHarvestConfirm}
       />
     </>
   );

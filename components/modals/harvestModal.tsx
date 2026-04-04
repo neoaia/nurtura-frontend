@@ -9,23 +9,26 @@ import { RadioOption } from "../shared/radioOption";
 interface HarvestModalProps {
   isVisible: boolean;
   title: string;
-  message?: string;
+  currentSeeds: number;
   confirmText?: string;
   cancelText?: string;
-  onConfirm: (selectedKey: number | null) => void;
+  onConfirm: (selectedKey: number, seedQuantity: number) => void;
   onCancel: () => void;
 }
 
 export const HarvestModal: React.FC<HarvestModalProps> = ({
   isVisible,
   title,
-  message,
+  currentSeeds,
   confirmText = "Confirm",
   cancelText = "Cancel",
   onConfirm,
   onCancel,
 }) => {
   const [selectedKey, setSelectedKey] = useState<number | null>(null);
+  const [seedQuantity, setSeedQuantity] = useState(0);
+
+  const maxSeeds = Math.max(0, currentSeeds - 1);
 
   const harvestOptions = [
     {
@@ -45,12 +48,25 @@ export const HarvestModal: React.FC<HarvestModalProps> = ({
     },
   ];
 
+  const handleCancel = () => {
+    setSelectedKey(null);
+    setSeedQuantity(0);
+    onCancel();
+  };
+
+  const handleConfirm = () => {
+    if (selectedKey === null) return;
+    onConfirm(selectedKey, seedQuantity);
+    setSelectedKey(null);
+    setSeedQuantity(0);
+  };
+
   return (
     <Modal
       visible={isVisible}
       transparent={true}
       animationType="fade"
-      onRequestClose={onCancel}
+      onRequestClose={handleCancel}
     >
       <View className="flex-1 justify-center items-center bg-black/50 px-4">
         <View className="bg-white rounded-2xl p-4 w-full max-w-sm">
@@ -74,21 +90,34 @@ export const HarvestModal: React.FC<HarvestModalProps> = ({
               />
             </View>
           ))}
+
           {selectedKey === 3 && (
             <View className="w-full mb-8">
-              <QuantityPicker title="Seeds" quantity={0} />
+              <QuantityPicker
+                title="Seeds"
+                quantity={seedQuantity}
+                onSubtractPress={() =>
+                  setSeedQuantity((prev) => Math.max(0, prev - 1))
+                }
+                onAddPress={() =>
+                  setSeedQuantity((prev) => Math.min(maxSeeds, prev + 1))
+                }
+              />
             </View>
           )}
 
           <View className="flex-row gap-3 w-full mb-2">
             <View className="flex-1">
-              <HollowButton title={cancelText} onPress={onCancel} />
+              <HollowButton title={cancelText} onPress={handleCancel} />
             </View>
             <View className="flex-1">
               <PrimaryButton
                 title={confirmText}
-                onPress={() => onConfirm(selectedKey)}
-                disabled={selectedKey === null}
+                onPress={handleConfirm}
+                disabled={
+                  selectedKey === null ||
+                  (selectedKey === 3 && seedQuantity === 0)
+                }
               />
             </View>
           </View>
