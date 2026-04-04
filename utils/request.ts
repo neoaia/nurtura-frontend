@@ -1,9 +1,8 @@
 import { logger } from "./logger";
 
-
 export async function handleRequest<T>(
   operation: string,
-  requestFn: () => Promise<any>
+  requestFn: () => Promise<any>,
 ): Promise<T> {
   logger.log(operation);
 
@@ -21,9 +20,10 @@ export async function handleRequest<T>(
       throw new Error("No data received");
     }
 
-    if (response.status !== 200) {
-      logger.warn(`Unexpected status code: ${response.status}`);
-      throw new Error(`Unexpected status code: ${response.status}`);
+    const status = response.status;
+    if (status < 200 || status >= 300) {
+      logger.warn(`Unexpected status code: ${status}`);
+      throw new Error(`Unexpected status code: ${status}`);
     }
 
     logger.log(`${operation} - Success`);

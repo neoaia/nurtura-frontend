@@ -82,6 +82,7 @@ export interface GetRackActivitiesRequestDTO {
   limit?: number;
   startDate?: string; // ISO 8601
   endDate?: string; // ISO 8601
+  rackId?: string;
 }
 
 export interface GetRackActivitiesResponseDTO {

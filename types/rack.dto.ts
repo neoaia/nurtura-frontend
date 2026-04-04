@@ -145,3 +145,25 @@ export interface GetRackStatusResponseDTO {
   status: string;
   lastSeenAt: string;
 }
+
+// Harvest DTOs
+export interface HarvestLeavesRequestDTO {
+  plantId: string;
+}
+export interface HarvestLeavesResponseDTO {
+  message: string;
+}
+
+export interface HarvestSeedsRequestDTO {
+  plantId: string;
+  quantity: number;
+}
+export interface HarvestSeedsResponseDTO {
+  message: string;
+}
+export interface HarvestPlantRequestDTO {
+  plantId: string;
+}
+export interface HarvestPlantResponseDTO {
+  message: string;
+}

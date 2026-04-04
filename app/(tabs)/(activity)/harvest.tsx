@@ -3,8 +3,10 @@ import { HarvestItem } from "@/components/activity/harvestItem";
 import { PlantChart } from "@/components/activity/plantChart";
 import { OnboardingTutorialModal } from "@/components/onboarding/tutorialModal";
 import { DateRangePicker } from "@/components/shared/datetimepicker";
+import Dropdown, { DropdownOption } from "@/components/shared/dropdown";
 import useFetch from "@/hooks/useFetch";
 import { plantService } from "@/services/plantService";
+import { rackService } from "@/services/rackService";
 import { BasePlantItemDTO } from "@/types/activity.dto";
 import React, { useCallback, useEffect, useState } from "react";
 import {
@@ -14,6 +16,7 @@ import {
   Text,
   View,
 } from "react-native";
+import RackIcon from "../../../assets/images/icons/rack(gray).svg";
 
 const screenWidth = Dimensions.get("window").width;
 
@@ -23,12 +26,18 @@ interface ListHeaderProps {
   dateRange: { start: Date | null; end: Date | null };
   setDateRange: (range: { start: Date | null; end: Date | null }) => void;
   harvestChartData: { timestamp: number; value: number }[];
+  selectedRack: DropdownOption | null;
+  setSelectedRack: (rack: DropdownOption | null) => void;
 }
 
 const groupHarvestsByDate = (data: HarvestData[]) => {
   const groups: { [key: string]: HarvestData[] } = {};
   const now = new Date();
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const today = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate(),
+  ).getTime();
   const yesterday = today - 86400000;
 
   data.forEach((item) => {
@@ -36,61 +45,134 @@ const groupHarvestsByDate = (data: HarvestData[]) => {
     let title = "";
     if (itemDate === today) title = "Today";
     else if (itemDate === yesterday) title = "Yesterday";
-    else title = new Date(itemDate).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+    else
+      title = new Date(itemDate).toLocaleDateString("en-US", {
+        month: "long",
+        day: "numeric",
+        year: "numeric",
+      });
 
     if (!groups[title]) groups[title] = [];
     groups[title].push(item);
   });
 
-  return Object.keys(groups).map((date) => ({ title: date, data: groups[date] }));
+  return Object.keys(groups).map((date) => ({
+    title: date,
+    data: groups[date],
+  }));
 };
 
 const ListHeader: React.FC<ListHeaderProps> = ({
   dateRange,
   setDateRange,
   harvestChartData,
-}) => (
-  <View className="bg-white">
-    <View className="mt-4">
-      <DateRangePicker value={dateRange} onChange={setDateRange} />
-    </View>
-    <View className="items-center mt-6 mb-4">
-      <PlantChart
-        title="Harvesting"
-        data={harvestChartData}
-        yLabels={["15", "10", "5", "0"]}
-        tooltipLabel=""
-        chartWidth={screenWidth - 48}
-        chartColor="#86975A"
-      />
-    </View>
-  </View>
-);
+  selectedRack,
+  setSelectedRack,
+}) => {
+  const [rackOptions, setRackOptions] = useState<DropdownOption[]>([]);
+  const [loadingRacks, setLoadingRacks] = useState(false);
 
-export default function HarvestScreen() {
-  const [tutorialStep, setTutorialStep] = useState(1);
-  const TOTAL_STEPS = 2;
-  
-  const [dateRange, setDateRange] = useState<{ start: Date | null; end: Date | null }>({ start: null, end: null });
-  const [harvests, setHarvests] = useState<HarvestData[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-
-  const { refetch: getHarvestActivities } = useFetch("/racks/activities/harvest", {
+  const { refetch: fetchRacks } = useFetch("/racks", {
     method: "GET",
     autoFetch: false,
     withAuth: true,
   });
 
+  const loadRacks = async () => {
+    setLoadingRacks(true);
+    try {
+      const response = await rackService.getAllUserRack(fetchRacks);
+      if (response?.data) {
+        const options = response.data
+          .filter((rack: any) => rack.isActive)
+          .map((rack: any) => ({
+            id: rack.id,
+            label: rack.name,
+            value: rack.id,
+          }));
+        setRackOptions(options);
+      }
+    } catch (e) {
+      console.error("Failed to load racks:", e);
+    } finally {
+      setLoadingRacks(false);
+    }
+  };
+
+  useEffect(() => {
+    loadRacks();
+  }, []);
+  return (
+    <View className="bg-white">
+      <View className="mt-4 gap-3">
+        <DateRangePicker value={dateRange} onChange={setDateRange} />
+        <Dropdown
+          placeholder="Select your device here"
+          options={rackOptions}
+          value={selectedRack?.label}
+          onSelect={(item) => setSelectedRack(item)}
+          label="Selected Rack"
+          Icon={RackIcon}
+        ></Dropdown>
+      </View>
+      <View className="items-center mt-6 mb-4">
+        <PlantChart
+          title="Harvesting"
+          data={harvestChartData}
+          yLabels={["15", "10", "5", "0"]}
+          tooltipLabel=""
+          chartWidth={screenWidth - 48}
+          chartColor="#86975A"
+        />
+      </View>
+    </View>
+  );
+};
+
+export default function HarvestScreen() {
+  const [tutorialStep, setTutorialStep] = useState(1);
+  const TOTAL_STEPS = 2;
+
+  const [dateRange, setDateRange] = useState<{
+    start: Date | null;
+    end: Date | null;
+  }>({ start: null, end: null });
+  const [selectedRack, setSelectedRack] = useState<DropdownOption | null>(null);
+  const [harvests, setHarvests] = useState<HarvestData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const { refetch: getHarvestActivities } = useFetch(
+    "/racks/activities/harvest",
+    {
+      method: "GET",
+      autoFetch: false,
+      withAuth: true,
+    },
+  );
+
+  useEffect(() => {
+    return () => {
+      setSelectedRack(null);
+    };
+  }, []);
+
   const handleNextStep = () => {
     setTutorialStep((prev) => (prev < TOTAL_STEPS ? prev + 1 : 0));
   };
 
-  const harvestChartData = harvests.map((item, index) => ({ timestamp: index, value: item.weight }));
+  const harvestChartData = harvests.map((item, index) => ({
+    timestamp: index,
+    value: item.weight,
+  }));
 
-  const chartDataForTutorial = harvests.length > 0 
-    ? harvestChartData 
-    : [{ timestamp: 0, value: 10 }, { timestamp: 1, value: 15 }];
+  const chartDataForTutorial =
+    harvests.length > 0
+      ? harvestChartData
+      : [
+          { timestamp: 0, value: 10 },
+          { timestamp: 1, value: 15 },
+        ];
 
   const getTutorialContent = (step: number) => {
     switch (step) {
@@ -112,7 +194,7 @@ export default function HarvestScreen() {
                 chartColor="#86975A"
               />
             </View>
-          )
+          ),
         };
       case 2:
         return {
@@ -123,7 +205,12 @@ export default function HarvestScreen() {
           offset: 240,
           component: (
             <View style={{ width: screenWidth }} className="px-6">
-              <Text style={typography["button-bold"]} className="text-black text-lg mb-3">Today</Text>
+              <Text
+                style={typography["button-bold"]}
+                className="text-black text-lg mb-3"
+              >
+                Today
+              </Text>
               <HarvestItem
                 id="tutorial-harvest"
                 plantName="Lettuce"
@@ -132,7 +219,7 @@ export default function HarvestScreen() {
                 date={new Date()}
               />
             </View>
-          )
+          ),
         };
       default:
         return null;
@@ -144,22 +231,35 @@ export default function HarvestScreen() {
   const fetchHarvests = useCallback(async () => {
     try {
       setLoading(true);
-      const startISO = dateRange.start ? new Date(new Date(dateRange.start).setHours(0, 0, 0, 0)).toISOString() : undefined;
-      const endISO = dateRange.end ? new Date(new Date(dateRange.end).setHours(23, 59, 59, 999)).toISOString() : undefined;
+      const startISO = dateRange.start
+        ? new Date(new Date(dateRange.start).setHours(0, 0, 0, 0)).toISOString()
+        : undefined;
+      const endISO = dateRange.end
+        ? new Date(
+            new Date(dateRange.end).setHours(23, 59, 59, 999),
+          ).toISOString()
+        : undefined;
 
-      const response = await plantService.getPlantHarvestActivities(getHarvestActivities, {
-        page: 1,
-        limit: 50,
-        startDate: startISO,
-        endDate: endISO,
-      });
+      const response = await plantService.getPlantHarvestActivities(
+        getHarvestActivities,
+        {
+          page: 1,
+          limit: 50,
+          startDate: startISO,
+          endDate: endISO,
+          rackId: selectedRack?.value,
+        },
+      );
 
       if (response && response.data) {
         const mappedData: HarvestData[] = response.data.map((item: any) => ({
           id: item.id,
           plantName: item.metadata?.plantName || "Unknown Plant",
           rackName: item.metadata?.rackName || item.rackId || "Unknown Rack",
-          time: new Date(item.timestamp).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }),
+          time: new Date(item.timestamp).toLocaleTimeString("en-US", {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
           date: new Date(item.timestamp),
           weight: item.metadata?.quantity || 0,
         }));
@@ -170,9 +270,11 @@ export default function HarvestScreen() {
     } finally {
       setLoading(false);
     }
-  }, [dateRange, getHarvestActivities]);
+  }, [dateRange, selectedRack, getHarvestActivities]);
 
-  useEffect(() => { fetchHarvests(); }, [fetchHarvests]);
+  useEffect(() => {
+    fetchHarvests();
+  }, [fetchHarvests]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -188,13 +290,16 @@ export default function HarvestScreen() {
         sections={sections}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
-          <View className="px-6"> 
+          <View className="px-6">
             <HarvestItem {...item} />
           </View>
         )}
         renderSectionHeader={({ section: { title } }) => (
           <View className="bg-white py-3 px-6">
-            <Text style={typography["button-bold"]} className="text-black text-lg">
+            <Text
+              style={typography["button-bold"]}
+              className="text-black text-lg"
+            >
               {title}
             </Text>
           </View>
@@ -205,6 +310,8 @@ export default function HarvestScreen() {
               dateRange={dateRange}
               setDateRange={setDateRange}
               harvestChartData={harvestChartData}
+              selectedRack={selectedRack}
+              setSelectedRack={setSelectedRack}
             />
           </View>
         }
