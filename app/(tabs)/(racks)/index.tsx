@@ -60,7 +60,8 @@ export default function RacksScreen() {
       const message =
         err instanceof Error ? err.message : "Failed to load racks";
       setError(message);
-      setRacks([]);
+      // Don't clear existing racks on refresh failure — keep stale data visible
+      setRacks((prev) => prev);
     } finally {
       setLoading(false);
     }
@@ -77,10 +78,10 @@ export default function RacksScreen() {
       let isScreenActive = true;
 
       const loadData = async () => {
-        if (isScreenActive) {
-          if (racks.length === 0) setLoading(true);
-          await fetchRacks();
-        }
+        if (!isScreenActive) return;
+        // Only show skeleton on first ever load (no cached racks yet)
+        if (racks.length === 0) setLoading(true);
+        await fetchRacks();
       };
 
       loadData();
@@ -88,7 +89,9 @@ export default function RacksScreen() {
       return () => {
         isScreenActive = false;
       };
-    }, [fetchRacks, racks.length]),
+    }, [fetchRacks]),
+    // Removed `racks.length` from deps — it was causing fetchRacks to re-register
+    // every time a rack was added, leading to duplicate calls
   );
 
   const handleCardPress = useCallback((rackId: string) => {
@@ -119,7 +122,7 @@ export default function RacksScreen() {
         </Text>
 
         <TouchableOpacity onPress={handlePreviouslyOwned} className="pr-1">
-          <ArchiveButton width={22} height={22}></ArchiveButton>
+          <ArchiveButton width={22} height={22} />
         </TouchableOpacity>
       </View>
     ),
@@ -144,13 +147,20 @@ export default function RacksScreen() {
     [handleAddRack],
   );
 
-  // ─── Content area based on state ───────────────────────────────────────────
+  // ─── Render logic ──────────────────────────────────────────────────────────
+  //
+  // Priority order:
+  //   1. If we have racks → show them immediately (websocket connects in background)
+  //   2. If still on first load (no racks yet) → skeleton
+  //   3. If fetch failed with no racks → error state
+  //   4. If fetch succeeded but no active racks → empty state
 
-  const isLoadingState = (loading || refreshing) && racks.length === 0;
-  const isErrorState = !!error && racks.length === 0 && !isLoadingState;
-  const isEmptyState = !loading && !error && racks.length === 0;
+  const hasRacks = racks.length > 0;
+  const isFirstLoad = loading && !hasRacks;
+  const isErrorState = !!error && !hasRacks && !isFirstLoad;
+  const isEmptyState = !loading && !error && !hasRacks;
 
-  if (isLoadingState) {
+  if (isFirstLoad) {
     return (
       <SafeAreaView className="bg-white flex-1">
         <FlatList
@@ -233,6 +243,7 @@ export default function RacksScreen() {
     );
   }
 
+  // ── Main list — renders as soon as racks data arrives ──────────────────────
   return (
     <SafeAreaView className="bg-white flex-1">
       <FlatList

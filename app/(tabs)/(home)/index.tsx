@@ -1,9 +1,10 @@
 import { typography } from "@/assets/fonts/Text";
 import { RecentActivityBarSkeleton } from "@/components/home/skeleton/recentActivityBarSkeleton";
 import { SummaryCardSkeleton } from "@/components/home/skeleton/summaryCardSkeleton";
+import { useAsyncState } from "@/hooks/useAsyncState";
 import useFetch from "@/hooks/useFetch";
 import { router, useFocusEffect } from "expo-router";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   ScrollView,
   StatusBar,
@@ -17,35 +18,253 @@ import InactiveNotificationIcon from "../../../assets/images/icons/inactive_noti
 import { Highlight } from "../../../components/home/highlight";
 import { RecentActivityBar } from "../../../components/home/recentActivityBar";
 import { SummaryCard } from "../../../components/home/summaryCard";
-import { useHome } from "../../../hooks/useHome";
+import { plantService } from "../../../services/plantService";
 import { userService } from "../../../services/userService";
+import {
+  AddRackRequestDTO,
+  AddRackResponseDTO,
+  NotificationsResponseDTO,
+} from "../../../types/home.dto";
 import { UserDetails } from "../../../types/interface";
 
 const NOTIFICATION_ICON_SIZE = 24;
 
+const mockApiResponse = {
+  user: { name: "User", hasNotifications: true },
+  highlight: {
+    title: "Farm Efficiently",
+    description: "Start growing your plant with Nurtura Racks",
+    buttonText: "Add Rack",
+  },
+};
+
 export default function HomeScreen() {
-  const [savedValues, setSavedValues] = useState<Partial<UserDetails>>({});
-  const [formValues, setFormValues] = useState<Partial<UserDetails>>({});
+  // ── States ────────────────────────────────────────────────────────────────
+  const [userInfo, setUserInfo] = useState<Partial<UserDetails>>({});
+  const [user] = useState(mockApiResponse.user);
+  const [highlight] = useState(mockApiResponse.highlight);
 
   const {
-    user,
-    highlight,
-    summary,
-    recentActivity,
-    isSummaryLoading,
-    isActivityLoading,
-    error,
-    refetch,
-    addRack,
-    getNotifications,
-  } = useHome();
+    data: summary,
+    loading: isSummaryLoading,
+    setData: setSummary,
+    setLoading: setSummaryLoading,
+  } = useAsyncState<any[]>([]);
 
+  const {
+    data: recentActivity,
+    loading: isActivityLoading,
+    setData: setRecentActivity,
+    setLoading: setActivityLoading,
+  } = useAsyncState<any[]>([]);
+
+  // ── useFetch hooks ────────────────────────────────────────────────────────
   const { refetch: getUserInfo } = useFetch("/users", {
     method: "GET",
     autoFetch: false,
     withAuth: true,
   });
 
+  const { refetch: fetchRacks } = useFetch("/racks", {
+    method: "GET",
+    autoFetch: false,
+    withAuth: true,
+  });
+
+  const { refetch: fetchPlants } = useFetch("/plants", {
+    method: "GET",
+    autoFetch: false,
+    withAuth: true,
+  });
+
+  const { refetch: addRackRequest } = useFetch("/racks", {
+    method: "POST",
+    autoFetch: false,
+    withAuth: true,
+  });
+
+  const { refetch: getPlantCare } = useFetch("/racks/activities/plant-care", {
+    method: "GET",
+    autoFetch: false,
+    withAuth: true,
+  });
+
+  // ── Ref mirrors so callbacks always use latest refetch ────────────────────
+  const fetchRacksRef = useRef(fetchRacks);
+  const fetchPlantsRef = useRef(fetchPlants);
+  const getPlantCareRef = useRef(getPlantCare);
+  const getUserInfoRef = useRef(getUserInfo);
+  const addRackRequestRef = useRef(addRackRequest);
+
+  fetchRacksRef.current = fetchRacks;
+  fetchPlantsRef.current = fetchPlants;
+  getPlantCareRef.current = getPlantCare;
+  getUserInfoRef.current = getUserInfo;
+  addRackRequestRef.current = addRackRequest;
+
+  // ── Generation counters — latest call wins, stale calls are discarded ─────
+  // Problem this solves: useFocusEffect fires multiple times (mount + focus).
+  // Each fire calls fetchSummary/fetchActivity, resetting skeleton each time.
+  // With this pattern, only the LATEST call's result ever updates the UI.
+  const summaryGenRef = useRef(0);
+  const activityGenRef = useRef(0);
+
+  // ── Fetch Logic ───────────────────────────────────────────────────────────
+  const fetchUserInfo = useCallback(async () => {
+    try {
+      const response = await userService.getUser(getUserInfoRef.current);
+      if (response?.userInfo) {
+        setUserInfo({
+          firstName: response.userInfo.firstName || "",
+          middleName: response.userInfo.middleName || "",
+          lastName: response.userInfo.lastName || "",
+          suffix: response.userInfo.suffix || "",
+          block: response.userInfo.block || "",
+          street: response.userInfo.street || "",
+          barangay: response.userInfo.barangay || "",
+          city: response.userInfo.city || "",
+        });
+      }
+    } catch (error) {
+      console.error("Failed to fetch user info:", error);
+    }
+  }, []);
+
+  const fetchSummary = useCallback(async () => {
+    // Stamp this call — if a newer call starts before this one finishes,
+    // this call's result will be silently discarded.
+    const gen = ++summaryGenRef.current;
+    setSummaryLoading();
+
+    try {
+      const [racksResult, plantsResult] = await Promise.all([
+        fetchRacksRef.current().catch((e) => {
+          console.error("Failed to fetch racks:", e);
+          return null;
+        }),
+        fetchPlantsRef.current().catch((e) => {
+          console.error("Failed to fetch plants:", e);
+          return null;
+        }),
+      ]);
+
+      // Stale check: a newer fetchSummary() call has since started, bail out
+      if (gen !== summaryGenRef.current) return;
+
+      const racksCount =
+        racksResult?.data?.data?.filter((rack: any) => rack.isActive === true)
+          .length ?? 0;
+      const plantsCount = plantsResult?.data?.meta?.totalItems ?? 0;
+
+      // ✅ Atomic: clears skeleton + sets data in one render
+      setSummary([
+        {
+          id: "racks",
+          type: "racks",
+          value: racksCount,
+          isActive: !!racksResult?.data?.data,
+        },
+        {
+          id: "plants",
+          type: "plants",
+          value: plantsCount,
+          isActive: !!plantsResult?.data?.data,
+        },
+      ]);
+    } catch (err) {
+      console.error("Summary error:", err);
+      if (gen !== summaryGenRef.current) return;
+      setSummary([]);
+    }
+  }, []);
+
+  const fetchActivity = useCallback(async () => {
+    const gen = ++activityGenRef.current;
+    setActivityLoading();
+
+    try {
+      const careResponse = await plantService
+        .getPlantCareActivities(getPlantCareRef.current, { page: 1, limit: 50 })
+        .catch((e) => {
+          console.error("Failed to fetch plant care:", e);
+          return null;
+        });
+
+      if (gen !== activityGenRef.current) return;
+
+      if (!careResponse?.data) {
+        setRecentActivity([]);
+        return;
+      }
+
+      const activities = careResponse.data
+        .filter((item: any) => item.eventType?.endsWith("_OFF"))
+        .sort(
+          (a: any, b: any) =>
+            new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
+        )
+        .slice(0, 3)
+        .map((item: any) => {
+          const isWater = item.eventType.includes("WATERING");
+          const dateObj = new Date(item.timestamp);
+          const durationMs = item.metadata?.duration;
+          const duration = durationMs
+            ? `${Math.round(durationMs / 60000)} mins`
+            : undefined;
+
+          return {
+            id: item.id,
+            type: isWater ? "water" : "light",
+            action: isWater ? "Watered the" : "Gave light to",
+            plant: item.metadata?.ruleName || "Plants",
+            timestamp: dateObj.toLocaleTimeString("en-US", {
+              hour: "2-digit",
+              minute: "2-digit",
+            }),
+            duration,
+          };
+        });
+
+      setRecentActivity(activities);
+    } catch (err) {
+      console.error("Activity error:", err);
+      if (gen !== activityGenRef.current) return;
+      setRecentActivity([]);
+    }
+  }, []);
+
+  const getNotifications = async (): Promise<NotificationsResponseDTO> => {
+    try {
+      return { notifications: [], unreadCount: 0 };
+    } catch (err) {
+      console.error("Error fetching notifications:", err);
+      throw err;
+    }
+  };
+
+  const addRack = async (
+    rackData: AddRackRequestDTO,
+  ): Promise<AddRackResponseDTO> => {
+    try {
+      const { data, error } = await addRackRequestRef.current({
+        body: rackData,
+      });
+      if (error || !data) {
+        return {
+          success: false,
+          message: error?.message || "Failed to add rack",
+        };
+      }
+      fetchSummary();
+      fetchActivity();
+      return { success: true, message: "Rack added successfully" };
+    } catch (err) {
+      console.error("Error adding rack:", err);
+      throw err;
+    }
+  };
+
+  // ── Handlers ──────────────────────────────────────────────────────────────
   const handleNotificationPress = async () => {
     try {
       await getNotifications();
@@ -69,51 +288,27 @@ export default function HomeScreen() {
     }
   };
 
-  const getUserInfoData = async () => {
-    try {
-      const response = await userService.getUser(getUserInfo);
-      if (response?.userInfo) {
-        setSavedValues({
-          firstName: response.userInfo.firstName || "",
-          middleName: response.userInfo.middleName || "",
-          lastName: response.userInfo.lastName || "",
-          suffix: response.userInfo.suffix || "",
-          block: response.userInfo.block || "",
-          street: response.userInfo.street || "",
-          barangay: response.userInfo.barangay || "",
-          city: response.userInfo.city || "",
-        });
-      }
-    } catch (error) {
-      console.error("Failed to fetch user info:", error);
-    }
-  };
+  // ── INITIAL LOAD (mount only) — shows skeleton, fires exactly once ────────
+  useEffect(() => {
+    fetchUserInfo();
+    fetchSummary();
+    fetchActivity();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
+  // ── SILENT REFRESH on re-focus — NO skeleton reset, just background update ─
+  // useAsyncState's setLoading() is a no-op once hasLoaded = true,
+  // so re-focusing will never flash the skeleton again.
   useFocusEffect(
     useCallback(() => {
-      getUserInfoData();
-      refetch();
+      fetchUserInfo();
+      fetchSummary();
+      fetchActivity();
+      // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []),
   );
 
-  useEffect(() => {
-    setFormValues(savedValues);
-  }, [savedValues]);
-
-  // Global Error state na lang ang ibinabato dito
-  if (error) {
-    return (
-      <View className="flex-1 bg-white items-center justify-center">
-        <Text className="text-red-500 mb-4">{error}</Text>
-        <TouchableOpacity
-          onPress={refetch}
-          className="px-4 py-2 bg-blue-500 rounded"
-        >
-          <Text className="text-white">Retry</Text>
-        </TouchableOpacity>
-      </View>
-    );
-  }
+  const displayName = userInfo.firstName || user.name;
 
   return (
     <SafeAreaView className="flex-1 bg-white">
@@ -122,10 +317,9 @@ export default function HomeScreen() {
         className="flex-1 bg-white"
         showsVerticalScrollIndicator={false}
       >
-        {/* Header - Laging lumalabas agad habang hinihintay ang iba */}
         <View className="flex flex-row justify-between items-center px-5 mt-7">
           <Text style={typography["h1-bold"]} className="text-black">
-            Hi {formValues.firstName || user.name}!
+            Hi {displayName}!
           </Text>
           <TouchableOpacity onPress={handleNotificationPress}>
             {user.hasNotifications ? (
@@ -143,7 +337,6 @@ export default function HomeScreen() {
         </View>
 
         <View className="flex-1 bg-white mt-2">
-          {/* Seryoso ang UX dito: Kung loading ang summary, skeleton lang muna */}
           <View className="bg-white py-5 w-full">
             {isSummaryLoading ? (
               <SummaryCardSkeleton />
@@ -152,7 +345,6 @@ export default function HomeScreen() {
             )}
           </View>
 
-          {/* Highlight Section (assuming static ito or mabilis makuha) */}
           <View className="px-4">
             <Highlight
               title={highlight.title}
@@ -162,7 +354,6 @@ export default function HomeScreen() {
             />
           </View>
 
-          {/* Activity Section - Hiwalay na loading state din */}
           <View className="px-4 pb-8 mt-2">
             {isActivityLoading ? (
               <RecentActivityBarSkeleton />
