@@ -1,203 +1,242 @@
 import { typography } from "@/assets/fonts/Text";
 import {
-    RackActivityItem,
-    RackActivityItemProps,
+  RackActivityItem,
+  RackActivityItemProps,
 } from "@/components/activity/rackActivityItem";
+import { OnboardingTutorialModal } from "@/components/onboarding/tutorialModal";
 import { DateRangePicker } from "@/components/shared/datetimepicker";
 import useFetch from "@/hooks/useFetch";
 import { activityService } from "@/services/activityService";
 import { GetRackActivitiesResponseDTO } from "@/types/activity.dto";
 import React, { useCallback, useEffect, useState } from "react";
-import { RefreshControl, SectionList, Text, View } from "react-native";
+import { Dimensions, RefreshControl, SectionList, Text, View } from "react-native";
+
+const screenWidth = Dimensions.get("window").width;
 
 interface ListHeaderProps {
-  dateRange: { start: Date | null; end: Date | null };
-  setDateRange: (range: { start: Date | null; end: Date | null }) => void;
+    dateRange: { start: Date | null; end: Date | null };
+    setDateRange: (range: { start: Date | null; end: Date | null }) => void;
 }
 
 const ListHeader: React.FC<ListHeaderProps> = ({ dateRange, setDateRange }) => (
-  <View className="bg-white">
-    <View className="mt-4 mb-4">
-      <DateRangePicker value={dateRange} onChange={setDateRange} />
+    <View className="bg-white">
+        <View className="mt-4 mb-4">
+            <DateRangePicker value={dateRange} onChange={setDateRange} />
+        </View>
     </View>
-  </View>
 );
 
 const groupActivitiesByDate = (
-  data: (RackActivityItemProps & { timestamp: string })[],
+    data: (RackActivityItemProps & { timestamp: string })[],
 ) => {
-  const groups: { [key: string]: RackActivityItemProps[] } = {};
-  const now = new Date();
-  const today = new Date(
-    now.getFullYear(),
-    now.getMonth(),
-    now.getDate(),
-  ).getTime();
-  const yesterday = today - 86400000;
+    const groups: { [key: string]: RackActivityItemProps[] } = {};
+    const now = new Date();
+    const today = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate(),
+    ).getTime();
+    const yesterday = today - 86400000;
 
-  data.forEach((item) => {
-    const itemDate = new Date(item.timestamp).setHours(0, 0, 0, 0);
-    let title = "";
+    data.forEach((item) => {
+        const itemDate = new Date(item.timestamp).setHours(0, 0, 0, 0);
+        let title = "";
 
-    if (itemDate === today) {
-      title = "Today";
-    } else if (itemDate === yesterday) {
-      title = "Yesterday";
-    } else {
-      title = new Date(itemDate).toLocaleDateString("en-US", {
-        month: "long",
-        day: "numeric",
-        year: "numeric",
-      });
-    }
+        if (itemDate === today) {
+            title = "Today";
+        } else if (itemDate === yesterday) {
+            title = "Yesterday";
+        } else {
+            title = new Date(itemDate).toLocaleDateString("en-US", {
+                month: "long",
+                day: "numeric",
+                year: "numeric",
+            });
+        }
 
-    if (!groups[title]) groups[title] = [];
-    groups[title].push(item);
-  });
+        if (!groups[title]) groups[title] = [];
+        groups[title].push(item);
+    });
 
-  return Object.keys(groups).map((date) => ({
-    title: date,
-    data: groups[date],
-  }));
+    return Object.keys(groups).map((date) => ({
+        title: date,
+        data: groups[date],
+    }));
 };
 
 const toActivityItemProps = (
-  item: any, // or item: RackActivityDTO kung naka-update na ang interface mo
+    item: any,
 ): RackActivityItemProps & { timestamp: string } => {
-  const dateObj = new Date(item.timestamp);
+    const dateObj = new Date(item.timestamp);
+    const time = dateObj.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
+    const dateStr = dateObj.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+    const isRenamed = item.eventType === "RACK_RENAMED";
+    const rackNameNew = isRenamed ? item.metadata?.newName : undefined;
+    const fetchedRackName = isRenamed ? item.metadata?.oldName : item.metadata?.rackName;
 
-  const time = dateObj.toLocaleTimeString("en-US", {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-
-  const dateStr = dateObj.toLocaleDateString("en-US", {
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-  });
-
-  const isRenamed = item.eventType === "RACK_RENAMED";
-
-  // Kunin ang newName kung RENAMED event ito
-  const rackNameNew = isRenamed ? item.metadata?.newName : undefined;
-
-  // Kung RENAMED, 'oldName' ang kukunin natin. Kung hindi, 'rackName'.
-  const fetchedRackName = isRenamed
-    ? item.metadata?.oldName
-    : item.metadata?.rackName;
-
-  return {
-    id: item.id,
-    eventType: item.eventType,
-    // Ipapasa natin ang fetchedRackName na nakuha natin sa itaas
-    rackName:
-      fetchedRackName || item.rack?.name || item.rackId || "Unknown Rack",
-    rackNameNew,
-    date: dateStr,
-    time,
-    timestamp: item.timestamp,
-  };
-};
-const RackActivity = () => {
-  const [dateRange, setDateRange] = useState<{
-    start: Date | null;
-    end: Date | null;
-  }>({ start: null, end: null });
-
-  const [activities, setActivities] = useState<
-    (RackActivityItemProps & { timestamp: string })[]
-  >([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-
-  const { refetch: getRackActivities } = useFetch("/racks/activities", {
-    method: "GET",
-    autoFetch: false,
-    withAuth: true,
-  });
-
-  const fetchActivities = useCallback(async () => {
-    try {
-      // FIX 2: Gumawa muna tayo ng 'new Date()' copy bago mag .setHours
-      // para hindi ma-mutate yung original state sa Date Picker mo.
-      const startISO = dateRange.start
-        ? new Date(new Date(dateRange.start).setHours(0, 0, 0, 0)).toISOString()
-        : undefined;
-      const endISO = dateRange.end
-        ? new Date(
-            new Date(dateRange.end).setHours(23, 59, 59, 999),
-          ).toISOString()
-        : undefined;
-
-      const response: GetRackActivitiesResponseDTO =
-        await activityService.getRackActivities(getRackActivities, {
-          page: 1,
-          limit: 50,
-          startDate: startISO,
-          endDate: endISO,
-        });
-
-      if (response && response.data) {
-        setActivities(response.data.map(toActivityItemProps));
-      }
-    } catch (error) {
-      console.error("Failed to fetch rack activities:", error);
-      setActivities([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [getRackActivities, dateRange]);
-
-  useEffect(() => {
-    setLoading(true);
-    fetchActivities();
-  }, [fetchActivities]);
-
-  const onRefresh = useCallback(async () => {
-    setRefreshing(true);
-    await fetchActivities();
-    setRefreshing(false);
-  }, [fetchActivities]);
-
-  const sections = groupActivitiesByDate(activities);
-
-  return (
-    <SectionList
-      sections={sections}
-      keyExtractor={(item) => item.id}
-      renderItem={({ item }) => <RackActivityItem {...item} />}
-      renderSectionHeader={({ section: { title } }) => (
-        <View className="bg-white py-3">
-          <Text
-            style={typography["button-bold"]}
-            className="text-black text-lg"
-          >
-            {title}
-          </Text>
-        </View>
-      )}
-      ListHeaderComponent={
-        <ListHeader dateRange={dateRange} setDateRange={setDateRange} />
-      }
-      contentContainerStyle={{ paddingBottom: 40, paddingHorizontal: 24 }}
-      className="bg-white flex-1"
-      stickySectionHeadersEnabled={false}
-      showsVerticalScrollIndicator={false}
-      refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-      }
-      ListEmptyComponent={() => (
-        <View className="items-center mt-10">
-          <Text style={typography["label"]} className="text-grayText">
-            {loading
-              ? "Loading activity..."
-              : "No rack activity found for this range."}
-          </Text>
-        </View>
-      )}
-    />
-  );
+    return {
+        id: item.id,
+        eventType: item.eventType,
+        rackName: fetchedRackName || item.rack?.name || item.rackId || "Unknown Rack",
+        rackNameNew,
+        date: dateStr,
+        time,
+        timestamp: item.timestamp,
+    };
 };
 
-export default RackActivity;
+export default function RackActivity() {
+    const [dateRange, setDateRange] = useState<{ start: Date | null; end: Date | null }>({ start: null, end: null });
+    const [tutorialStep, setTutorialStep] = useState(1);
+    const TOTAL_STEPS = 2;
+
+    const [activities, setActivities] = useState<(RackActivityItemProps & { timestamp: string })[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
+
+    const { refetch: getRackActivities } = useFetch("/racks/activities", {
+        method: "GET",
+        autoFetch: false,
+        withAuth: true,
+    });
+
+    const handleNextStep = () => {
+        setTutorialStep((prev) => (prev < TOTAL_STEPS ? prev + 1 : 0));
+    };
+
+    const getTutorialContent = (step: number) => {
+        switch (step) {
+            case 1:
+                return {
+                    title: "Activity Calendar",
+                    desc: "Filter your rack history by date! Easily find exactly when a rack was added, renamed, or modified.",
+                    image: require("@/assets/nuri/pointing-up.png"),
+                    position: { bottom: 0, right: -50 },
+                    offset: 180,
+                    component: (
+                        <View className="px-6">
+                            <DateRangePicker value={dateRange} onChange={() => { }} />
+                        </View>
+                    )
+                };
+            case 2:
+                return {
+                    title: "Rack Updates",
+                    desc: "Stay informed about your hardware! Track every name change and system update across your indoor farm.",
+                    image: require("@/assets/nuri/joyful.png"),
+                    position: { bottom: 20, left: -80 },
+                    offset: 200,
+                    component: (
+                        <View style={{ width: screenWidth }} className="px-6">
+                            <Text style={typography["button-bold"]} className="text-black text-lg mb-3">Today</Text>
+                            <RackActivityItem
+                                id="tutorial-rack"
+                                eventType="RACK_RENAMED"
+                                rackName="Old Rack Name"
+                                rackNameNew="New Smart Rack"
+                                date="April 3, 2026"
+                                time="01:30 PM"
+                            />
+                        </View>
+                    )
+                };
+            default:
+                return null;
+        }
+    };
+
+    const currentTutorial = getTutorialContent(tutorialStep);
+
+    const fetchActivities = useCallback(async () => {
+        try {
+            const startISO = dateRange.start ? new Date(new Date(dateRange.start).setHours(0, 0, 0, 0)).toISOString() : undefined;
+            const endISO = dateRange.end ? new Date(new Date(dateRange.end).setHours(23, 59, 59, 999)).toISOString() : undefined;
+
+            const response: GetRackActivitiesResponseDTO = await activityService.getRackActivities(getRackActivities, {
+                page: 1,
+                limit: 50,
+                startDate: startISO,
+                endDate: endISO,
+            });
+
+            if (response && response.data) {
+                setActivities(response.data.map(toActivityItemProps));
+            }
+        } catch (error) {
+            console.error("Failed to fetch rack activities:", error);
+            setActivities([]);
+        } finally {
+            setLoading(false);
+        }
+    }, [getRackActivities, dateRange]);
+
+    useEffect(() => {
+        setLoading(true);
+        fetchActivities();
+    }, [fetchActivities]);
+
+    const onRefresh = useCallback(async () => {
+        setRefreshing(true);
+        await fetchActivities();
+        setRefreshing(false);
+    }, [fetchActivities]);
+
+    const sections = groupActivitiesByDate(activities);
+
+    return (
+        <View className="flex-1 bg-white">
+            <SectionList
+                sections={sections}
+                keyExtractor={(item) => item.id}
+                renderItem={({ item }) => (
+                    <View className="px-6">
+                        <RackActivityItem {...item} />
+                    </View>
+                )}
+                renderSectionHeader={({ section: { title } }) => (
+                    <View className="bg-white py-3 px-6">
+                        <Text style={typography["button-bold"]} className="text-black text-lg">
+                            {title}
+                        </Text>
+                    </View>
+                )}
+                ListHeaderComponent={
+                    <View className="px-6">
+                        <ListHeader 
+                            dateRange={dateRange} 
+                            setDateRange={setDateRange} 
+                        />
+                    </View>
+                }
+                contentContainerStyle={{ paddingBottom: 40 }}
+                className="bg-white flex-1"
+                stickySectionHeadersEnabled={false}
+                showsVerticalScrollIndicator={false}
+                refreshControl={
+                    <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+                }
+                ListEmptyComponent={() => (
+                    <View className="items-center mt-10 px-6">
+                        <Text style={typography["label"]} className="text-grayText">
+                            {loading ? "Loading activity..." : "No rack activity found for this range."}
+                        </Text>
+                    </View>
+                )}
+            />
+
+            {currentTutorial && (
+                <OnboardingTutorialModal
+                    visible={tutorialStep > 0}
+                    onClose={handleNextStep}
+                    title={currentTutorial.title}
+                    subtitle={currentTutorial.desc}
+                    topOffset={currentTutorial.offset}
+                    characterImage={currentTutorial.image}
+                    characterPosition={currentTutorial.position}
+                >
+                    {currentTutorial.component}
+                </OnboardingTutorialModal>
+            )}
+        </View>
+    );
+}

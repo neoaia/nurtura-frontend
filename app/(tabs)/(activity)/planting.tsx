@@ -1,17 +1,18 @@
 import { typography } from "@/assets/fonts/Text";
 import { PlantChart } from "@/components/activity/plantChart";
 import { PlantItem } from "@/components/activity/plantingItem";
+import { OnboardingTutorialModal } from "@/components/onboarding/tutorialModal"; // Added
 import { DateRangePicker } from "@/components/shared/datetimepicker";
 import useFetch from "@/hooks/useFetch";
 import { plantService } from "@/services/plantService";
 import { PlantedItemDTO } from "@/types/activity.dto";
 import React, { useCallback, useEffect, useState } from "react";
 import {
-    Dimensions,
-    RefreshControl,
-    SectionList,
-    Text,
-    View,
+  Dimensions,
+  RefreshControl,
+  SectionList,
+  Text,
+  View,
 } from "react-native";
 
 const screenWidth = Dimensions.get("window").width;
@@ -82,27 +83,79 @@ const ListHeader: React.FC<ListHeaderProps> = ({
 );
 
 export default function PlantingScreen() {
-  const [dateRange, setDateRange] = useState<{
-    start: Date | null;
-    end: Date | null;
-  }>({
-    start: null,
-    end: null,
-  });
+    const [dateRange, setDateRange] = useState<{ start: Date | null; end: Date | null }>({ start: null, end: null });
+    const [tutorialStep, setTutorialStep] = useState(1);
+    const TOTAL_STEPS = 2;
+    const [plants, setPlants] = useState<PlantedItemDTO[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
 
-  const [plants, setPlants] = useState<PlantedItemDTO[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
+    const { refetch: getPlantingActivities } = useFetch("/racks/activities/planting", {
+        method: "GET",
+        autoFetch: false,
+        withAuth: true,
+    });
 
-  // Setup useFetch para sa planting activities
-  const { refetch: getPlantingActivities } = useFetch(
-    "/racks/activities/planting",
-    {
-      method: "GET",
-      autoFetch: false,
-      withAuth: true,
-    },
-  );
+    const handleNextStep = () => {
+        setTutorialStep((prev) => (prev < TOTAL_STEPS ? prev + 1 : 0));
+    };
+
+    const getTutorialContent = (step: number) => {
+        const chartDataForTutorial = plants.length > 0 
+            ? plants.map((item, index) => ({ timestamp: index, value: parseInt(item.quantity) || 0 }))
+            : [{ timestamp: 0, value: 5 }, { timestamp: 1, value: 12 }];
+
+        switch (step) {
+            case 1:
+                return {
+                    title: "Planting Chart",
+                    desc: "See when each plant began its journey! Monitor planting dates and early growth with ease.",
+                    image: require("@/assets/nuri/pointing-up.png"),
+                    position: { bottom: -20, right: -50 },
+                    offset: 80,
+                    component: (
+                        <View className="items-center w-full">
+                            <PlantChart
+                                title="Planting"
+                                data={chartDataForTutorial}
+                                yLabels={["15", "10", "5", "0"]}
+                                tooltipLabel="seeds"
+                                chartWidth={screenWidth - 48}
+                                chartColor="#86975A"
+                            />
+                        </View>
+                    )
+                };
+            case 2:
+                return {
+                    title: "Recent Activities",
+                    desc: "See what's been happening in your garden! Track every action your plants have received recently.",
+                    image: require("@/assets/nuri/pointing-down.png"),
+                    position: { top: 145, right: -70 },
+                    offset: 480,
+                    component: (
+                        <View style={{ width: screenWidth }} className="px-6">
+                            <Text style={typography["button-bold"]} className="text-black text-lg mb-3">Today</Text>
+                            <PlantItem 
+                                plants={{
+                                    id: "tutorial-planting",
+                                    eventType: "PLANT_ADDED",
+                                    plantName: "Basil",
+                                    rackName: "My First Rack",
+                                    time: "09:00 AM",
+                                    date: new Date(),
+                                    quantity: "12"
+                                }} 
+                            />
+                        </View>
+                    )
+                };
+            default:
+                return null;
+        }
+    };
+
+  const currentTutorial = getTutorialContent(tutorialStep);
 
   const fetchPlants = useCallback(async () => {
     try {
@@ -197,48 +250,66 @@ export default function PlantingScreen() {
   }, [fetchPlants]);
 
   const sections = groupPlantsByDate(plants);
+    const plantingChartData = plants.map((item, index) => ({
+        timestamp: index,
+        value: parseInt(item.quantity) || 0,
+    }));
 
-  const plantingChartData = plants.map((item, index) => ({
-    timestamp: index,
-    value: parseInt(item.quantity) || 0,
-  }));
+    return (
+        <View className="flex-1 bg-[#F5F5F5]">
+            <SectionList
+                sections={sections}
+                keyExtractor={(item) => item.id}
+                renderItem={({ item }) => (
+                    <View className="px-6"> 
+                        <PlantItem plants={item} />
+                    </View>
+                )}
+                renderSectionHeader={({ section: { title } }) => (
+                    <View className="bg-white py-3 px-6">
+                        <Text style={typography["button-bold"]} className="text-black text-lg">
+                            {title}
+                        </Text>
+                    </View>
+                )}
+                ListHeaderComponent={
+                    <View className="px-6">
+                        <ListHeader
+                            dateRange={dateRange}
+                            setDateRange={setDateRange}
+                            plantingChartData={plantingChartData}
+                        />
+                    </View>
+                }
+                ListEmptyComponent={() => (
+                    <View className="items-center mt-10 px-6">
+                        <Text style={typography["label"]} className="text-gray-400">
+                            {loading ? "Loading plants..." : "No plants found for this range."}
+                        </Text>
+                    </View>
+                )}
+                contentContainerStyle={{ paddingBottom: 40 }}
+                className="bg-white flex-1"
+                stickySectionHeadersEnabled={false}
+                refreshControl={
+                    <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+                }
+                showsVerticalScrollIndicator={false}
+            />
 
-  return (
-    <SectionList
-      sections={sections}
-      keyExtractor={(item) => item.id}
-      renderItem={({ item }) => <PlantItem plants={item} />}
-      renderSectionHeader={({ section: { title } }) => (
-        <View className="bg-white py-3">
-          <Text
-            style={typography["button-bold"]}
-            className="text-black text-lg"
-          >
-            {title}
-          </Text>
+            {currentTutorial && (
+                <OnboardingTutorialModal
+                    visible={tutorialStep > 0}
+                    onClose={handleNextStep}
+                    title={currentTutorial.title}
+                    subtitle={currentTutorial.desc}
+                    topOffset={currentTutorial.offset}
+                    characterImage={currentTutorial.image}
+                    characterPosition={currentTutorial.position}
+                >
+                    {currentTutorial.component}
+                </OnboardingTutorialModal>
+            )}
         </View>
-      )}
-      ListHeaderComponent={
-        <ListHeader
-          dateRange={dateRange}
-          setDateRange={setDateRange}
-          plantingChartData={plantingChartData}
-        />
-      }
-      ListEmptyComponent={() => (
-        <View className="items-center mt-10">
-          <Text style={typography["label"]} className="text-gray-400">
-            {loading ? "Loading plants..." : "No plants found for this range."}
-          </Text>
-        </View>
-      )}
-      contentContainerStyle={{ paddingBottom: 40, paddingHorizontal: 24 }}
-      className="bg-white flex-1"
-      stickySectionHeadersEnabled={false}
-      refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-      }
-      showsVerticalScrollIndicator={false}
-    />
-  );
+    );
 }
