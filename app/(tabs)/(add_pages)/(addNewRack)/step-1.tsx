@@ -1,5 +1,6 @@
 import { typography } from "@/assets/fonts/Text";
 import { BottomButton } from "@/components/shared/bottomButton";
+import { useBackWarning } from "@/hooks/shared/useBackWarning";
 import { bleManager } from "@/utils/bluetooth/bleManager";
 import * as IntentLauncher from "expo-intent-launcher";
 import { router, useFocusEffect } from "expo-router";
@@ -13,11 +14,10 @@ import {
   Platform,
   Text,
   TouchableOpacity,
-  View,
+  View
 } from "react-native";
 import { State } from "react-native-ble-plx";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Buffer } from "buffer";
 
 const SERVICE_UUID = "4fafc201-1fb5-459e-8fcc-c5c9c331914b";
 const RESET_CHAR_UUID = "ffffffff-ffff-ffff-ffff-ffffffffffff";
@@ -36,7 +36,7 @@ export default function AddNewRack1() {
         // Cleanup when screen loses focus
         try {
           bleManager.stopDeviceScan();
-        } catch (_) { }
+        } catch (_) {}
         setIsScanning(false);
       };
     }, []),
@@ -45,9 +45,15 @@ export default function AddNewRack1() {
   // Clean up scan on unmount
   useEffect(() => {
     return () => {
-      bleManager.stopDeviceScan().catch(() => { });
+      bleManager.stopDeviceScan().catch(() => {});
     };
   }, []);
+
+  const handleBack = useCallback(() => {
+    router.replace("/(tabs)/(home)");
+  }, []);
+
+  useBackWarning(false, handleBack);
 
   const requestPermissions = async (): Promise<boolean> => {
     if (Platform.OS === "ios") return true;
@@ -86,16 +92,16 @@ export default function AddNewRack1() {
 
     const allGranted =
       result["android.permission.BLUETOOTH_CONNECT"] ===
-      PermissionsAndroid.RESULTS.GRANTED &&
+        PermissionsAndroid.RESULTS.GRANTED &&
       result["android.permission.BLUETOOTH_SCAN"] ===
-      PermissionsAndroid.RESULTS.GRANTED;
+        PermissionsAndroid.RESULTS.GRANTED;
 
     if (!allGranted) {
       const permanentlyDenied =
         result["android.permission.BLUETOOTH_CONNECT"] ===
-        PermissionsAndroid.RESULTS.NEVER_ASK_AGAIN ||
+          PermissionsAndroid.RESULTS.NEVER_ASK_AGAIN ||
         result["android.permission.BLUETOOTH_SCAN"] ===
-        PermissionsAndroid.RESULTS.NEVER_ASK_AGAIN;
+          PermissionsAndroid.RESULTS.NEVER_ASK_AGAIN;
 
       if (permanentlyDenied) {
         Alert.alert(
@@ -228,7 +234,10 @@ export default function AddNewRack1() {
         {(isScanning || isEnablingBluetooth) && (
           <View className="items-center mb-4">
             <ActivityIndicator size="small" color="#10b981" />
-            <Text style={typography["subheader"]} className="text-grayText mt-2">
+            <Text
+              style={typography["subheader"]}
+              className="text-grayText mt-2"
+            >
               {isEnablingBluetooth ? "Enabling Bluetooth..." : "Scanning..."}
             </Text>
           </View>

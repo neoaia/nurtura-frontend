@@ -20,16 +20,21 @@ export const useBackWarning = (
       const onBackPress = () => {
         if (isDirty) {
           setShowModal(true);
-          return true;
+        } else {
+          if (onBack) {
+            onBack();
+          } else {
+            router.back();
+          }
         }
-        return false;
+        return true;
       };
       const subscription = BackHandler.addEventListener(
         "hardwareBackPress",
         onBackPress,
       );
       return () => subscription.remove();
-    }, [isDirty]),
+    }, [isDirty, onBack]),
   );
 
   const handleConfirm = () => {
