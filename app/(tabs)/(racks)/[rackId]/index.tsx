@@ -13,9 +13,16 @@ import useFetch from "@/hooks/useFetch";
 import { useRackSensor } from "@/hooks/useRackSensor";
 import { rackService } from "@/services/rackService";
 import { useFocusEffect } from "@react-navigation/native";
-import { useLocalSearchParams } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import React, { useCallback, useState } from "react";
-import { Alert, Image, ScrollView, Text, View } from "react-native";
+import {
+  Alert,
+  Image,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import DateIcon from "../../../../assets/images/icons/date.svg";
 import SoilIcon from "../../../../assets/images/icons/soil.svg";
 import { PLANT_IMAGES } from "../../../../utils/constants";
@@ -37,22 +44,18 @@ const RackInfo = () => {
   const { rackId } = useLocalSearchParams<{ rackId: string }>();
   const [showModal, setShowModal] = useState(false);
   const [activePlant, setActivePlant] = useState<any>(null);
+  const [rackName, setRackName] = useState<string>("Unknown Rack");
   const [loading, setLoading] = useState(true);
   const [harvesting, setHarvesting] = useState(false);
 
   const { reading } = useRackSensor(rackId);
 
-  // ── Rack fetch ─────────────────────────────────────────────────────────────
   const { refetch: getRackInfo } = useFetch(`/racks/${rackId}`, {
     method: "GET",
     autoFetch: false,
     withAuth: true,
   });
 
-  // ── Harvest endpoints (per API docs) ──────────────────────────────────────
-  // key 2 → POST /racks/{rackId}/harvest        (Harvest All)
-  // key 1 → POST /racks/{rackId}/harvest-leaves (Harvest Leaves only)
-  // key 3 → POST /racks/{rackId}/harvest-seeds  (Take Some Seeds)
   const { refetch: refetchHarvest } = useFetch(`/racks/${rackId}/harvest`, {
     method: "POST",
     autoFetch: false,
@@ -69,8 +72,8 @@ const RackInfo = () => {
     { method: "POST", autoFetch: false, withAuth: true },
   );
 
-  // ── Shared rack state setter ───────────────────────────────────────────────
   const applyRackData = useCallback((rack: any) => {
+    if (rack.name) setRackName(rack.name);
     if (rack.currentPlant) {
       setActivePlant({
         quantity: rack.quantity ?? 0,
@@ -91,7 +94,6 @@ const RackInfo = () => {
     }
   }, []);
 
-  // ── Load rack data on focus ────────────────────────────────────────────────
   useFocusEffect(
     useCallback(() => {
       let isActive = true;
@@ -117,7 +119,6 @@ const RackInfo = () => {
     }, [rackId]),
   );
 
-  // ── Harvest confirm ────────────────────────────────────────────────────────
   const handleHarvestConfirm = useCallback(
     async (selectedKey: number, seedQuantity: number) => {
       const plantId = activePlant?.plant?.id;
@@ -128,13 +129,10 @@ const RackInfo = () => {
 
       try {
         if (selectedKey === 1) {
-          // Harvest Leaves only
           await rackService.harvestLeaves(refetchHarvestLeaves, { plantId });
         } else if (selectedKey === 2) {
-          // Harvest All
           await rackService.harvestPlant(refetchHarvest, { plantId });
         } else if (selectedKey === 3) {
-          // Take Some Seeds
           await rackService.harvestSeeds(refetchHarvestSeeds, {
             plantId,
             quantity: seedQuantity,
@@ -143,7 +141,6 @@ const RackInfo = () => {
 
         Alert.alert("Success", "Harvest recorded successfully.");
 
-        // Refresh rack state after harvest
         const rackResponse = await rackService.getRackbyId(getRackInfo);
         const rack = rackResponse?.rack;
         if (rack) applyRackData(rack);
@@ -173,6 +170,36 @@ const RackInfo = () => {
       ? PLANT_IMAGES[plantName]
       : PLANT_IMAGES.default;
 
+  // ── Empty state ────────────────────────────────────────────────────────────
+  if (!loading && !activePlant?.plant) {
+    return (
+      <View className="flex-1 bg-white justify-center items-center px-8">
+        <Text style={typography["h2-bold"]} className="text-black mb-2">
+          No plant yet!
+        </Text>
+        <Text
+          style={typography["subheader"]}
+          className="text-grayText text-center mb-8"
+        >
+          You haven&apos;t added a plant in your rack yet.
+        </Text>
+        <TouchableOpacity
+          onPress={() =>
+            router.push({
+              pathname: `/(tabs)/(racks)/${rackId}/add-plant` as any,
+              params: { rackId },
+            })
+          }
+          className="bg-[#EDEDED] active:bg-gray-300 rounded-xl px-12 py-6"
+        >
+          <Text style={typography["button-bold"]} className="text-black">
+            Add a Plant
+          </Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
   return (
     <>
       <View className="flex-1 bg-white">
@@ -180,11 +207,11 @@ const RackInfo = () => {
           showsVerticalScrollIndicator={false}
           className="bg-white px-4 py-4"
         >
-          <View className="flex-1 justify-center items-center pl-8">
+          <View className="flex-1 justify-center items-center">
             <Image
               source={imageSource}
               className="w-72 h-72"
-              resizeMode="contain"
+              resizeMode="cover"
             />
           </View>
 
@@ -223,9 +250,9 @@ const RackInfo = () => {
             </View>
           )}
 
-          {/* Sensor readings */}
+          {/* Sensor readings — independent sa loading, hintay lang ng reading */}
           <View className="flex-row gap-3 mb-6">
-            {loading || reading === null ? (
+            {reading === null ? (
               <>
                 <PlantStatusIndicatorsSkeleton />
                 <PlantStatusIndicatorsSkeleton />
@@ -294,13 +321,27 @@ const RackInfo = () => {
                   description="Logs based on watering and grow light activity."
                   icon={PlantCareIcon}
                   iconSize={25}
-                  route="/(tabs)/(racks)/care"
+                  onPress={() =>
+                    router.push({
+                      pathname: `/(tabs)/(racks)/${rackId}/care` as any,
+                      params: { rackName },
+                    })
+                  }
                 />
                 <MenuCard
                   title="Harvest Activity"
                   description="Records of your past harvests for this plant."
                   icon={PlantIcon}
-                  route="/(tabs)/(racks)/harvest-history"
+                  onPress={() =>
+                    router.push({
+                      pathname:
+                        `/(tabs)/(racks)/${rackId}/harvest-history` as any,
+                      params: {
+                        rackName,
+                        plantId: activePlant?.plant?.id ?? "",
+                      },
+                    })
+                  }
                 />
               </>
             )}
@@ -308,7 +349,7 @@ const RackInfo = () => {
         </ScrollView>
 
         <BottomButton
-          title={harvesting ? "Harvesting..." : "Mark as Harvested"}
+          title={harvesting ? "Harvesting..." : "Harvest Plant"}
           onPress={handleHarvestPress}
           disabled={harvesting || loading || !activePlant?.plant}
         />

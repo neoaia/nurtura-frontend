@@ -48,9 +48,9 @@ export default function RacksScreen() {
           .map((rack: any) => ({
             id: rack.id,
             name: rack.name,
-            plant: "Lettuce",
+            plant: rack.currentPlant?.name ?? "No plant",
             image: undefined,
-            seeds: 12,
+            seeds: rack.quantity ?? 0,
             water: 0,
             humidity: 0,
             temperature: 0,

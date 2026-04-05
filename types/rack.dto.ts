@@ -167,3 +167,10 @@ export interface HarvestPlantRequestDTO {
 export interface HarvestPlantResponseDTO {
   message: string;
 }
+
+export interface RemovePlantRequestDTO {
+  plantId: string;
+}
+export interface RemovePlantResponseDTO {
+  message: string;
+}
