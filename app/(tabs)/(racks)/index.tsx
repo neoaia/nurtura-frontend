@@ -6,7 +6,7 @@ import useFetch from "@/hooks/useFetch";
 import { rackService } from "@/services/rackService";
 import { GetRackInfoDTO } from "@/types/rack.dto";
 import { router, useFocusEffect } from "expo-router";
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import {
   FlatList,
   RefreshControl,
@@ -24,6 +24,11 @@ export default function RacksScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Once we've completed at least one fetch, skeleton never shows again.
+  // Re-focus refreshes run silently in the background — stale racks stay
+  // visible instantly while new data loads behind them.
+  const hasLoadedOnce = useRef(false);
 
   const { refetch: getAllRacks } = useFetch("/racks", {
     method: "GET",
@@ -60,9 +65,12 @@ export default function RacksScreen() {
       const message =
         err instanceof Error ? err.message : "Failed to load racks";
       setError(message);
-      // Don't clear existing racks on refresh failure — keep stale data visible
+      // Keep stale racks visible on refresh failure
       setRacks((prev) => prev);
     } finally {
+      // Mark that we've been through at least one full fetch cycle.
+      // After this point, loading=true will never trigger the skeleton again.
+      hasLoadedOnce.current = true;
       setLoading(false);
     }
   }, [getAllRacks]);
@@ -75,23 +83,17 @@ export default function RacksScreen() {
 
   useFocusEffect(
     useCallback(() => {
-      let isScreenActive = true;
-
       const loadData = async () => {
-        if (!isScreenActive) return;
-        // Only show skeleton on first ever load (no cached racks yet)
-        if (racks.length === 0) setLoading(true);
+        // First ever load: show skeleton while fetching
+        // Subsequent focuses: fetch silently, existing racks stay on screen
+        if (!hasLoadedOnce.current) {
+          setLoading(true);
+        }
         await fetchRacks();
       };
 
       loadData();
-
-      return () => {
-        isScreenActive = false;
-      };
     }, [fetchRacks]),
-    // Removed `racks.length` from deps — it was causing fetchRacks to re-register
-    // every time a rack was added, leading to duplicate calls
   );
 
   const handleCardPress = useCallback((rackId: string) => {
@@ -150,15 +152,15 @@ export default function RacksScreen() {
   // ─── Render logic ──────────────────────────────────────────────────────────
   //
   // Priority order:
-  //   1. If we have racks → show them immediately (websocket connects in background)
-  //   2. If still on first load (no racks yet) → skeleton
+  //   1. If we have racks → show them immediately (even while a bg refresh runs)
+  //   2. If still on very first load (hasLoadedOnce = false) → skeleton
   //   3. If fetch failed with no racks → error state
   //   4. If fetch succeeded but no active racks → empty state
 
   const hasRacks = racks.length > 0;
-  const isFirstLoad = loading && !hasRacks;
+  const isFirstLoad = !hasLoadedOnce.current && loading;
   const isErrorState = !!error && !hasRacks && !isFirstLoad;
-  const isEmptyState = !loading && !error && !hasRacks;
+  const isEmptyState = hasLoadedOnce.current && !loading && !error && !hasRacks;
 
   if (isFirstLoad) {
     return (
