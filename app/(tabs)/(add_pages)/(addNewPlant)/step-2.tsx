@@ -5,6 +5,7 @@ import { ConfirmationModal } from "@/components/modals/confirmationModal";
 import { BottomButton } from "@/components/shared/bottomButton";
 import { useBackWarning } from "@/hooks/shared/useBackWarning";
 import useFetch from "@/hooks/useFetch";
+import { PLANT_IMAGES } from "@/utils/constants";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useEffect, useState } from "react";
 import { ActivityIndicator, ScrollView, Text, View } from "react-native";
@@ -97,6 +98,16 @@ const AddNewPlant2 = () => {
         recommendedSoil: selectedPlant.recommendedSoil,
       },
     });
+    console.log("Navigating to step-2 with params:", {
+      rackId,
+      rackName,
+      rackValue: rackId,
+      plantId: selectedPlant.id,
+      plantName: selectedPlant.name,
+      plantCategory: formatCategory(selectedPlant.category),
+      plantType: selectedPlant.category,
+      recommendedSoil: selectedPlant.recommendedSoil,
+    });
   };
 
   const filteredPlants =
@@ -149,7 +160,10 @@ const AddNewPlant2 = () => {
               <PlantCard
                 key={plant.id}
                 plantName={plant.name}
-                category={formatCategory(plant.category)} // 👈 formatted label
+                category={formatCategory(plant.category)}
+                image={
+                  PLANT_IMAGES[plant.name.toLowerCase()] ?? PLANT_IMAGES.default
+                }
                 onPress={() => setSelectedPlant(plant)}
                 isSelected={selectedPlant?.id === plant.id}
               />

@@ -1,4 +1,5 @@
 import { typography } from "@/assets/fonts/Text";
+import SeedIcon from "@/assets/images/icons/rackItem/seed.svg";
 import { useRackSensor } from "@/hooks/useRackSensor";
 import { GetRackInfoDTO } from "@/types/rack.dto";
 import React, { useState } from "react";
@@ -12,8 +13,8 @@ import {
 } from "react-native";
 import HumidityIcon from "../../assets/images/icons/rackItem/humidity.svg";
 import MoistureIcon from "../../assets/images/icons/rackItem/moisture.svg";
-import SeedIcon from "../../assets/images/icons/rackItem/seed.svg";
 import TemperatureIcon from "../../assets/images/icons/rackItem/temperature.svg";
+import { PLANT_IMAGES } from "../../utils/constants";
 
 interface RackItemProps {
   rack: GetRackInfoDTO;
@@ -37,6 +38,15 @@ const RackItem: React.FC<RackItemProps> = ({ rack }) => {
       setTimeout(() => setIsLoading(false), 500);
     }
   };
+
+  // Resolve plant image: use uri if explicitly provided, otherwise look up
+  // by plant name in PLANT_IMAGES, falling back to the default illustration
+  const plantKey = plant?.toLowerCase();
+  const plantImageSource = image
+    ? { uri: image }
+    : plantKey && PLANT_IMAGES[plantKey]
+      ? PLANT_IMAGES[plantKey]
+      : PLANT_IMAGES.default;
 
   // Determine connection status
   const getConnectionStatus = () => {
@@ -62,7 +72,6 @@ const RackItem: React.FC<RackItemProps> = ({ rack }) => {
       };
     }
 
-    // Calculate last update time
     const now = new Date();
     const lastUpdate = new Date(reading.timestamp || now);
     const diffMs = now.getTime() - lastUpdate.getTime();
@@ -83,14 +92,12 @@ const RackItem: React.FC<RackItemProps> = ({ rack }) => {
 
   const connectionStatus = getConnectionStatus();
 
-  // Handle status indicator press
   const handleStatusPress = () => {
     Alert.alert(connectionStatus.message, connectionStatus.details, [
       { text: "OK" },
     ]);
   };
 
-  // Use real-time data if available, fallback to 0
   const displayData = {
     moisture: reading?.moisture ?? 0,
     humidity: reading?.humidity ?? 0,
@@ -99,7 +106,6 @@ const RackItem: React.FC<RackItemProps> = ({ rack }) => {
 
   const isConnected = connectionStatus.type === "connected";
 
-  // Render connection status indicator
   const renderStatusIndicator = () => {
     if (connectionStatus.type === "connecting") {
       return (
@@ -127,7 +133,6 @@ const RackItem: React.FC<RackItemProps> = ({ rack }) => {
       );
     }
 
-    // Connected - show green dot
     return (
       <TouchableOpacity
         onPress={handleStatusPress}
@@ -148,16 +153,12 @@ const RackItem: React.FC<RackItemProps> = ({ rack }) => {
     >
       <View className="flex-row justify-between items-center mb-7">
         <View className="flex-row items-center gap-5 flex-1">
-          <View className="w-14 h-14 bg-[#E5EDCF] rounded-xl items-center justify-center">
-            {image ? (
-              <Image
-                source={{ uri: image }}
-                className="w-12 h-12"
-                resizeMode="contain"
-              />
-            ) : (
-              <Text className="text-3xl"></Text>
-            )}
+          <View className="w-14 h-14 bg-[#E5EDCF] rounded-xl items-center justify-center overflow-hidden">
+            <Image
+              source={plantImageSource}
+              className="w-14 h-14"
+              resizeMode="contain"
+            />
           </View>
 
           <View className="flex-1">

@@ -157,6 +157,11 @@ export interface GetPlantHistoryForRackResponseDTO {
   meta: PlantHistoryMeta;
 }
 
+export interface AssignPlantToRackRequestDTO {
+  plantId: string;
+  quantity: number;
+  plantedAt: string;
+}
 export interface AssignPlantToRackResponseDTO {
   message: string;
 }

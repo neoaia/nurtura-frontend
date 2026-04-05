@@ -6,7 +6,7 @@ import { MenuCard } from "@/components/shared/menubtn";
 import useFetch from "@/hooks/useFetch";
 import { rackService } from "@/services/rackService";
 import { router, useLocalSearchParams } from "expo-router";
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Alert, ScrollView, View } from "react-native";
 
 const EditRack = () => {
@@ -14,13 +14,48 @@ const EditRack = () => {
 
   const [removePlantModal, setRemovePlantModal] = useState(false);
   const [removeRackModal, setRemoveRackModal] = useState(false);
+  const [hasPlant, setHasPlant] = useState(false);
+  const [currentPlantId, setCurrentPlantId] = useState<string | null>(null);
 
-  // ✅ 1. I-setup ang useFetch para sa DELETE request
+  const { refetch: getRackInfo } = useFetch(`/racks/${rackId}`, {
+    method: "GET",
+    autoFetch: false,
+    withAuth: true,
+  });
+
   const { refetch: deleteRackReq } = useFetch(`/racks/${rackId}`, {
     method: "DELETE",
     autoFetch: false,
     withAuth: true,
   });
+
+  const { refetch: removePlantReq } = useFetch(`/racks/${rackId}/unassign`, {
+    method: "POST",
+    autoFetch: false,
+    withAuth: true,
+  });
+
+  useEffect(() => {
+    let isActive = true;
+
+    const fetchRack = async () => {
+      try {
+        const res = await rackService.getRackbyId(getRackInfo);
+        if (isActive) {
+          setHasPlant(!!res?.rack?.currentPlant);
+          setCurrentPlantId(res?.rack?.currentPlantId ?? null);
+        }
+      } catch (err) {
+        console.error("Failed to fetch rack:", err);
+      }
+    };
+
+    if (rackId) fetchRack();
+
+    return () => {
+      isActive = false;
+    };
+  }, [rackId, getRackInfo]);
 
   const handleRemovePlantPress = useCallback(
     () => setRemovePlantModal(true),
@@ -28,11 +63,27 @@ const EditRack = () => {
   );
   const handleRemoveRackPress = useCallback(() => setRemoveRackModal(true), []);
 
-  const handleRemovePlantConfirm = useCallback(() => {
-    setRemovePlantModal(false);
-  }, []);
+  const handleRemovePlantConfirm = useCallback(async () => {
+    if (!currentPlantId) return;
 
-  // ✅ 2. Gawing async at tawagin ang rackService.deleteRackbyId
+    try {
+      const response = await rackService.removePlant(removePlantReq, {
+        plantId: currentPlantId,
+      });
+
+      if (response) {
+        setRemovePlantModal(false);
+        Alert.alert("Success", "Plant removed successfully.");
+        router.replace("/(tabs)/(racks)" as any);
+      }
+    } catch (error) {
+      console.error("Failed to remove plant:", error);
+      Alert.alert("Error", "Failed to remove the plant. Please try again.");
+    } finally {
+      setRemovePlantModal(false);
+    }
+  }, [removePlantReq, currentPlantId]);
+
   const handleRemoveRackConfirm = useCallback(async () => {
     try {
       const response = await rackService.deleteRackbyId(deleteRackReq);
@@ -40,15 +91,12 @@ const EditRack = () => {
       if (response) {
         setRemoveRackModal(false);
         Alert.alert("Success", "Nurtura Rack removed successfully.");
-
-        // ✅ 3. I-redirect ang user pabalik sa main list para iwas error
         router.replace("/(tabs)/(racks)" as any);
       }
     } catch (error) {
       console.error("Failed to delete rack:", error);
       Alert.alert("Error", "Failed to remove the rack. Please try again.");
     } finally {
-      // Siguraduhing magsasara ang modal kahit mag-error
       setRemoveRackModal(false);
     }
   }, [deleteRackReq]);
@@ -68,14 +116,18 @@ const EditRack = () => {
         icon: RackNameIcon,
         onPress: handleEditNamePress,
       },
-      {
-        title: "Remove Plant",
-        desc: "Remove the plant on your Nurtura Rack.",
-        icon: RemovePlantIcon,
-        iconSize: 20,
-        type: "red" as const,
-        onPress: handleRemovePlantPress,
-      },
+      ...(hasPlant
+        ? [
+            {
+              title: "Remove Plant",
+              desc: "Remove the plant on your Nurtura Rack.",
+              icon: RemovePlantIcon,
+              iconSize: 20,
+              type: "red" as const,
+              onPress: handleRemovePlantPress,
+            },
+          ]
+        : []),
       {
         title: "Remove Nurtura Rack",
         desc: "Remove this rack from your account.",
@@ -85,7 +137,12 @@ const EditRack = () => {
         onPress: handleRemoveRackPress,
       },
     ],
-    [handleEditNamePress, handleRemovePlantPress, handleRemoveRackPress],
+    [
+      hasPlant,
+      handleEditNamePress,
+      handleRemovePlantPress,
+      handleRemoveRackPress,
+    ],
   );
 
   return (

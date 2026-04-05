@@ -1,19 +1,21 @@
 import {
-	DeleteRackResponseDTO,
-	GetAllRacksResponseDTO,
-	GetRackCurrentStateResponseDTO,
-	GetRackInfoResponseDTO,
-	GetRackStatusResponseDTO,
-	HarvestLeavesRequestDTO,
-	HarvestLeavesResponseDTO,
-	HarvestPlantRequestDTO,
-	HarvestPlantResponseDTO,
-	HarvestSeedsRequestDTO,
-	HarvestSeedsResponseDTO,
-	RegisterRackRequestDTO,
-	RegisterRackResponseDTO,
-	UpdateRackRequestDTO,
-	UpdateRackResponseDTO,
+  DeleteRackResponseDTO,
+  GetAllRacksResponseDTO,
+  GetRackCurrentStateResponseDTO,
+  GetRackInfoResponseDTO,
+  GetRackStatusResponseDTO,
+  HarvestLeavesRequestDTO,
+  HarvestLeavesResponseDTO,
+  HarvestPlantRequestDTO,
+  HarvestPlantResponseDTO,
+  HarvestSeedsRequestDTO,
+  HarvestSeedsResponseDTO,
+  RegisterRackRequestDTO,
+  RegisterRackResponseDTO,
+  RemovePlantRequestDTO,
+  RemovePlantResponseDTO,
+  UpdateRackRequestDTO,
+  UpdateRackResponseDTO,
 } from "@/types/rack.dto";
 import { handleRequest } from "@/utils/request";
 
@@ -98,6 +100,16 @@ export const rackService = {
   ): Promise<HarvestPlantResponseDTO> {
     return handleRequest<HarvestPlantResponseDTO>(
       "Harvesting plant from rack",
+      () => refetch({ body }),
+    );
+  },
+
+  async removePlant(
+    refetch: any,
+    body: RemovePlantRequestDTO,
+  ): Promise<RemovePlantResponseDTO> {
+    return handleRequest<RemovePlantResponseDTO>(
+      "Removing plant from rack",
       () => refetch({ body }),
     );
   },

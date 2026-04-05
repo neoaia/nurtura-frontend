@@ -12,6 +12,7 @@ export interface DropdownOption {
   id: string;
   label: string;
   value: string;
+  hasPlant?: boolean;
 }
 
 interface DropdownProps {

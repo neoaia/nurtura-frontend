@@ -4,7 +4,7 @@ import { SummaryCardSkeleton } from "@/components/home/skeleton/summaryCardSkele
 import { useAsyncState } from "@/hooks/useAsyncState";
 import useFetch from "@/hooks/useFetch";
 import { router, useFocusEffect } from "expo-router";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useRef, useState } from "react";
 import {
   ScrollView,
   StatusBar,
@@ -184,7 +184,7 @@ export default function HomeScreen() {
 
     try {
       const careResponse = await plantService
-        .getPlantCareActivities(getPlantCareRef.current, { page: 1, limit: 50 })
+        .getPlantCareActivities(getPlantCareRef.current, { page: 1, limit: 3 })
         .catch((e) => {
           console.error("Failed to fetch plant care:", e);
           return null;
@@ -287,14 +287,6 @@ export default function HomeScreen() {
       console.error("Failed to add rack:", error);
     }
   };
-
-  // ── INITIAL LOAD (mount only) — shows skeleton, fires exactly once ────────
-  useEffect(() => {
-    fetchUserInfo();
-    fetchSummary();
-    fetchActivity();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   // ── SILENT REFRESH on re-focus — NO skeleton reset, just background update ─
   // useAsyncState's setLoading() is a no-op once hasLoaded = true,

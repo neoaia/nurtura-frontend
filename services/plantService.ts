@@ -1,5 +1,6 @@
 import { handleRequest } from "@/utils/request";
 import {
+  AssignPlantToRackRequestDTO,
   AssignPlantToRackResponseDTO,
   CreatePlantRequestDTO,
   CreatePlantResponseDTO,
@@ -65,7 +66,7 @@ export const plantService = {
 
   async assignPlantToRack(
     refetch: any,
-    body: { rackId: string; quantity: number; plantedAt: string },
+    body: AssignPlantToRackRequestDTO,
   ): Promise<AssignPlantToRackResponseDTO> {
     return handleRequest<AssignPlantToRackResponseDTO>(
       "Assigning plant to rack",
