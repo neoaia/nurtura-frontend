@@ -38,7 +38,7 @@ const AddNewPlant3 = () => {
     recommendedSoil: string;
   }>();
 
-  const { refetch: assignPlant } = useFetch(`/plants/${plantId}/assign`, {
+  const { refetch: assignPlant } = useFetch(`/racks/${rackId}/assign`, {
     method: "POST",
     autoFetch: false,
     withAuth: true,
@@ -58,7 +58,7 @@ const AddNewPlant3 = () => {
     try {
       const { data, error } = await assignPlant({
         body: {
-          rackId: rackId as string,
+          plantId: plantId as string,
           quantity: seedQuantity,
           plantedAt: new Date().toISOString(),
         },

@@ -184,12 +184,21 @@ const RackInfo = () => {
           You haven&apos;t added a plant in your rack yet.
         </Text>
         <TouchableOpacity
-          onPress={() =>
+          onPress={() => {
+            console.log("Navigating to step-2 with params:", {
+              rackId,
+              rackName,
+              rackValue: rackId,
+            });
             router.push({
-              pathname: `/(tabs)/(racks)/${rackId}/add-plant` as any,
-              params: { rackId },
-            })
-          }
+              pathname: "/(tabs)/(add_pages)/(addNewPlant)/step-2" as any,
+              params: {
+                rackId,
+                rackName,
+                rackValue: rackId,
+              },
+            });
+          }}
           className="bg-[#EDEDED] active:bg-gray-300 rounded-xl px-12 py-6"
         >
           <Text style={typography["button-bold"]} className="text-black">

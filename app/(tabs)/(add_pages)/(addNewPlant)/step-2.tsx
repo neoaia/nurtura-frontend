@@ -97,6 +97,16 @@ const AddNewPlant2 = () => {
         recommendedSoil: selectedPlant.recommendedSoil,
       },
     });
+    console.log("Navigating to step-2 with params:", {
+      rackId,
+      rackName,
+      rackValue: rackId,
+      plantId: selectedPlant.id,
+      plantName: selectedPlant.name,
+      plantCategory: formatCategory(selectedPlant.category),
+      plantType: selectedPlant.category,
+      recommendedSoil: selectedPlant.recommendedSoil,
+    });
   };
 
   const filteredPlants =

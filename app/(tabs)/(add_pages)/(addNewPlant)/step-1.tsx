@@ -1,5 +1,6 @@
 import { typography } from "@/assets/fonts/Text";
 import { ConfirmationModal } from "@/components/modals/confirmationModal";
+import { InfoModal } from "@/components/modals/infoModal";
 import { BottomButton } from "@/components/shared/bottomButton";
 import Dropdown, { DropdownOption } from "@/components/shared/dropdown";
 import { useBackWarning } from "@/hooks/shared/useBackWarning";
@@ -15,6 +16,7 @@ const AddNewPlant1 = () => {
   const [selectedRack, setSelectedRack] = useState<DropdownOption | null>(null);
   const [rackOptions, setRackOptions] = useState<DropdownOption[]>([]);
   const [loadingRacks, setLoadingRacks] = useState(false);
+  const [showOccupiedModal, setShowOccupiedModal] = useState(false);
 
   const handleBack = useCallback(() => {
     router.replace("/(tabs)/(home)");
@@ -42,6 +44,7 @@ const AddNewPlant1 = () => {
             id: rack.id,
             label: rack.name,
             value: rack.id,
+            hasPlant: !!rack.currentPlant, // ← idagdag ang field na ito
           }));
         setRackOptions(options);
       }
@@ -61,6 +64,14 @@ const AddNewPlant1 = () => {
       handleCancel();
     }, []),
   );
+
+  const handleSelectRack = useCallback((item: DropdownOption) => {
+    if (item.hasPlant) {
+      setShowOccupiedModal(true);
+      return;
+    }
+    setSelectedRack(item);
+  }, []);
 
   const handleNextPress = () => {
     if (!selectedRack) return;
@@ -101,7 +112,7 @@ const AddNewPlant1 = () => {
             placeholder="Select your device here"
             options={rackOptions}
             value={selectedRack?.label}
-            onSelect={(item) => setSelectedRack(item)}
+            onSelect={handleSelectRack}
             label="Selected Rack"
             Icon={RackIcon}
           />
@@ -113,6 +124,7 @@ const AddNewPlant1 = () => {
         onPress={handleNextPress}
         disabled={!selectedRack || loadingRacks}
       />
+
       <ConfirmationModal
         isVisible={showModal}
         onConfirm={handleConfirm}
@@ -121,6 +133,14 @@ const AddNewPlant1 = () => {
         confirmText="Continue"
         cancelText="Cancel"
         onCancel={handleCancel}
+      />
+
+      <InfoModal
+        isVisible={showOccupiedModal}
+        title="Rack Unavailable"
+        message="This rack already has a plant. Please select another rack or remove the current plant first."
+        confirmText="Got it!"
+        onConfirm={() => setShowOccupiedModal(false)}
       />
     </View>
   );
