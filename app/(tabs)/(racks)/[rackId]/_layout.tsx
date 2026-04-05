@@ -133,6 +133,8 @@ export default function RackIDLayout() {
         name="edit-rack-name"
         options={{ title: "Edit Rack Name", headerTitleAlign: "left" }}
       />
+
+      <Stack.Screen name="success-screen" options={{ headerShown: false }} />
     </Stack>
   );
 }

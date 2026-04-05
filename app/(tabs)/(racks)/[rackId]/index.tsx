@@ -139,11 +139,17 @@ const RackInfo = () => {
           });
         }
 
-        Alert.alert("Success", "Harvest recorded successfully.");
-
         const rackResponse = await rackService.getRackbyId(getRackInfo);
         const rack = rackResponse?.rack;
         if (rack) applyRackData(rack);
+
+        router.push({
+          pathname: `/(tabs)/(racks)/${rackId}/success-screen` as any,
+          params: {
+            title: "Harvest Recorded!",
+            subtitle: "Your harvest has been successfully recorded.",
+          },
+        });
       } catch (err) {
         console.error("Harvest failed:", err);
         Alert.alert("Error", "Failed to record harvest. Please try again.");
