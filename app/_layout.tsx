@@ -1,6 +1,7 @@
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { useNotificationHandler } from "@/hooks/useNotificationHandler";
 import { createLogger } from "@/utils/logger";
+import { useRegisterForPushNotifications } from "@/utils/notification";
 import { useFonts } from "expo-font";
 import * as Notifications from "expo-notifications";
 import { Stack, useRouter, useSegments } from "expo-router";
@@ -17,6 +18,7 @@ function RootLayoutNav() {
   const { user, loading } = useAuth();
   const segments = useSegments();
   const router = useRouter();
+  const { registerForPushNotifications } = useRegisterForPushNotifications();
 
   const handleWarning = useCallback((data: Record<string, unknown>) => {
     logger.warn("Warning notification payload", data);
@@ -44,6 +46,16 @@ function RootLayoutNav() {
   );
 
   useNotificationHandler(notificationOptions);
+
+  useEffect(() => {
+    if (!user?.uid) {
+      return;
+    }
+
+    registerForPushNotifications(user.uid).catch((error: unknown) => {
+      logger.error("Failed to register push notifications", error);
+    });
+  }, [registerForPushNotifications, user?.uid]);
 
   const [isBypassCheckComplete, setIsBypassCheckComplete] = useState(false);
 
