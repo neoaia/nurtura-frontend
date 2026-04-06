@@ -1,4 +1,8 @@
 import {
+  GetRackCountResponseDTO,
+  GetTotalPlantedQuantityResponseDTO,
+} from "@/types/plant.dto";
+import {
   DeleteRackResponseDTO,
   GetAllRacksResponseDTO,
   GetRackCurrentStateResponseDTO,
@@ -111,6 +115,21 @@ export const rackService = {
     return handleRequest<RemovePlantResponseDTO>(
       "Removing plant from rack",
       () => refetch({ body }),
+    );
+  },
+
+  async getTotalPlantedQuantity(
+    refetch: any,
+  ): Promise<GetTotalPlantedQuantityResponseDTO> {
+    return handleRequest<GetTotalPlantedQuantityResponseDTO>(
+      "Fetching total planted quantity",
+      () => refetch(),
+    );
+  },
+
+  async getRackQuantity(refetch: any): Promise<GetRackCountResponseDTO> {
+    return handleRequest<GetRackCountResponseDTO>("Fetching rack count", () =>
+      refetch(),
     );
   },
 };

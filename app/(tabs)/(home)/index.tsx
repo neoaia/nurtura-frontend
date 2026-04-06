@@ -4,6 +4,10 @@ import { SummaryCardSkeleton } from "@/components/home/skeleton/summaryCardSkele
 import { OnboardingTutorialModal } from "@/components/onboarding/tutorialModal";
 import { useAsyncState } from "@/hooks/useAsyncState";
 import useFetch from "@/hooks/useFetch";
+import { plantService } from "@/services/plantService";
+import { rackService } from "@/services/rackService";
+import { userService } from "@/services/userService";
+import { UserDetails } from "@/types/interface";
 import { router, useFocusEffect } from "expo-router";
 import React, { useCallback, useState } from "react";
 import {
@@ -21,9 +25,6 @@ import InactiveNotificationIcon from "../../../assets/images/icons/inactive_noti
 import { Highlight } from "../../../components/home/highlight";
 import { RecentActivityBar } from "../../../components/home/recentActivityBar";
 import { SummaryCard } from "../../../components/home/summaryCard";
-import { plantService } from "../../../services/plantService";
-import { userService } from "../../../services/userService";
-import { UserDetails } from "../../../types/interface";
 
 const NOTIFICATION_ICON_SIZE = 24;
 const screenHeight = Dimensions.get("window").height;
@@ -43,7 +44,7 @@ export default function HomeScreen() {
   const [highlight] = useState(mockApiResponse.highlight);
   const displayName = userInfo.firstName || user.name;
 
-  // ── Tutorial Logic ────────────────────────────────────────────────────────
+  // #region ── Tutorial Logic ─────────────────────────────────────────────────
   const [tutorialStep, setTutorialStep] = useState(1);
   const TOTAL_STEPS = 5;
 
@@ -62,25 +63,30 @@ export default function HomeScreen() {
           offset: 300,
         };
       case 2:
-        case 2:
-          return {
-            title: "Notification",
-            desc: "Receive intelligent alerts based on your plants’ needs and system insights for optimal care.",
-            image: require("@/assets/nuri/waving.png"),
-            position: { top: 250, right: -50 },
-            offset: 50,
-            component: (
-              <View className="items-center justify-center">
-                <View className="bg-white p-4 rounded-[20px] items-center justify-center shadow-sm w-[72px] h-[72px]">
-                  {user.hasNotifications ? (
-                    <ActiveNotificationIcon width={NOTIFICATION_ICON_SIZE} height={NOTIFICATION_ICON_SIZE} />
-                  ) : (
-                    <InactiveNotificationIcon width={NOTIFICATION_ICON_SIZE} height={NOTIFICATION_ICON_SIZE} />
-                  )}
-                </View>
+        return {
+          title: "Notification",
+          desc: "Receive intelligent alerts based on your plants' needs and system insights for optimal care.",
+          image: require("@/assets/nuri/waving.png"),
+          position: { top: 250, right: -50 },
+          offset: 50,
+          component: (
+            <View className="items-center justify-center">
+              <View className="bg-white p-4 rounded-[20px] items-center justify-center shadow-sm w-[72px] h-[72px]">
+                {user.hasNotifications ? (
+                  <ActiveNotificationIcon
+                    width={NOTIFICATION_ICON_SIZE}
+                    height={NOTIFICATION_ICON_SIZE}
+                  />
+                ) : (
+                  <InactiveNotificationIcon
+                    width={NOTIFICATION_ICON_SIZE}
+                    height={NOTIFICATION_ICON_SIZE}
+                  />
+                )}
               </View>
-            ),
-          };
+            </View>
+          ),
+        };
       case 3:
         return {
           title: "Quick View Cards",
@@ -90,12 +96,26 @@ export default function HomeScreen() {
           offset: 150,
           component: (
             <View className="w-full">
-              <SummaryCard 
-                cards={summary && summary.length > 0 ? summary : [
-                  { id: "racks", type: "racks", value: 0, isActive: true },
-                  { id: "plants", type: "plants", value: 0, isActive: true }
-                ]} 
-                onCardPress={() => {}} 
+              <SummaryCard
+                cards={
+                  summary && summary.length > 0
+                    ? summary
+                    : [
+                        {
+                          id: "racks",
+                          type: "racks",
+                          value: 0,
+                          isActive: true,
+                        },
+                        {
+                          id: "plants",
+                          type: "plants",
+                          value: 0,
+                          isActive: true,
+                        },
+                      ]
+                }
+                onCardPress={() => {}}
               />
             </View>
           ),
@@ -119,7 +139,6 @@ export default function HomeScreen() {
             </View>
           ),
         };
-
       case 5:
         return {
           title: "Racks",
@@ -145,50 +164,110 @@ export default function HomeScreen() {
   };
 
   const currentTutorial = getTutorialContent(tutorialStep);
+  // #endregion
 
-  // ── States & Fetching (Keeping your existing logic) ────────────────────────
-  const { data: summary, loading: isSummaryLoading, setData: setSummary, setLoading: setSummaryLoading } = useAsyncState<any[]>([]);
-  const { data: recentActivity, loading: isActivityLoading, setData: setRecentActivity, setLoading: setActivityLoading } = useAsyncState<any[]>([]);
+  // ── States ─────────────────────────────────────────────────────────────────
+  const {
+    data: summary,
+    loading: isSummaryLoading,
+    setData: setSummary,
+    setLoading: setSummaryLoading,
+  } = useAsyncState<any[]>([]);
 
-  const { refetch: getUserInfo } = useFetch("/users", { method: "GET", autoFetch: false, withAuth: true });
-  const { refetch: fetchRacks } = useFetch("/racks", { method: "GET", autoFetch: false, withAuth: true });
-  const { refetch: fetchPlants } = useFetch("/plants", { method: "GET", autoFetch: false, withAuth: true });
-  const { refetch: getPlantCare } = useFetch("/racks/activities/plant-care", { method: "GET", autoFetch: false, withAuth: true });
+  const {
+    data: recentActivity,
+    loading: isActivityLoading,
+    setData: setRecentActivity,
+    setLoading: setActivityLoading,
+  } = useAsyncState<any[]>([]);
 
+  // ── useFetch hooks ─────────────────────────────────────────────────────────
+  const { refetch: getUserInfo } = useFetch("/users", {
+    method: "GET",
+    autoFetch: false,
+    withAuth: true,
+  });
+
+  const { refetch: fetchRackCount } = useFetch("/racks/count", {
+    method: "GET",
+    autoFetch: false,
+    withAuth: true,
+  });
+
+  const { refetch: fetchPlantedQuantity } = useFetch(
+    "/racks/planted-quantity",
+    {
+      method: "GET",
+      autoFetch: false,
+      withAuth: true,
+    },
+  );
+
+  const { refetch: getPlantCare } = useFetch("/racks/activities/plant-care", {
+    method: "GET",
+    autoFetch: false,
+    withAuth: true,
+  });
+
+  // ── Fetch logic ────────────────────────────────────────────────────────────
   const fetchUserInfo = useCallback(async () => {
     try {
       const response = await userService.getUser(getUserInfo);
       if (response?.userInfo) setUserInfo(response.userInfo);
-    } catch (error) { console.error(error); }
+    } catch (error) {
+      console.error(error);
+    }
   }, [getUserInfo]);
 
   const fetchSummary = useCallback(async () => {
     setSummaryLoading();
     try {
-      const [racksResult, plantsResult] = await Promise.all([fetchRacks(), fetchPlants()]);
-      const racksCount = racksResult?.data?.data?.filter((rack: any) => rack.isActive === true).length ?? 0;
-      const plantsCount = plantsResult?.data?.meta?.totalItems ?? 0;
-      setSummary([
-        { id: "racks", type: "racks", value: racksCount, isActive: true },
-        { id: "plants", type: "plants", value: plantsCount, isActive: true },
+      const [rackCountResult, plantedQuantityResult] = await Promise.all([
+        rackService.getRackQuantity(fetchRackCount),
+        rackService.getTotalPlantedQuantity(fetchPlantedQuantity),
       ]);
-    } catch (err) { setSummary([]); }
-  }, [fetchRacks, fetchPlants, setSummaryLoading, setSummary]);
+
+      setSummary([
+        {
+          id: "racks",
+          type: "racks",
+          value: rackCountResult?.count ?? 0,
+          isActive: true,
+        },
+        {
+          id: "plants",
+          type: "plants",
+          value: plantedQuantityResult?.totalQuantity ?? 0,
+          isActive: true,
+        },
+      ]);
+    } catch (err) {
+      setSummary([]);
+    }
+  }, [fetchRackCount, fetchPlantedQuantity, setSummaryLoading, setSummary]);
 
   const fetchActivity = useCallback(async () => {
     setActivityLoading();
     try {
-      const careResponse = await plantService.getPlantCareActivities(getPlantCare, { page: 1, limit: 3 });
+      const careResponse = await plantService.getPlantCareActivities(
+        getPlantCare,
+        { page: 1, limit: 3 },
+      );
       if (careResponse?.data) {
         const activities = careResponse.data.slice(0, 3).map((item: any) => ({
           id: item.id,
           type: item.eventType.includes("WATERING") ? "water" : "light",
           plant: item.metadata?.ruleName || "Plants",
-          timestamp: new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          timestamp: new Date(item.timestamp).toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
         }));
         setRecentActivity(activities);
       }
-    } catch (err) { setRecentActivity([]); }
+    } catch (err) {
+      setRecentActivity([]);
+    }
   }, [getPlantCare, setActivityLoading, setRecentActivity]);
 
   useFocusEffect(
@@ -196,33 +275,57 @@ export default function HomeScreen() {
       fetchUserInfo();
       fetchSummary();
       fetchActivity();
-    }, [fetchUserInfo, fetchSummary, fetchActivity])
+    }, [fetchUserInfo, fetchSummary, fetchActivity]),
   );
 
+  // ── Handlers ───────────────────────────────────────────────────────────────
   const handleNotificationPress = () => router.push("/notifications");
-  const handleCardPress = (type: string) => router.push(type === "racks" ? "/(tabs)/(racks)" : "/(tabs)/(plants)");
+  const handleCardPress = (type: string) =>
+    router.push(type === "racks" ? "/(tabs)/(racks)" : "/(tabs)/(plants)");
   const handleAddRack = () => console.log("Add Rack");
 
   return (
     <SafeAreaView className="flex-1 bg-white">
       <StatusBar barStyle="dark-content" />
-      <ScrollView className="flex-1 bg-white" showsVerticalScrollIndicator={false}>
+      <ScrollView
+        className="flex-1 bg-white"
+        showsVerticalScrollIndicator={false}
+      >
         <View className="flex flex-row justify-between items-center px-5 mt-7">
-          <Text style={typography["h1-bold"]} className="text-black">Hi {displayName}!</Text>
+          <Text style={typography["h1-bold"]} className="text-black">
+            Hi {displayName}!
+          </Text>
           <TouchableOpacity onPress={handleNotificationPress}>
-            {user.hasNotifications ? <ActiveNotificationIcon width={24} height={24} /> : <InactiveNotificationIcon width={24} height={24} />}
+            {user.hasNotifications ? (
+              <ActiveNotificationIcon width={24} height={24} />
+            ) : (
+              <InactiveNotificationIcon width={24} height={24} />
+            )}
           </TouchableOpacity>
         </View>
 
         <View className="flex-1 bg-white mt-2">
           <View className="bg-white py-5 w-full">
-            {isSummaryLoading ? <SummaryCardSkeleton /> : <SummaryCard cards={summary} onCardPress={handleCardPress} />}
+            {isSummaryLoading ? (
+              <SummaryCardSkeleton />
+            ) : (
+              <SummaryCard cards={summary} onCardPress={handleCardPress} />
+            )}
           </View>
           <View className="px-4">
-            <Highlight title={highlight.title} description={highlight.description} buttonText={highlight.buttonText} onButtonPress={handleAddRack} />
+            <Highlight
+              title={highlight.title}
+              description={highlight.description}
+              buttonText={highlight.buttonText}
+              onButtonPress={handleAddRack}
+            />
           </View>
           <View className="px-4 pb-8 mt-2">
-            {isActivityLoading ? <RecentActivityBarSkeleton /> : <RecentActivityBar activities={recentActivity} />}
+            {isActivityLoading ? (
+              <RecentActivityBarSkeleton />
+            ) : (
+              <RecentActivityBar activities={recentActivity} />
+            )}
           </View>
         </View>
       </ScrollView>

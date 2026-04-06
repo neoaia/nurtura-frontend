@@ -147,6 +147,14 @@ export interface GetAllPlantsResponseDTO {
   plant: PlantDetails[];
 }
 
+export interface GetTotalPlantedQuantityResponseDTO {
+  totalQuantity: number;
+}
+
+export interface GetRackCountResponseDTO {
+  count: number;
+}
+
 export interface GetPlantInfoResponseDTO {
   message: string;
   plant: PlantDetails;
