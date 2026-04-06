@@ -40,7 +40,8 @@
         "android.permission.BLUETOOTH_CONNECT",
         "android.permission.ACCESS_FINE_LOCATION",
         "android.permission.ACCESS_COARSE_LOCATION"
-      ]
+      ],
+      "googleServicesFile": "./google-services.json"
     },
     "web": {
       "output": "static",
@@ -70,7 +71,15 @@
         }
       ],
       "expo-web-browser",
-      "expo-build-properties"
+      "expo-build-properties",
+      [
+        "expo-notifications", 
+        {
+          "icons": "./assets/images/icon.png",
+          "color": "#ffffff",
+          "sound": []
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,
