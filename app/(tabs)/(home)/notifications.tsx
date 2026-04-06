@@ -1,11 +1,18 @@
 import NotificationItem from "@/components/notifications/notificationItem";
-import { NotificationItemDTO } from "@/types/home.dto";
+import useFetch from "@/hooks/useFetch";
+import { notificationService } from "@/services/notificationService";
+import {
+  NotificationItemDTO,
+  NotificationsResponseDTO,
+} from "@/types/notification.dto";
 import { useNavigation } from "expo-router";
-import { useLayoutEffect, useState } from "react";
-import { FlatList, View } from "react-native";
+import { useEffect, useLayoutEffect, useState } from "react";
+import { ActivityIndicator, FlatList, Text, View } from "react-native";
 
 export default function NotificationScreen() {
   const navigation = useNavigation();
+  const [notifications, setNotifications] = useState<NotificationItemDTO[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useLayoutEffect(() => {
     navigation.getParent()?.setOptions({
@@ -24,56 +31,48 @@ export default function NotificationScreen() {
     };
   }, [navigation]);
 
-  // mock notifications data
-  const [notifications] = useState<NotificationItemDTO[]>([
-    {
-      id: "1",
-      type: "water",
-      plantName: "Lettuce",
-      value: "200",
-      time: "2h ago",
-    },
-    {
-      id: "2",
-      type: "light",
-      plantName: "Tomato",
-      value: "80",
-      time: "5m ago",
-    },
-    {
-      id: "3",
-      type: "harvest",
-      plantName: "Basil",
-      value: "150",
-      time: "1d ago",
-    },
-    {
-      id: "4",
-      type: "sensor",
-      plantName: "Cucumber",
-      metric: "moisture",
-      value: "30",
-      time: "30m ago",
-    },
-    {
-      id: "5",
-      type: "environment",
-      rackName: "Rack A",
-      component: "Temperature Sensor",
-      value: "85",
-      time: "10m ago",
-    },
-    {
-      id: "6",
-      type: "info",
-      time: "Just now",
-    },
-    {
-      id: "7",
-      type: "info",
-      time: "Just now",
-    },
-  ]);
+  const { refetch: fetchNotifications } = useFetch("/notifications", {
+    method: "GET",
+    autoFetch: false,
+    withAuth: true,
+  });
+
+  const loadNotifications = async () => {
+    setLoading(true);
+    try {
+      const response: NotificationsResponseDTO =
+        await notificationService.getAllNotifications(fetchNotifications);
+      if (response?.data) {
+        setNotifications(response.data);
+      }
+    } catch (error) {
+      console.error("Failed to fetch notifications:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadNotifications();
+  }, []);
+
+  if (loading) {
+    return (
+      <View className="flex-1 bg-white items-center justify-center">
+        <ActivityIndicator size="small" color="#86975A" />
+      </View>
+    );
+  }
+
+  if (!loading && notifications.length === 0) {
+    return (
+      <View className="flex-1 bg-white items-center justify-center px-6">
+        <Text className="text-grayText text-center">
+          You have no notifications yet.
+        </Text>
+      </View>
+    );
+  }
 
   return (
     <View className="flex-1 bg-white">
