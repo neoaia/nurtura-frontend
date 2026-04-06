@@ -1,11 +1,13 @@
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { useNotificationHandler } from "@/hooks/useNotificationHandler";
+import { createLogger } from "@/utils/logger";
 import { useFonts } from "expo-font";
+import * as Notifications from "expo-notifications";
 import { Stack, useRouter, useSegments } from "expo-router";
 import * as SecureStore from "expo-secure-store";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, View } from "react-native";
 import "./globals.css";
-import { createLogger } from "@/utils/logger";
 
 const logger = createLogger("RootLayout");
 
@@ -16,7 +18,33 @@ function RootLayoutNav() {
   const segments = useSegments();
   const router = useRouter();
 
-  const [isSigningUp, setIsSigningUp] = useState(false);
+  const handleWarning = useCallback((data: Record<string, unknown>) => {
+    logger.warn("Warning notification payload", data);
+  }, []);
+
+  const handlePermissionResolved = useCallback(
+    (status: Notifications.PermissionStatus) => {
+      if (status === "granted") {
+        logger.log("Push notification permission granted");
+        return;
+      }
+
+      logger.warn("Push notification permission denied", { status });
+    },
+    [],
+  );
+
+  const notificationOptions = useMemo(
+    () => ({
+      requestPermissionOnMount: Boolean(user?.uid),
+      onPermissionResolved: handlePermissionResolved,
+      onWarning: handleWarning,
+    }),
+    [handlePermissionResolved, handleWarning, user?.uid],
+  );
+
+  useNotificationHandler(notificationOptions);
+
   const [isBypassCheckComplete, setIsBypassCheckComplete] = useState(false);
 
   const isReady = !loading && isBypassCheckComplete;
@@ -24,8 +52,7 @@ function RootLayoutNav() {
   useEffect(() => {
     const checkBypassFlag = async () => {
       try {
-        const flag = await SecureStore.getItemAsync(GOOGLE_SIGNUP_FLAG_KEY);
-        setIsSigningUp(flag === "true");
+        await SecureStore.getItemAsync(GOOGLE_SIGNUP_FLAG_KEY);
       } catch (e) {
         logger.error("Failed to read Google sign-up flag:", e);
       } finally {
@@ -45,11 +72,10 @@ function RootLayoutNav() {
       const inAuthGroup = segments[0] === "(auth)";
       const inSignupFlow = inAuthGroup && segments[1] === "signup";
       const inLoginScreen = inAuthGroup && segments[1] === "login";
-      const inForgotPasswordFlow = inAuthGroup && segments[1] === "forgetpassword";
+      const inForgotPasswordFlow =
+        inAuthGroup && segments[1] === "forgetpassword";
       const flag = await SecureStore.getItemAsync(GOOGLE_SIGNUP_FLAG_KEY);
       const isSigningUpFlag = flag === "true";
-
-      const forgotPasswordInProgress = await SecureStore.getItemAsync("forgotPasswordInProgress");
 
       if (!user && !inAuthGroup) {
         router.replace("/(auth)/login");
