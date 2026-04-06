@@ -7,8 +7,8 @@ import { io, Socket } from "socket.io-client";
 
 const logger = createLogger("SocketService");
 
-const SOCKET_URL = process.env.EXPO_PUBLIC_LOCAL_IP_ADDRESS
-  ? `ws://${process.env.EXPO_PUBLIC_LOCAL_IP_ADDRESS}:3000`
+const SOCKET_URL = process.env.EXPO_PUBLIC_WEBSOCKET_URL
+  ? process.env.EXPO_PUBLIC_WEBSOCKET_URL
   : "ws://localhost:3000";
 
 class SocketService {
@@ -43,6 +43,12 @@ class SocketService {
       this.isConnecting = true;
       this.connectionSettled = false;
       this.token = token;
+
+      logger.log("Initializing socket connection", {
+        socketUrl: SOCKET_URL,
+        namespace: "/sensors",
+        hasToken: Boolean(this.token),
+      });
 
       this.socket = io(`${SOCKET_URL}/sensors`, {
         transports: ["websocket", "polling"],
@@ -80,6 +86,7 @@ class SocketService {
       this.socket.on("connect_error", (error) => {
         logger.warn("Socket connection failed — will retry automatically", {
           message: error.message,
+          socketUrl: SOCKET_URL,
         });
         this.isConnecting = false;
 
@@ -93,7 +100,10 @@ class SocketService {
 
       // ─── Disconnected ─────────────────────────────────────────────────────
       this.socket.on("disconnect", (reason) => {
-        logger.warn("Socket disconnected", { reason });
+        logger.warn("Socket disconnected", {
+          reason,
+          socketId: this.socket?.id,
+        });
       });
 
       // ─── Reconnection failed ──────────────────────────────────────────────
@@ -162,6 +172,7 @@ class SocketService {
   }
 
   getStatus(): void {
+    logger.log("Requesting socket status from server");
     this.socket?.emit("getStatus");
   }
 
@@ -181,6 +192,10 @@ class SocketService {
     }
 
     this.eventListeners.get(event)?.push(callback);
+    logger.debug("Registering socket event listener", {
+      event,
+      listenerCount: this.eventListeners.get(event)?.length ?? 0,
+    });
     this.socket.on(event, callback as any);
   }
 
@@ -206,10 +221,16 @@ class SocketService {
         if (index > -1) {
           listeners.splice(index, 1);
         }
+
+        logger.debug("Removed socket event listener", {
+          event,
+          listenerCount: listeners.length,
+        });
       }
     } else {
       this.socket.off(event);
       this.eventListeners.delete(event);
+      logger.debug("Removed all listeners for socket event", { event });
     }
   }
 
@@ -224,6 +245,10 @@ class SocketService {
   private restoreEventListeners(): void {
     logger.log("Restoring event listeners after reconnection");
     this.eventListeners.forEach((listeners, event) => {
+      logger.debug("Rebinding listeners", {
+        event,
+        listenerCount: listeners.length,
+      });
       listeners.forEach((callback) => {
         this.socket?.on(event, callback as any);
       });
