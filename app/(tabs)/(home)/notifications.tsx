@@ -5,8 +5,8 @@ import {
   NotificationItemDTO,
   NotificationsResponseDTO,
 } from "@/types/notification.dto";
-import { useNavigation } from "expo-router";
-import { useEffect, useLayoutEffect, useState } from "react";
+import { useFocusEffect, useNavigation } from "expo-router";
+import { useCallback, useLayoutEffect, useState } from "react";
 import { ActivityIndicator, FlatList, Text, View } from "react-native";
 
 export default function NotificationScreen() {
@@ -37,24 +37,38 @@ export default function NotificationScreen() {
     withAuth: true,
   });
 
-  const loadNotifications = async () => {
+  const { refetch: markAllRead } = useFetch("/notifications/read-all", {
+    method: "PATCH",
+    autoFetch: false,
+    withAuth: true,
+  });
+
+  const loadNotifications = useCallback(async () => {
     setLoading(true);
     try {
       const response: NotificationsResponseDTO =
         await notificationService.getAllNotifications(fetchNotifications);
+
       if (response?.data) {
         setNotifications(response.data);
+
+        const hasUnread = response.data.some((n) => n.status === "UNREAD");
+        if (hasUnread) {
+          await notificationService.markReadAllNotifications(markAllRead);
+        }
       }
     } catch (error) {
       console.error("Failed to fetch notifications:", error);
     } finally {
       setLoading(false);
     }
-  };
+  }, [fetchNotifications, markAllRead]);
 
-  useEffect(() => {
-    loadNotifications();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      loadNotifications();
+    }, [loadNotifications]),
+  );
 
   if (loading) {
     return (
@@ -80,10 +94,7 @@ export default function NotificationScreen() {
         data={notifications}
         renderItem={({ item }) => <NotificationItem {...item} />}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={{
-          paddingHorizontal: 16,
-          paddingVertical: 16,
-        }}
+        contentContainerStyle={{ paddingVertical: 16 }}
         showsVerticalScrollIndicator={false}
       />
     </View>

@@ -4,10 +4,12 @@ import { SummaryCardSkeleton } from "@/components/home/skeleton/summaryCardSkele
 import { OnboardingTutorialModal } from "@/components/onboarding/tutorialModal";
 import { useAsyncState } from "@/hooks/useAsyncState";
 import useFetch from "@/hooks/useFetch";
+import { notificationService } from "@/services/notificationService";
 import { plantService } from "@/services/plantService";
 import { rackService } from "@/services/rackService";
 import { userService } from "@/services/userService";
 import { UserDetails } from "@/types/interface";
+import { NotificationsResponseDTO } from "@/types/notification.dto";
 import { router, useFocusEffect } from "expo-router";
 import React, { useCallback, useState } from "react";
 import {
@@ -30,7 +32,6 @@ const NOTIFICATION_ICON_SIZE = 24;
 const screenHeight = Dimensions.get("window").height;
 
 const mockApiResponse = {
-  user: { name: "User", hasNotifications: true },
   highlight: {
     title: "Farm Efficiently",
     description: "Start growing your plant with Nurtura Racks",
@@ -40,9 +41,9 @@ const mockApiResponse = {
 
 export default function HomeScreen() {
   const [userInfo, setUserInfo] = useState<Partial<UserDetails>>({});
-  const [user] = useState(mockApiResponse.user);
   const [highlight] = useState(mockApiResponse.highlight);
-  const displayName = userInfo.firstName || user.name;
+  const [hasUnread, setHasUnread] = useState(false);
+  const displayName = userInfo.firstName || "User";
 
   // #region ── Tutorial Logic ─────────────────────────────────────────────────
   const [tutorialStep, setTutorialStep] = useState(1);
@@ -72,7 +73,7 @@ export default function HomeScreen() {
           component: (
             <View className="items-center justify-center">
               <View className="bg-white p-4 rounded-[20px] items-center justify-center shadow-sm w-[72px] h-[72px]">
-                {user.hasNotifications ? (
+                {hasUnread ? (
                   <ActiveNotificationIcon
                     width={NOTIFICATION_ICON_SIZE}
                     height={NOTIFICATION_ICON_SIZE}
@@ -209,6 +210,12 @@ export default function HomeScreen() {
     withAuth: true,
   });
 
+  const { refetch: fetchNotificationCount } = useFetch("/notifications", {
+    method: "GET",
+    autoFetch: false,
+    withAuth: true,
+  });
+
   // ── Fetch logic ────────────────────────────────────────────────────────────
   const fetchUserInfo = useCallback(async () => {
     try {
@@ -270,12 +277,23 @@ export default function HomeScreen() {
     }
   }, [getPlantCare, setActivityLoading, setRecentActivity]);
 
+  const fetchNotificationStatus = useCallback(async () => {
+    try {
+      const response: NotificationsResponseDTO =
+        await notificationService.getAllNotifications(fetchNotificationCount);
+      setHasUnread((response?.unreadCount ?? 0) > 0);
+    } catch (error) {
+      console.error("Failed to fetch notification status:", error);
+    }
+  }, [fetchNotificationCount]);
+
   useFocusEffect(
     useCallback(() => {
       fetchUserInfo();
       fetchSummary();
       fetchActivity();
-    }, [fetchUserInfo, fetchSummary, fetchActivity]),
+      fetchNotificationStatus();
+    }, [fetchUserInfo, fetchSummary, fetchActivity, fetchNotificationStatus]),
   );
 
   // ── Handlers ───────────────────────────────────────────────────────────────
@@ -296,7 +314,7 @@ export default function HomeScreen() {
             Hi {displayName}!
           </Text>
           <TouchableOpacity onPress={handleNotificationPress}>
-            {user.hasNotifications ? (
+            {hasUnread ? (
               <ActiveNotificationIcon width={24} height={24} />
             ) : (
               <InactiveNotificationIcon width={24} height={24} />

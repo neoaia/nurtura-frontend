@@ -13,11 +13,9 @@ export const NotificationItem: React.FC<NotificationItemDTO> = ({
   type,
   title,
   message,
-  metadata,
   status,
   createdAt,
 }) => {
-  // ── Map API type → icon ────────────────────────────────────────────────────
   const getIconByType = () => {
     switch (type) {
       case "ALERT":
@@ -35,7 +33,6 @@ export const NotificationItem: React.FC<NotificationItemDTO> = ({
     }
   };
 
-  // ── Map API type → background color ───────────────────────────────────────
   const getBoxStyle = () => {
     switch (type) {
       case "ALERT":
@@ -53,13 +50,11 @@ export const NotificationItem: React.FC<NotificationItemDTO> = ({
     }
   };
 
-  // ── Format createdAt → relative time ──────────────────────────────────────
   const getRelativeTime = (dateStr: string) => {
     const diff = Date.now() - new Date(dateStr).getTime();
     const mins = Math.floor(diff / 60000);
     const hours = Math.floor(diff / 3600000);
     const days = Math.floor(diff / 86400000);
-
     if (mins < 1) return "Just now";
     if (mins < 60) return `${mins}m ago`;
     if (hours < 24) return `${hours}h ago`;
@@ -71,43 +66,33 @@ export const NotificationItem: React.FC<NotificationItemDTO> = ({
 
   return (
     <View
-      className={`p-3 mb-2 py-4 pr-3 pl-4 w-full flex-row items-center rounded-xl shadow-sm border min-h-[84px] ${
-        isUnread ? "bg-[#F9FCF4] border-primary/30" : "bg-white border-gray-100"
+      // Idinagdag ang 'px-4' class dito
+      className={`py-4 px-4 w-full flex-row items-center min-h-[84px] ${
+        isUnread ? "bg-[#f0f5e7]" : "bg-white"
       }`}
     >
       {/* ── Icon box ──────────────────────────────────────────────────────── */}
       <View
         style={getBoxStyle()}
-        className="p-4 mr-4 rounded-xl items-center justify-center"
+        className="w-12 h-12 mr-4 rounded-xl items-center justify-center"
       >
-        {Icon && <Icon width={20} height={20} />}
+        {Icon && <Icon width={16} height={16} />}
       </View>
-
-      {/* ── Content ───────────────────────────────────────────────────────── */}
+      {/* ── Content — sentence format ─────────────────────────────────────── */}
       <View className="flex-1">
-        <Text
-          style={typography["subheader-bold"]}
-          className="text-black mb-0.5"
-          numberOfLines={1}
-        >
-          {title}
-        </Text>
         <Text
           style={typography["subheader"]}
           className="text-gray-700 leading-5"
-          numberOfLines={2}
         >
-          {message}
-        </Text>
-        <Text style={typography["subheader"]} className="text-grayText mt-1">
-          {getRelativeTime(createdAt)}
+          <Text style={typography["subheader-bold"]} className="text-black">
+            {title}
+          </Text>{" "}
+          {message}{" "}
+          <Text style={typography["subheader"]} className="text-grayText">
+            {getRelativeTime(createdAt)}
+          </Text>
         </Text>
       </View>
-
-      {/* ── Unread dot ────────────────────────────────────────────────────── */}
-      {isUnread && (
-        <View className="w-2 h-2 rounded-full bg-primary ml-2 self-start mt-1" />
-      )}
     </View>
   );
 };
