@@ -26,3 +26,8 @@ export interface NotificationsResponseDTO {
   meta: PaginationMetaDTO;
   unreadCount: number;
 }
+
+export interface MarkReadAllNotificationsResponseDTO {
+  message: string;
+  updatedCount: number;
+}
