@@ -252,7 +252,6 @@ export default function RacksScreen() {
           />
         }
       />
-      {/* ✅ InfoModal removed here — handled inside each RackItem */}
     </SafeAreaView>
   );
 }

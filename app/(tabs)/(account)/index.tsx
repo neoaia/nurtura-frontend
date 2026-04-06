@@ -1,6 +1,7 @@
 import { typography } from "@/assets/fonts/Text";
 import SecurityIcon from "@/assets/images/icons/lock.svg";
 import LogoutIcon from "@/assets/images/icons/logout.svg";
+import { OnboardingTutorialModal } from "@/components/onboarding/tutorialModal"; // Added
 import { ProfileCard } from "@/components/settings/profileCard";
 import ProfileCardSkeleton from "@/components/settings/skeleton/profileCardSkeleton";
 import { MenuCard } from "@/components/shared/menubtn";
@@ -12,12 +13,13 @@ import { useFocusEffect } from "@react-navigation/native";
 import { useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import React, { useCallback, useEffect, useState } from "react";
-import { ScrollView, Text, View } from "react-native";
+import { Dimensions, Image, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { userService } from "../../../services/userService";
 import { UserDetails } from "../../../types/interface";
 
 const logger = createLogger("AccountScreen");
+const screenHeight = Dimensions.get("window").height; 
 
 export default function AccountScreen() {
   const [savedValues, setSavedValues] = useState<Partial<UserDetails>>({});
@@ -27,6 +29,51 @@ export default function AccountScreen() {
   const { logout } = useAuth();
   const router = useRouter();
 
+  const [tutorialStep, setTutorialStep] = useState(1);
+  const TOTAL_STEPS = 2;
+
+  const handleNextStep = () => {
+    setTutorialStep((prev) => (prev < TOTAL_STEPS ? prev + 1 : 0));
+  };
+
+  const getTutorialContent = (step: number) => {
+    switch (step) {
+      case 1:
+        return {
+          title: "User Profile",
+          desc: "Access your personal account details, preferences, and security settings.",
+          image: require("@/assets/nuri/pointing-down.png"),
+          position: { bottom: 290, right: -50 },
+          offset: screenHeight - 300,
+          component: (
+            <View className="items-center justify-center">
+              <View className="bg-white p-4 rounded-[20px] items-center justify-center shadow-sm w-[72px] h-[72px]">
+                <Image
+                  source={require("@/assets/images/bottom-nav/bm-account-inactive.png")}
+                  style={{ width: 22, height: 22 }}
+                  resizeMode="contain"
+                />
+              </View>
+            </View>
+          ),
+        };
+      case 2:
+        return {
+          title: "Time to Grow!",
+          desc: "All done! Your plants can’t wait to sprout into action with you.",
+          image: require("@/assets/nuri/waving.png"),
+          position: { bottom: 0, right: -70 },
+          offset: screenHeight / 2 - 100, 
+          component: null,
+        };
+      default:
+        return null;
+    }
+  };
+
+  const currentTutorial = getTutorialContent(tutorialStep);
+
+  // ── Data Fetching ─────────────────────────────────────────────────────────
   const { refetch: getUserInfo } = useFetch("/users", {
     method: "GET",
     autoFetch: false,
@@ -35,16 +82,8 @@ export default function AccountScreen() {
 
   const checkUserProvider = async () => {
     try {
-      logger.log("Checking auth provider from storage...");
       const authProvider = await SecureStore.getItemAsync("auth_provider");
-      logger.log("Auth provider:", authProvider);
-      if (authProvider === "google") {
-        setIsGoogleUser(true);
-        logger.log("✓ User is Google-only - hiding Account Security");
-      } else {
-        setIsGoogleUser(false);
-        logger.log("✓ User has password auth - showing Account Security");
-      }
+      setIsGoogleUser(authProvider === "google");
     } catch (error) {
       logger.error("Error checking auth provider:", error);
       setIsGoogleUser(false);
@@ -56,17 +95,7 @@ export default function AccountScreen() {
     try {
       const response = await userService.getUser(getUserInfo);
       if (response?.userInfo) {
-        const data = {
-          firstName: response.userInfo.firstName || "",
-          middleName: response.userInfo.middleName || "",
-          lastName: response.userInfo.lastName || "",
-          suffix: response.userInfo.suffix || "",
-          block: response.userInfo.block || "",
-          street: response.userInfo.street || "",
-          barangay: response.userInfo.barangay || "",
-          city: response.userInfo.city || "",
-        };
-        setSavedValues(data);
+        setSavedValues(response.userInfo);
         setIsLoadingProfile(false);
       }
     } catch (error) {
@@ -82,7 +111,7 @@ export default function AccountScreen() {
     useCallback(() => {
       getUserInfoData();
       checkUserProvider();
-    }, []),
+    }, [])
   );
 
   useEffect(() => {
@@ -109,7 +138,7 @@ export default function AccountScreen() {
               <ProfileCard
                 name="Profile"
                 username={
-                  formValues.firstName + " " + formValues.lastName || " "
+                  (formValues.firstName || "") + " " + (formValues.lastName || "") || "User"
                 }
                 onPress={handleProfilePress}
               />
@@ -138,6 +167,20 @@ export default function AccountScreen() {
           </View>
         </View>
       </ScrollView>
+
+      {currentTutorial && (
+        <OnboardingTutorialModal
+          visible={tutorialStep > 0}
+          onClose={handleNextStep}
+          title={currentTutorial.title}
+          subtitle={currentTutorial.desc}
+          topOffset={currentTutorial.offset}
+          characterImage={currentTutorial.image}
+          characterPosition={currentTutorial.position}
+        >
+          {currentTutorial.component}
+        </OnboardingTutorialModal>
+      )}
     </SafeAreaView>
   );
 }
