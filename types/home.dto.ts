@@ -47,9 +47,48 @@ export interface NotificationsResponseDTO {
   unreadCount: number;
 }
 
+export interface BackendNotificationDTO {
+  id: string;
+  userId: string;
+  rackId: string | null;
+  type: string;
+  status: "UNREAD" | "READ";
+  title: string;
+  message: string;
+  metadata: Record<string, unknown>;
+  readAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface BackendNotificationsMetaDTO {
+  currentPage: number;
+  itemsPerPage: number;
+  totalItems: number;
+  totalPages: number;
+  hasNextPage: boolean;
+  hasPreviousPage: boolean;
+}
+
+export interface BackendNotificationsResponseDTO {
+  data: BackendNotificationDTO[];
+  meta: BackendNotificationsMetaDTO;
+  unreadCount: number;
+}
+
 export interface NotificationItemDTO {
   id: string;
-  type: "water" | "light" | "harvest" | "sensor" | "environment" | "info";
+  type:
+    | "water"
+    | "light"
+    | "harvest"
+    | "sensor"
+    | "environment"
+    | "info"
+    | "alert";
+  title?: string;
+  message?: string;
+  status?: "UNREAD" | "READ";
   plantName?: string;
   location?: string;
   value?: string;

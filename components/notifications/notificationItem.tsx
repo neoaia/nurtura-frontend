@@ -12,6 +12,9 @@ import WaterIcon from "../../assets/images/icons/watered(Activity).svg";
 
 export const NotificationItem: React.FC<NotificationItemDTO> = ({
   type,
+  title,
+  message,
+  status,
   plantName,
   location,
   value,
@@ -26,6 +29,7 @@ export const NotificationItem: React.FC<NotificationItemDTO> = ({
     if (type === "harvest") return HarvestIcon;
     if (type === "environment") return WarningIcon;
     if (type === "sensor") return DisconnectedIcon;
+    if (type === "alert") return WarningIcon;
     if (type === "info") return InfoIcon;
     return null;
   };
@@ -44,6 +48,8 @@ export const NotificationItem: React.FC<NotificationItemDTO> = ({
         return { backgroundColor: "#EBB2F6" };
       case "environment":
         return { backgroundColor: "#E9A2A2" };
+      case "alert":
+        return { backgroundColor: "#FDE68A" };
       case "info":
         return { backgroundColor: "#E5E5E5" };
       default:
@@ -80,6 +86,23 @@ export const NotificationItem: React.FC<NotificationItemDTO> = ({
   };
 
   const renderContent = () => {
+    if (title || message) {
+      return (
+        <View>
+          <Text style={typography["subheader-bold"]} className="text-black">
+            {title || "Notification"}
+          </Text>
+          <Text style={typography["subheader"]} className="text-gray-700 mt-1">
+            {message || ""}
+          </Text>
+          <Text style={typography["subheader"]} className="text-grayText mt-1">
+            {time}
+            {status ? ` • ${status}` : ""}
+          </Text>
+        </View>
+      );
+    }
+
     if (type === "water" || type === "light" || type === "harvest") {
       return (
         <Text

@@ -1,5 +1,4 @@
 import useFetch from "@/hooks/useFetch";
-import Constants from "expo-constants";
 import * as Device from "expo-device";
 import * as Notifications from "expo-notifications";
 import { useCallback } from "react";
@@ -19,11 +18,8 @@ type SavePushTokenResponse = {
 
 const resolveProjectId = (): string | undefined => {
   const envProjectId = process.env.EXPO_PUBLIC_EAS_PROJECT_ID;
-  const projectIdFromConfig =
-    Constants.expoConfig?.extra?.eas?.projectId ??
-    Constants.easConfig?.projectId;
 
-  return envProjectId ?? projectIdFromConfig;
+  return envProjectId
 };
 
 export async function getExpoPushToken(): Promise<string | null> {
