@@ -1,6 +1,6 @@
 import {
-    OnboardingPageKey,
-    useOnboardingContext,
+  OnboardingPageKey,
+  useOnboardingContext,
 } from "@/contexts/OnboardingContext";
 import { useCallback, useState } from "react";
 
@@ -28,25 +28,21 @@ export function useOnboarding(
   totalSteps: number,
 ): UseOnboardingReturn {
   const { shouldShowTutorial, markPageComplete } = useOnboardingContext();
-
   const shouldShow = shouldShowTutorial(pageKey);
-
-  // Start at step 1 only if the tutorial should be shown, otherwise 0
   const [tutorialStep, setTutorialStep] = useState<number>(shouldShow ? 1 : 0);
 
   const handleNextStep = useCallback(() => {
-    setTutorialStep((prev) => {
-      const next = prev + 1;
+    const next = tutorialStep + 1;
+    const isFinished = next > totalSteps;
 
-      if (next > totalSteps) {
-        // Tutorial finished — mark complete in background, dismiss UI
-        markPageComplete(pageKey);
-        return 0;
-      }
+    setTutorialStep(isFinished ? 0 : next);
 
-      return next;
-    });
-  }, [totalSteps, pageKey, markPageComplete]);
+    // Call markPageComplete OUTSIDE the updater so it
+    // doesn't trigger cross-component setState during render
+    if (isFinished) {
+      markPageComplete(pageKey);
+    }
+  }, [tutorialStep, totalSteps, pageKey, markPageComplete]);
 
   return {
     shouldShow: shouldShow && tutorialStep > 0,

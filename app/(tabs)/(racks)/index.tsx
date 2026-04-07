@@ -1,9 +1,10 @@
 import { typography } from "@/assets/fonts/Text";
-import { OnboardingTutorialModal } from "@/components/onboarding/tutorialModal"; // Added
+import { OnboardingTutorialModal } from "@/components/onboarding/tutorialModal";
 import AddRackButton from "@/components/racks/addRackItemBtn";
 import RackItem from "@/components/racks/rackItem";
 import RackItemSkeleton from "@/components/racks/skeleton/rackItemSkeleton";
 import useFetch from "@/hooks/useFetch";
+import { useOnboarding } from "@/hooks/useOnboarding";
 import { rackService } from "@/services/rackService";
 import { GetRackInfoDTO } from "@/types/rack.dto";
 import { router, useFocusEffect } from "expo-router";
@@ -31,13 +32,11 @@ export default function RacksScreen() {
 
   const hasLoadedOnce = useRef(false);
 
-  // ── Tutorial Logic ────────────────────────────────────────────────────────
-  const [tutorialStep, setTutorialStep] = useState(1);
-  const TOTAL_STEPS = 4;
-
-  const handleNextStep = () => {
-    setTutorialStep((prev) => (prev < TOTAL_STEPS ? prev + 1 : 0));
-  };
+  // ── Tutorial Logic ─────────────────────────────────────────────────────────
+  const { shouldShow, tutorialStep, handleNextStep } = useOnboarding(
+    "racks",
+    4,
+  );
 
   const getTutorialContent = (step: number) => {
     switch (step) {
@@ -65,7 +64,7 @@ export default function RacksScreen() {
                 }}
               />
             </View>
-          )
+          ),
         };
       case 2:
         return {
@@ -78,7 +77,7 @@ export default function RacksScreen() {
             <View className="px-4 w-full">
               <AddRackButton onPress={() => {}} />
             </View>
-          )
+          ),
         };
       case 3:
         return {
@@ -89,16 +88,16 @@ export default function RacksScreen() {
           offset: screenHeight - 300,
           component: (
             <View className="items-center justify-center">
-               <View className="bg-white p-4 rounded-[20px] items-center justify-center shadow-sm w-[72px] h-[72px]">
+              <View className="bg-white p-4 rounded-[20px] items-center justify-center shadow-sm w-[72px] h-[72px]">
                 <Text className="text-primary text-4xl">+</Text>
               </View>
             </View>
-          )
+          ),
         };
       case 4:
         return {
           title: "Activity",
-          desc: "See what your garden’s been up to! Track watering, growth, and all your plant care moments.",
+          desc: "See what your garden's been up to! Track watering, growth, and all your plant care moments.",
           image: require("@/assets/nuri/joyful.png"),
           position: { bottom: 290, right: -50 },
           offset: screenHeight - 300,
@@ -112,7 +111,7 @@ export default function RacksScreen() {
                 />
               </View>
             </View>
-          )
+          ),
         };
       default:
         return null;
@@ -121,7 +120,7 @@ export default function RacksScreen() {
 
   const currentTutorial = getTutorialContent(tutorialStep);
 
-  // ── API Fetch Logic ───────────────────────────────────────────────────────
+  // ── API Fetch Logic ────────────────────────────────────────────────────────
   const { refetch: getAllRacks } = useFetch("/racks", {
     method: "GET",
     autoFetch: false,
@@ -152,7 +151,8 @@ export default function RacksScreen() {
         setRacks([]);
       }
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to load racks";
+      const message =
+        err instanceof Error ? err.message : "Failed to load racks";
       setError(message);
     } finally {
       hasLoadedOnce.current = true;
@@ -194,7 +194,9 @@ export default function RacksScreen() {
   const renderHeader = useCallback(
     () => (
       <View className="flex flex-row justify-between items-center w-full mb-5 mt-8 px-3">
-        <Text style={typography["title-bold"]} className="text-black text-5xl">Racks</Text>
+        <Text style={typography["title-bold"]} className="text-black text-5xl">
+          Racks
+        </Text>
         <TouchableOpacity onPress={handlePreviouslyOwned} className="pr-1">
           <ArchiveButton width={22} height={22} />
         </TouchableOpacity>
@@ -247,21 +249,40 @@ export default function RacksScreen() {
         ListEmptyComponent={
           error ? (
             <View className="flex-1 justify-center items-center py-20 gap-4">
-              <Text style={typography["button-bold"]} className="text-grayText text-center">Something went wrong</Text>
-              <TouchableOpacity onPress={handleRetry} className="bg-primary px-6 py-3 rounded-xl">
-                <Text style={typography["button"]} className="text-white">Retry</Text>
+              <Text
+                style={typography["button-bold"]}
+                className="text-grayText text-center"
+              >
+                Something went wrong
+              </Text>
+              <TouchableOpacity
+                onPress={handleRetry}
+                className="bg-primary px-6 py-3 rounded-xl"
+              >
+                <Text style={typography["button"]} className="text-white">
+                  Retry
+                </Text>
               </TouchableOpacity>
             </View>
           ) : null
         }
-        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 20, flexGrow: 1 }}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#86975A" />}
+        contentContainerStyle={{
+          paddingHorizontal: 16,
+          paddingBottom: 20,
+          flexGrow: 1,
+        }}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor="#86975A"
+          />
+        }
       />
 
-      {/* Tutorial Overlay - Now inside the RacksScreen component */}
-      {currentTutorial && (
+      {shouldShow && currentTutorial && (
         <OnboardingTutorialModal
-          visible={tutorialStep > 0}
+          visible={shouldShow}
           onClose={handleNextStep}
           title={currentTutorial.title}
           subtitle={currentTutorial.desc}

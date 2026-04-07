@@ -4,6 +4,7 @@ import { SummaryCardSkeleton } from "@/components/home/skeleton/summaryCardSkele
 import { OnboardingTutorialModal } from "@/components/onboarding/tutorialModal";
 import { useAsyncState } from "@/hooks/useAsyncState";
 import useFetch from "@/hooks/useFetch";
+import { useOnboarding } from "@/hooks/useOnboarding";
 import { notificationService } from "@/services/notificationService";
 import { plantService } from "@/services/plantService";
 import { rackService } from "@/services/rackService";
@@ -45,13 +46,8 @@ export default function HomeScreen() {
   const [hasUnread, setHasUnread] = useState(false);
   const displayName = userInfo.firstName || "User";
 
-  // #region ── Tutorial Logic ─────────────────────────────────────────────────
-  const [tutorialStep, setTutorialStep] = useState(1);
-  const TOTAL_STEPS = 5;
-
-  const handleNextStep = () => {
-    setTutorialStep((prev) => (prev < TOTAL_STEPS ? prev + 1 : 0));
-  };
+  // ── Tutorial Logic ─────────────────────────────────────────────────────────
+  const { shouldShow, tutorialStep, handleNextStep } = useOnboarding("home", 5);
 
   const getTutorialContent = (step: number) => {
     switch (step) {
@@ -165,7 +161,6 @@ export default function HomeScreen() {
   };
 
   const currentTutorial = getTutorialContent(tutorialStep);
-  // #endregion
 
   // ── States ─────────────────────────────────────────────────────────────────
   const {
@@ -348,9 +343,9 @@ export default function HomeScreen() {
         </View>
       </ScrollView>
 
-      {currentTutorial && (
+      {shouldShow && currentTutorial && (
         <OnboardingTutorialModal
-          visible={tutorialStep > 0}
+          visible={shouldShow}
           onClose={handleNextStep}
           title={currentTutorial.title}
           subtitle={currentTutorial.desc}

@@ -1,25 +1,25 @@
 import useFetch from "@/hooks/useFetch";
 import { userService } from "@/services/userService";
 import { UserDetails } from "@/types/interface";
+import * as SecureStore from "expo-secure-store";
 import React, {
-    createContext,
-    useCallback,
-    useContext,
-    useEffect,
-    useRef,
-    useState,
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
 } from "react";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 /**
- * All onboarding page keys in completion order.
- * Add/remove keys here if you add new screens with tutorials.
+ * Remove "rack-info" since no screen uses it.
+ * This must match exactly the pages that call useOnboarding().
  */
 export const ALL_ONBOARDING_PAGES = [
   "home",
   "racks",
-  "rack-info",
   "activity",
   "plant-care",
   "harvest",
@@ -30,21 +30,17 @@ export const ALL_ONBOARDING_PAGES = [
 
 export type OnboardingPageKey = (typeof ALL_ONBOARDING_PAGES)[number];
 
+// SecureStore key prefix — scoped per user
+const storageKey = (userId: string) => `onboarding_progress_${userId}`;
+const COMPLETED_KEY = (userId: string) => `onboarding_completed_${userId}`;
+
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface OnboardingState {
-  /** Whether the GET /users/onboarding-state has finished loading */
   isLoading: boolean;
-  /** True once the user has completed every page's tutorial */
   hasCompletedOnboarding: boolean;
-  /** Pages the user has already seen */
   completedPages: OnboardingPageKey[];
-  /**
-   * Call this at the END of a page's tutorial (last step dismissed).
-   * It will PATCH the backend and update local state.
-   */
   markPageComplete: (page: OnboardingPageKey) => Promise<void>;
-  /** Returns true if this specific page's tutorial should be shown */
   shouldShowTutorial: (page: OnboardingPageKey) => boolean;
 }
 
@@ -52,26 +48,21 @@ interface OnboardingState {
 
 const OnboardingContext = createContext<OnboardingState | null>(null);
 
-// ─── Provider ────────────────────────────────────────────────────────────────
+// ─── Provider ─────────────────────────────────────────────────────────────────
 
 export function OnboardingProvider({
   children,
+  userId,
 }: {
   children: React.ReactNode;
+  userId: string | null;
 }) {
   const [isLoading, setIsLoading] = useState(true);
   const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(false);
   const [completedPages, setCompletedPages] = useState<OnboardingPageKey[]>([]);
 
-  // Prevent race conditions if markPageComplete is called rapidly
   const isPatchingRef = useRef(false);
-
-  // ── useFetch hooks ──────────────────────────────────────────────────────────
-
-  const { refetch: fetchOnboardingState } = useFetch(
-    "/users/onboarding-state",
-    { method: "GET", autoFetch: false, withAuth: true },
-  );
+  const hasSyncedToBackend = useRef(false);
 
   const { refetch: patchUser } = useFetch("/users", {
     method: "PATCH",
@@ -79,37 +70,45 @@ export function OnboardingProvider({
     withAuth: true,
   });
 
-  // ── Initial load ────────────────────────────────────────────────────────────
+  // ── Load from SecureStore on mount ──────────────────────────────────────────
 
   useEffect(() => {
-    const loadState = async () => {
+    if (!userId) {
+      setIsLoading(false);
+      return;
+    }
+
+    const loadLocal = async () => {
       try {
-        // fetchOnboardingState returns the raw response; adjust if your
-        // useFetch wrapper shapes it differently.
-        const response = await fetchOnboardingState();
-        const data = response?.data ?? response; // handle both shaped & raw
-
-        const pages: OnboardingPageKey[] = (data?.completedPages ?? []).filter(
-          (p: string): p is OnboardingPageKey =>
-            (ALL_ONBOARDING_PAGES as readonly string[]).includes(p),
+        // 1. Check if already fully completed
+        const completedFlag = await SecureStore.getItemAsync(
+          COMPLETED_KEY(userId),
         );
+        if (completedFlag === "true") {
+          setHasCompletedOnboarding(true);
+          setCompletedPages([...ALL_ONBOARDING_PAGES]);
+          return;
+        }
 
-        setCompletedPages(pages);
-        setHasCompletedOnboarding(data?.hasCompletedOnboarding ?? false);
+        // 2. Load partial progress
+        const stored = await SecureStore.getItemAsync(storageKey(userId));
+        if (stored) {
+          const parsed: OnboardingPageKey[] = JSON.parse(stored);
+          const valid = parsed.filter((p): p is OnboardingPageKey =>
+            (ALL_ONBOARDING_PAGES as readonly string[]).includes(p),
+          );
+          setCompletedPages(valid);
+        }
       } catch (err) {
-        // If the endpoint fails (e.g. network error on first launch),
-        // treat as new user — tutorials will show and retry on next open.
-        console.error("[Onboarding] Failed to load onboarding state:", err);
+        console.error("[Onboarding] Failed to load local progress:", err);
         setCompletedPages([]);
-        setHasCompletedOnboarding(false);
       } finally {
         setIsLoading(false);
       }
     };
 
-    loadState();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Run once on mount
+    loadLocal();
+  }, [userId]);
 
   // ── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -124,7 +123,7 @@ export function OnboardingProvider({
 
   const markPageComplete = useCallback(
     async (page: OnboardingPageKey) => {
-      // Guard: already completed or currently patching
+      if (!userId) return;
       if (hasCompletedOnboarding) return;
       if (completedPages.includes(page)) return;
       if (isPatchingRef.current) return;
@@ -136,30 +135,48 @@ export function OnboardingProvider({
         updatedPages.includes(p),
       );
 
-      // Optimistically update local state so UI responds instantly
+      // 1. Optimistically update UI
       setCompletedPages(updatedPages);
-      if (allDone) setHasCompletedOnboarding(true);
 
       try {
-        const body: UserDetails = {
-          completedPages: updatedPages,
-          ...(allDone ? { hasCompletedOnboarding: true } : {}),
-        };
+        if (allDone && !hasSyncedToBackend.current) {
+          // 2a. All pages done — sync to backend ONCE
+          hasSyncedToBackend.current = true;
+          setHasCompletedOnboarding(true);
 
-        await userService.updateUser(patchUser, body);
+          const body: UserDetails = {
+            completedPages: updatedPages,
+            hasCompletedOnboarding: true,
+          };
+          await userService.updateUser(patchUser, body);
+
+          // 3. Persist completion flag locally
+          await SecureStore.setItemAsync(COMPLETED_KEY(userId), "true");
+          await SecureStore.deleteItemAsync(storageKey(userId)); // cleanup partial
+        } else {
+          // 2b. Still in progress — only save locally, no backend call
+          await SecureStore.setItemAsync(
+            storageKey(userId),
+            JSON.stringify(updatedPages),
+          );
+        }
       } catch (err) {
-        // Roll back optimistic update on failure
-        console.error("[Onboarding] Failed to save page completion:", err);
-        setCompletedPages(completedPages);
-        if (allDone) setHasCompletedOnboarding(false);
+        console.error("[Onboarding] Failed to save progress:", err);
+
+        // Roll back optimistic update on backend failure only
+        if (allDone) {
+          hasSyncedToBackend.current = false;
+          setHasCompletedOnboarding(false);
+          setCompletedPages(completedPages);
+        }
+        // For local storage failure mid-flow, keep optimistic state
+        // (will retry next session from whatever was last saved)
       } finally {
         isPatchingRef.current = false;
       }
     },
-    [hasCompletedOnboarding, completedPages, patchUser],
+    [userId, hasCompletedOnboarding, completedPages, patchUser],
   );
-
-  // ── Value ───────────────────────────────────────────────────────────────────
 
   const value: OnboardingState = {
     isLoading,

@@ -1,4 +1,5 @@
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { OnboardingProvider } from "@/contexts/OnboardingContext";
 import { useNotificationHandler } from "@/hooks/useNotificationHandler";
 import { createLogger } from "@/utils/logger";
 import { useRegisterForPushNotifications } from "@/utils/notification";
@@ -25,15 +26,30 @@ function NotificationBridge({ userId }: { userId: string }) {
     let isMounted = true;
 
     const registerToken = async () => {
-      if (lastRegisteredUserIdRef.current === userId) {
+      if (lastRegisteredUserIdRef.current === userId) return;
+      if (!userId) return;
+
+      // Get current Firebase token first — if it fails, user is logging out
+      try {
+        const { auth } = await import("@/firebase");
+        const currentUser = auth.currentUser;
+
+        // If Firebase has no current user, the token is already invalidated
+        if (!currentUser) {
+          logger.log("Skipping push token registration — no Firebase user");
+          return;
+        }
+
+        // Verify token is still valid before attempting registration
+        await currentUser.getIdToken(false);
+      } catch {
+        logger.log("Skipping push token registration — token invalid");
         return;
       }
 
       const token = await registerForPushNotifications(userId);
 
-      if (!isMounted) {
-        return;
-      }
+      if (!isMounted) return;
 
       if (token) {
         lastRegisteredUserIdRef.current = userId;
@@ -115,7 +131,6 @@ function RootLayoutNav() {
     );
   }
 
-  //this is where the animation should load so that the dashboard wont pop up in the first mount of the app
   const inAuthGroupForRender = segments[0] === "(auth)";
   if (!user && !inAuthGroupForRender) {
     return (
@@ -126,13 +141,15 @@ function RootLayoutNav() {
   }
 
   return (
-    <>
-      {user?.uid ? <NotificationBridge userId={user.uid} /> : null}
+    <OnboardingProvider userId={user?.uid ?? null}>
+      {user?.uid && segments[0] !== "(auth)" ? (
+        <NotificationBridge userId={user.uid} />
+      ) : null}
       <Stack screenOptions={{ headerShown: false }} initialRouteName="(auth)">
         <Stack.Screen name="(auth)" />
         <Stack.Screen name="(tabs)" />
       </Stack>
-    </>
+    </OnboardingProvider>
   );
 }
 

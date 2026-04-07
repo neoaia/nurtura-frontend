@@ -60,7 +60,7 @@ export const RecentActivityBar: React.FC<RecentActivityBarProps> = ({
       <View>
         {activities.length === 0 ? (
           <View className="p-8 items-center border border-gray-200 rounded-xl">
-            <Text style={typography.body} className="text-grayText">
+            <Text style={typography["subheader"]} className="text-grayText">
               No recent activities
             </Text>
           </View>

@@ -5,6 +5,7 @@ import { OnboardingTutorialModal } from "@/components/onboarding/tutorialModal";
 import { DateRangePicker } from "@/components/shared/datetimepicker";
 import Dropdown, { DropdownOption } from "@/components/shared/dropdown";
 import useFetch from "@/hooks/useFetch";
+import { useOnboarding } from "@/hooks/useOnboarding";
 import { plantService } from "@/services/plantService";
 import { rackService } from "@/services/rackService";
 import { BasePlantItemDTO } from "@/types/activity.dto";
@@ -102,6 +103,7 @@ const ListHeader: React.FC<ListHeaderProps> = ({
   useEffect(() => {
     loadRacks();
   }, []);
+
   return (
     <View className="bg-white">
       <View className="mt-4 gap-3">
@@ -113,7 +115,7 @@ const ListHeader: React.FC<ListHeaderProps> = ({
           onSelect={(item) => setSelectedRack(item)}
           label="Selected Rack"
           Icon={RackIcon}
-        ></Dropdown>
+        />
       </View>
       <View className="items-center mt-6 mb-4">
         <PlantChart
@@ -130,13 +132,19 @@ const ListHeader: React.FC<ListHeaderProps> = ({
 };
 
 export default function HarvestScreen() {
-  const [tutorialStep, setTutorialStep] = useState(1);
-  const TOTAL_STEPS = 2;
+  // ── Tutorial Logic ─────────────────────────────────────────────────────────
+  const { shouldShow, tutorialStep, handleNextStep } = useOnboarding(
+    "harvest",
+    2,
+  );
 
   const [dateRange, setDateRange] = useState<{
     start: Date | null;
     end: Date | null;
-  }>({ start: null, end: null });
+  }>({
+    start: null,
+    end: null,
+  });
   const [selectedRack, setSelectedRack] = useState<DropdownOption | null>(null);
   const [harvests, setHarvests] = useState<HarvestData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -156,10 +164,6 @@ export default function HarvestScreen() {
       setSelectedRack(null);
     };
   }, []);
-
-  const handleNextStep = () => {
-    setTutorialStep((prev) => (prev < TOTAL_STEPS ? prev + 1 : 0));
-  };
 
   const harvestChartData = harvests.map((item, index) => ({
     timestamp: index,
@@ -330,9 +334,9 @@ export default function HarvestScreen() {
         }
       />
 
-      {currentTutorial && (
+      {shouldShow && currentTutorial && (
         <OnboardingTutorialModal
-          visible={tutorialStep > 0}
+          visible={shouldShow}
           onClose={handleNextStep}
           title={currentTutorial.title}
           subtitle={currentTutorial.desc}
