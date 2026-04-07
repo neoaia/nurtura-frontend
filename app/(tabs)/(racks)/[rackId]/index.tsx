@@ -2,6 +2,7 @@ import { typography } from "@/assets/fonts/Text";
 import PlantCareIcon from "@/assets/images/icons/plantCare(Activity).svg";
 import PlantIcon from "@/assets/images/icons/plants(Dashboard).svg";
 import { HarvestModal } from "@/components/modals/harvestModal";
+import { OnboardingTutorialModal } from "@/components/onboarding/tutorialModal"; // Added
 import PlantStatusIndicators from "@/components/racks/plantStatusIndicators";
 import { PlantStatusIndicatorsSkeleton } from "@/components/racks/skeleton/plantStatusIndicatorsSkeleton";
 import { BottomButton } from "@/components/shared/bottomButton";
@@ -13,10 +14,11 @@ import useFetch from "@/hooks/useFetch";
 import { useRackSensor } from "@/hooks/useRackSensor";
 import { rackService } from "@/services/rackService";
 import { useFocusEffect } from "@react-navigation/native";
-import { router, useLocalSearchParams } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router"; // Added Stack
 import React, { useCallback, useState } from "react";
 import {
   Alert,
+  Dimensions,
   Image,
   ScrollView,
   Text,
@@ -26,6 +28,8 @@ import {
 import DateIcon from "../../../../assets/images/icons/date.svg";
 import SoilIcon from "../../../../assets/images/icons/soil.svg";
 import { PLANT_IMAGES } from "../../../../utils/constants";
+
+const screenHeight = Dimensions.get("window").height;
 
 const formatLabel = (value: string) =>
   value
@@ -47,6 +51,59 @@ const RackInfo = () => {
   const [rackName, setRackName] = useState<string>("Unknown Rack");
   const [loading, setLoading] = useState(true);
   const [harvesting, setHarvesting] = useState(false);
+
+  // ── Tutorial Logic ────────────────────────────────────────────────────────
+  const [tutorialStep, setTutorialStep] = useState(1);
+  const TOTAL_STEPS = 2;
+
+  const handleNextStep = () => {
+    setTutorialStep((prev) => (prev < TOTAL_STEPS ? prev + 1 : 0));
+  };
+
+  const getTutorialContent = (step: number) => {
+    switch (step) {
+      case 1:
+        return {
+          title: "Edit Your Nurtura Rack",
+          desc: "Give your plants a little attention — adjust their info, care schedule, or environment setup.",
+          image: require("@/assets/nuri/pointing-up.png"),
+          position: { top: 250, right: -50 },
+          offset: 50,
+          component: (
+            <View className="items-center justify-center">
+              <View className="bg-white p-4 rounded-[20px] items-center justify-center shadow-sm w-[72px] h-[72px]">
+                <Image
+                    source={require("@/assets/images/racks/edit.png")}
+                    style={{ width: 22, height: 22 }}
+                    resizeMode="contain"
+                  />
+              </View>
+            </View>
+          )
+        };
+      case 2:
+        return {
+          title: "Add a Plant",
+          desc: "Register a new plant to connect it with real-time sensors, automated care, and smart tracking.",
+          image: require("@/assets/nuri/thinking.png"),
+          position: { bottom: 0, right: -50 },
+          offset: screenHeight - 580,
+          component: (
+            <View className="px-8 w-full items-center">
+              <View className="bg-[#EDEDED] rounded-xl px-12 py-6 w-full items-center">
+                <Text style={typography["button-bold"]} className="text-black">
+                  Add a Plant
+                </Text>
+              </View>
+            </View>
+          )
+        };
+      default:
+        return null;
+    }
+  };
+
+  const currentTutorial = getTutorialContent(tutorialStep);
 
   const { reading } = useRackSensor(rackId);
 
@@ -211,6 +268,20 @@ const RackInfo = () => {
             Add a Plant
           </Text>
         </TouchableOpacity>
+
+        {currentTutorial && (
+          <OnboardingTutorialModal
+            visible={tutorialStep > 0}
+            onClose={handleNextStep}
+            title={currentTutorial.title}
+            subtitle={currentTutorial.desc}
+            topOffset={currentTutorial.offset}
+            characterImage={currentTutorial.image}
+            characterPosition={currentTutorial.position}
+          >
+            {currentTutorial.component}
+          </OnboardingTutorialModal>
+        )}
       </View>
     );
   }
