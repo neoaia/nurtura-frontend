@@ -1,3 +1,4 @@
+import { typography } from "@/assets/fonts/Text";
 import NotificationItem from "@/components/notifications/notificationItem";
 import useFetch from "@/hooks/useFetch";
 import { notificationService } from "@/services/notificationService";
@@ -7,7 +8,43 @@ import {
 } from "@/types/notification.dto";
 import { useFocusEffect, useNavigation } from "expo-router";
 import { useCallback, useLayoutEffect, useState } from "react";
-import { ActivityIndicator, FlatList, Text, View } from "react-native";
+import { ActivityIndicator, SectionList, Text, View } from "react-native";
+
+// Grouping function adapted from RackActivity
+const groupNotificationsByDate = (data: NotificationItemDTO[]) => {
+  const groups: { [key: string]: NotificationItemDTO[] } = {};
+  const now = new Date();
+  const today = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate(),
+  ).getTime();
+  const yesterday = today - 86400000;
+
+  data.forEach((item) => {
+    // Adjust 'createdAt' or 'timestamp' based on your actual NotificationItemDTO property
+    const dateValue = (item as any).createdAt || (item as any).timestamp;
+    const itemDate = new Date(dateValue).setHours(0, 0, 0, 0);
+    let title = "";
+
+    if (itemDate === today) title = "Today";
+    else if (itemDate === yesterday) title = "Yesterday";
+    else
+      title = new Date(itemDate).toLocaleDateString("en-US", {
+        month: "long",
+        day: "numeric",
+        year: "numeric",
+      });
+
+    if (!groups[title]) groups[title] = [];
+    groups[title].push(item);
+  });
+
+  return Object.keys(groups).map((date) => ({
+    title: date,
+    data: groups[date],
+  }));
+};
 
 export default function NotificationScreen() {
   const navigation = useNavigation();
@@ -88,14 +125,27 @@ export default function NotificationScreen() {
     );
   }
 
+  const sections = groupNotificationsByDate(notifications);
+
   return (
     <View className="flex-1 bg-white">
-      <FlatList
-        data={notifications}
-        renderItem={({ item }) => <NotificationItem {...item} />}
+      <SectionList
+        sections={sections}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={{ paddingVertical: 16 }}
+        renderItem={({ item }) => (
+          <View>
+            <NotificationItem {...item} />
+          </View>
+        )}
+        renderSectionHeader={({ section: { title } }) => (
+          <View className="bg-white py-3 px-6">
+            <Text className="text-black" style={typography["h2-bold"]}>
+              {title}
+            </Text>
+          </View>
+        )}
         showsVerticalScrollIndicator={false}
+        stickySectionHeadersEnabled={false}
       />
     </View>
   );

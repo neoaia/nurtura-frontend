@@ -67,7 +67,7 @@ export const NotificationItem: React.FC<NotificationItemDTO> = ({
   return (
     <View
       // Idinagdag ang 'px-4' class dito
-      className={`py-4 px-4 w-full flex-row items-center min-h-[84px] ${
+      className={`px-4 w-full flex-row items-center min-h-[84px] ${
         isUnread ? "bg-[#f0f5e7]" : "bg-white"
       }`}
     >
@@ -87,7 +87,9 @@ export const NotificationItem: React.FC<NotificationItemDTO> = ({
           <Text style={typography["subheader-bold"]} className="text-black">
             {title}
           </Text>{" "}
-          {message}{" "}
+          {"- "}
+          {message}
+          {". "}
           <Text style={typography["subheader"]} className="text-grayText">
             {getRelativeTime(createdAt)}
           </Text>

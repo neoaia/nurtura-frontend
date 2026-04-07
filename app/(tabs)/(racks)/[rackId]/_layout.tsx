@@ -126,10 +126,6 @@ export default function RackIDLayout() {
         options={{ title: "Edit Rack", headerTitleAlign: "left" }}
       />
       <Stack.Screen
-        name="connection"
-        options={{ title: "Rack Connection", headerTitleAlign: "left" }}
-      />
-      <Stack.Screen
         name="edit-rack-name"
         options={{ title: "Edit Rack Name", headerTitleAlign: "left" }}
       />
