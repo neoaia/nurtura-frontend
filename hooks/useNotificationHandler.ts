@@ -55,19 +55,7 @@ const isWarningLike = (data: AppNotificationData): boolean => {
 };
 
 const getRouteFromData = (data: AppNotificationData): Href | null => {
-  if ((data.screen === "Rack" || data.rackId) && data.rackId) {
-    return `/(tabs)/(racks)/${data.rackId}` as Href;
-  }
-
-  if (data.screen === "Home") {
-    return "/(tabs)/(home)" as Href;
-  }
-
-  if (data.screen === "Notifications") {
-    return "/notifications" as Href;
-  }
-
-  return "/notifications" as Href;
+  return data.screen as Href;
 };
 
 export function useNotificationHandler(

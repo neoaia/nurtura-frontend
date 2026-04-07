@@ -13,13 +13,13 @@ Notifications.setNotificationHandler({
 });
 
 type SavePushTokenResponse = {
-  message?: string;
+  expoPushToken?: string;
 };
 
 const resolveProjectId = (): string | undefined => {
   const envProjectId = process.env.EXPO_PUBLIC_EAS_PROJECT_ID;
 
-  return envProjectId
+  return envProjectId;
 };
 
 export async function getExpoPushToken(): Promise<string | null> {
@@ -62,8 +62,8 @@ export function useRegisterForPushNotifications() {
     refetch: saveToken,
     loading,
     error,
-  } = useFetch<SavePushTokenResponse>("/users/save-token", {
-    method: "POST",
+  } = useFetch<SavePushTokenResponse>("/users", {
+    method: "PATCH",
     autoFetch: false,
     withAuth: true,
   });
@@ -76,7 +76,7 @@ export function useRegisterForPushNotifications() {
       }
 
       const result = await saveToken({
-        body: { userId, expoPushToken },
+        body: { expoPushToken },
       });
 
       if (result.error) {

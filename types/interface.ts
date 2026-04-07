@@ -11,6 +11,9 @@ export interface UserDetails {
   street?: string;
   barangay?: string;
   city?: string;
+  expoPushToken?: string;
+  completedPages?: string[];
+  hasCompletedOnboarding?: boolean;
 }
 
 export interface UseFetchOptions {
