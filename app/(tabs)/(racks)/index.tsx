@@ -89,7 +89,7 @@ export default function RacksScreen() {
   );
 
   const handleCardPress = useCallback((rackId: string) => {
-    router.push(`/(tabs)/(racks)/${rackId}` as any);
+    router.push(`/(racks)/${rackId}` as any);
   }, []);
 
   const handleAddRack = useCallback(() => {
