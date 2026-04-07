@@ -90,6 +90,18 @@ export default function NotificationScreen() {
 
   return (
     <View className="flex-1 bg-white">
+      {loading ? (
+        <View className="flex-1 items-center justify-center">
+          <ActivityIndicator size="large" color="#31511E" />
+        </View>
+      ) : null}
+
+      {!loading && error ? (
+        <View className="px-6 pt-8">
+          <Text className="text-red-500">Failed to load notifications.</Text>
+        </View>
+      ) : null}
+
       <FlatList
         data={notifications}
         renderItem={({ item }) => <NotificationItem {...item} />}
