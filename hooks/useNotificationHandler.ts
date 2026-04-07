@@ -77,6 +77,7 @@ export function useNotificationHandler(
   const optionsRef = useRef<UseNotificationHandlerOptions | undefined>(options);
   const notifListener = useRef<Notifications.EventSubscription | null>(null);
   const responseListener = useRef<Notifications.EventSubscription | null>(null);
+  const lastHandledResponseIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     optionsRef.current = options;
@@ -115,7 +116,17 @@ export function useNotificationHandler(
       });
     };
 
-    const handleResponse = (response: Notifications.NotificationResponse) => {
+    const handleResponse = async (
+      response: Notifications.NotificationResponse,
+    ) => {
+      const responseId = response.notification.request.identifier;
+
+      if (lastHandledResponseIdRef.current === responseId) {
+        return;
+      }
+
+      lastHandledResponseIdRef.current = responseId;
+
       const rawData = response.notification.request.content.data as Record<
         string,
         unknown
@@ -126,6 +137,8 @@ export function useNotificationHandler(
       if (route) {
         router.push(route);
       }
+
+      await Notifications.clearLastNotificationResponseAsync();
     };
 
     const bootstrap = async () => {
@@ -138,7 +151,7 @@ export function useNotificationHandler(
       const lastResponse =
         await Notifications.getLastNotificationResponseAsync();
       if (lastResponse) {
-        handleResponse(lastResponse);
+        await handleResponse(lastResponse);
       }
     };
 
@@ -168,7 +181,9 @@ export function useNotificationHandler(
 
     // User TAPS the notification
     responseListener.current =
-      Notifications.addNotificationResponseReceivedListener(handleResponse);
+      Notifications.addNotificationResponseReceivedListener((response) => {
+        void handleResponse(response);
+      });
 
     return () => {
       notifListener.current?.remove();
