@@ -3,12 +3,15 @@ import { OnboardingTutorialModal } from "@/components/onboarding/tutorialModal";
 import AddRackButton from "@/components/racks/addRackItemBtn";
 import RackItem from "@/components/racks/rackItem";
 import RackItemSkeleton from "@/components/racks/skeleton/rackItemSkeleton";
+import { useAuth } from "@/contexts/AuthContext";
 import useFetch from "@/hooks/useFetch";
 import { useOnboarding } from "@/hooks/useOnboarding";
 import { rackService } from "@/services/rackService";
 import { GetRackInfoDTO } from "@/types/rack.dto";
+import { SensorReading } from "@/types/socket.interface";
+import { socketService } from "@/utils/websocket/socket";
 import { router, useFocusEffect } from "expo-router";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Dimensions,
   FlatList,
@@ -31,8 +34,119 @@ export default function RacksScreen() {
   const [error, setError] = useState<string | null>(null);
 
   const hasLoadedOnce = useRef(false);
+  // Track which rackIds we're currently subscribed to so we
+  // don't double-subscribe or forget to unsubscribe stragglers
+  const subscribedRackIds = useRef<Set<string>>(new Set());
 
-  // ── Tutorial Logic ─────────────────────────────────────────────────────────
+  const { user } = useAuth(); // { id: string, ... }
+
+  // ── Socket subscriptions ──────────────────────────────────────────────────
+
+  // One shared handler per event type — checks rackId internally.
+  // Defined with useRef so the function reference is stable across renders,
+  // which lets us call socketService.off() with the exact same reference.
+  const onSensorData = useRef(
+    (payload: { rackId: string; data: SensorReading }) => {
+      const { rackId, data } = payload;
+      setRacks((prev) =>
+        prev.map((r) =>
+          r.id === rackId
+            ? {
+                ...r,
+                water: data.waterLevel ?? r.water,
+                humidity: data.humidity ?? r.humidity,
+                temperature: data.temperature ?? r.temperature,
+              }
+            : r,
+        ),
+      );
+    },
+  ).current;
+
+  const onInitialData = useRef(
+    (payload: { rackId: string; data: SensorReading | null }) => {
+      if (!payload.data) return;
+      onSensorData({ rackId: payload.rackId, data: payload.data });
+    },
+  ).current;
+
+  const onDeviceStatus = useRef(
+    (payload: { rackId: string; status: string }) => {
+      setRacks((prev) =>
+        prev.map((r) =>
+          r.id === payload.rackId
+            ? {
+                ...r,
+                hasAlert:
+                  payload.status === "offline" || payload.status === "error",
+              }
+            : r,
+        ),
+      );
+    },
+  ).current;
+
+  const onAlert = useRef((payload: { rackId: string }) => {
+    setRacks((prev) =>
+      prev.map((r) => (r.id === payload.rackId ? { ...r, hasAlert: true } : r)),
+    );
+  }).current;
+
+  const subscribeToRacks = useCallback(
+    (rackList: GetRackInfoDTO[]) => {
+      if (!user?.uid) return;
+
+      const incomingIds = new Set(rackList.map((r) => r.id));
+
+      // Unsubscribe from racks no longer in the list
+      subscribedRackIds.current.forEach((id) => {
+        if (!incomingIds.has(id)) {
+          socketService.unsubscribeFromRack(id);
+          subscribedRackIds.current.delete(id);
+        }
+      });
+
+      // Register shared event handlers once (idempotent — off then on)
+      socketService.off("sensorData", onSensorData);
+      socketService.off("initialData", onInitialData);
+      socketService.off("deviceStatus", onDeviceStatus);
+      socketService.off("alert", onAlert);
+
+      socketService.on("sensorData", onSensorData);
+      socketService.on("initialData", onInitialData);
+      socketService.on("deviceStatus", onDeviceStatus);
+      socketService.on("alert", onAlert);
+
+      // Subscribe to each new rack
+      rackList.forEach((rack) => {
+        if (subscribedRackIds.current.has(rack.id)) return;
+        socketService.subscribeToRack(rack.id);
+        subscribedRackIds.current.add(rack.id);
+      });
+    },
+    [user?.uid, onSensorData, onInitialData, onDeviceStatus, onAlert],
+  );
+
+  const unsubscribeAll = useCallback(() => {
+    subscribedRackIds.current.forEach((id) => {
+      socketService.unsubscribeFromRack(id);
+    });
+    subscribedRackIds.current.clear();
+
+    socketService.off("sensorData", onSensorData);
+    socketService.off("initialData", onInitialData);
+    socketService.off("deviceStatus", onDeviceStatus);
+    socketService.off("alert", onAlert);
+  }, [onSensorData, onInitialData, onDeviceStatus, onAlert]);
+
+  // Full cleanup on unmount
+  useEffect(() => {
+    return () => {
+      unsubscribeAll();
+    };
+  }, [unsubscribeAll]);
+
+  // ── Tutorial Logic ────────────────────────────────────────────────────────
   const { shouldShow, tutorialStep, handleNextStep } = useOnboarding(
     "racks",
     4,
@@ -120,7 +234,7 @@ export default function RacksScreen() {
 
   const currentTutorial = getTutorialContent(tutorialStep);
 
-  // ── API Fetch Logic ────────────────────────────────────────────────────────
+  // ── API Fetch Logic ───────────────────────────────────────────────────────
   const { refetch: getAllRacks } = useFetch("/racks", {
     method: "GET",
     autoFetch: false,
@@ -146,9 +260,17 @@ export default function RacksScreen() {
             temperature: 0,
             hasAlert: rack.status === "offline" || rack.status === "error",
           }));
+
         setRacks(mappedRacks);
+
+        // ✅ Ensure socket is connected before subscribing
+        if (user?.token) {
+          await socketService.connect(user.token);
+        }
+        subscribeToRacks(mappedRacks);
       } else {
         setRacks([]);
+        unsubscribeAll();
       }
     } catch (err) {
       const message =
@@ -158,7 +280,7 @@ export default function RacksScreen() {
       hasLoadedOnce.current = true;
       setLoading(false);
     }
-  }, [getAllRacks]);
+  }, [getAllRacks, subscribeToRacks, unsubscribeAll, user?.token]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -170,7 +292,11 @@ export default function RacksScreen() {
     useCallback(() => {
       if (!hasLoadedOnce.current) setLoading(true);
       fetchRacks();
-    }, [fetchRacks]),
+
+      return () => {
+        unsubscribeAll();
+      };
+    }, [fetchRacks, unsubscribeAll]),
   );
 
   const handleCardPress = useCallback((rackId: string) => {
