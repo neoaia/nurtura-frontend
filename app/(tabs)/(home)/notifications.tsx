@@ -1,51 +1,18 @@
 import NotificationItem from "@/components/notifications/notificationItem";
 import useFetch from "@/hooks/useFetch";
+import { notificationService } from "@/services/notificationService";
 import {
-  BackendNotificationsResponseDTO,
   NotificationItemDTO,
-} from "@/types/home.dto";
-import { useNavigation } from "expo-router";
-import { useLayoutEffect, useMemo } from "react";
+  NotificationsResponseDTO,
+} from "@/types/notification.dto";
+import { useFocusEffect, useNavigation } from "expo-router";
+import { useCallback, useLayoutEffect, useState } from "react";
 import { ActivityIndicator, FlatList, Text, View } from "react-native";
-
-const toRelativeTime = (dateInput: string): string => {
-  const date = new Date(dateInput);
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-
-  const minute = 60 * 1000;
-  const hour = 60 * minute;
-  const day = 24 * hour;
-
-  if (diffMs < minute) {
-    return "Just now";
-  }
-
-  if (diffMs < hour) {
-    return `${Math.floor(diffMs / minute)}m ago`;
-  }
-
-  if (diffMs < day) {
-    return `${Math.floor(diffMs / hour)}h ago`;
-  }
-
-  return `${Math.floor(diffMs / day)}d ago`;
-};
 
 export default function NotificationScreen() {
   const navigation = useNavigation();
-  const { data, loading, error } = useFetch<BackendNotificationsResponseDTO>(
-    "/notifications",
-    {
-      method: "GET",
-      withAuth: true,
-      autoFetch: true,
-      params: {
-        page: 1,
-        limit: 20,
-      },
-    },
-  );
+  const [notifications, setNotifications] = useState<NotificationItemDTO[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useLayoutEffect(() => {
     navigation.getParent()?.setOptions({
@@ -64,18 +31,62 @@ export default function NotificationScreen() {
     };
   }, [navigation]);
 
-  const notifications = useMemo<NotificationItemDTO[]>(() => {
+  const { refetch: fetchNotifications } = useFetch("/notifications", {
+    method: "GET",
+    autoFetch: false,
+    withAuth: true,
+  });
+
+  const { refetch: markAllRead } = useFetch("/notifications/read-all", {
+    method: "PATCH",
+    autoFetch: false,
+    withAuth: true,
+  });
+
+  const loadNotifications = useCallback(async () => {
+    setLoading(true);
+    try {
+      const response: NotificationsResponseDTO =
+        await notificationService.getAllNotifications(fetchNotifications);
+
+      if (response?.data) {
+        setNotifications(response.data);
+
+        const hasUnread = response.data.some((n) => n.status === "UNREAD");
+        if (hasUnread) {
+          await notificationService.markReadAllNotifications(markAllRead);
+        }
+      }
+    } catch (error) {
+      console.error("Failed to fetch notifications:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, [fetchNotifications, markAllRead]);
+
+  useFocusEffect(
+    useCallback(() => {
+      loadNotifications();
+    }, [loadNotifications]),
+  );
+
+  if (loading) {
     return (
-      data?.data?.map((item) => ({
-        id: item.id,
-        type: "alert",
-        title: item.title,
-        message: item.message,
-        status: item.status,
-        time: toRelativeTime(item.createdAt),
-      })) ?? []
+      <View className="flex-1 bg-white items-center justify-center">
+        <ActivityIndicator size="small" color="#86975A" />
+      </View>
     );
-  }, [data]);
+  }
+
+  if (!loading && notifications.length === 0) {
+    return (
+      <View className="flex-1 bg-white items-center justify-center px-6">
+        <Text className="text-grayText text-center">
+          You have no notifications yet.
+        </Text>
+      </View>
+    );
+  }
 
   return (
     <View className="flex-1 bg-white">
@@ -95,17 +106,7 @@ export default function NotificationScreen() {
         data={notifications}
         renderItem={({ item }) => <NotificationItem {...item} />}
         keyExtractor={(item) => item.id}
-        ListEmptyComponent={
-          !loading ? (
-            <View className="px-6 pt-8">
-              <Text className="text-gray-500">No notifications yet.</Text>
-            </View>
-          ) : null
-        }
-        contentContainerStyle={{
-          paddingHorizontal: 16,
-          paddingVertical: 16,
-        }}
+        contentContainerStyle={{ paddingVertical: 16 }}
         showsVerticalScrollIndicator={false}
       />
     </View>

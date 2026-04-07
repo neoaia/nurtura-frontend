@@ -25,9 +25,6 @@ export default function RacksScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Once we've completed at least one fetch, skeleton never shows again.
-  // Re-focus refreshes run silently in the background — stale racks stay
-  // visible instantly while new data loads behind them.
   const hasLoadedOnce = useRef(false);
 
   const { refetch: getAllRacks } = useFetch("/racks", {
@@ -65,11 +62,8 @@ export default function RacksScreen() {
       const message =
         err instanceof Error ? err.message : "Failed to load racks";
       setError(message);
-      // Keep stale racks visible on refresh failure
       setRacks((prev) => prev);
     } finally {
-      // Mark that we've been through at least one full fetch cycle.
-      // After this point, loading=true will never trigger the skeleton again.
       hasLoadedOnce.current = true;
       setLoading(false);
     }
@@ -84,8 +78,6 @@ export default function RacksScreen() {
   useFocusEffect(
     useCallback(() => {
       const loadData = async () => {
-        // First ever load: show skeleton while fetching
-        // Subsequent focuses: fetch silently, existing racks stay on screen
         if (!hasLoadedOnce.current) {
           setLoading(true);
         }
@@ -122,7 +114,6 @@ export default function RacksScreen() {
         <Text style={typography["title-bold"]} className="text-black text-5xl">
           Racks
         </Text>
-
         <TouchableOpacity onPress={handlePreviouslyOwned} className="pr-1">
           <ArchiveButton width={22} height={22} />
         </TouchableOpacity>
@@ -150,12 +141,6 @@ export default function RacksScreen() {
   );
 
   // ─── Render logic ──────────────────────────────────────────────────────────
-  //
-  // Priority order:
-  //   1. If we have racks → show them immediately (even while a bg refresh runs)
-  //   2. If still on very first load (hasLoadedOnce = false) → skeleton
-  //   3. If fetch failed with no racks → error state
-  //   4. If fetch succeeded but no active racks → empty state
 
   const hasRacks = racks.length > 0;
   const isFirstLoad = !hasLoadedOnce.current && loading;
@@ -245,7 +230,6 @@ export default function RacksScreen() {
     );
   }
 
-  // ── Main list — renders as soon as racks data arrives ──────────────────────
   return (
     <SafeAreaView className="bg-white flex-1">
       <FlatList

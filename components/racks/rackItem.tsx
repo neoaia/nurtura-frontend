@@ -1,11 +1,11 @@
 import { typography } from "@/assets/fonts/Text";
 import SeedIcon from "@/assets/images/icons/rackItem/seed.svg";
+import { InfoModal } from "@/components/modals/infoModal";
 import { useRackSensor } from "@/hooks/useRackSensor";
 import { GetRackInfoDTO } from "@/types/rack.dto";
 import React, { useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   Image,
   Text,
   TouchableOpacity,
@@ -23,6 +23,13 @@ interface RackItemProps {
 const RackItem: React.FC<RackItemProps> = ({ rack }) => {
   const [isLoading, setIsLoading] = useState(false);
 
+  // ── Modal state ────────────────────────────────────────────────────────────
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalContent, setModalContent] = useState({
+    title: "",
+    message: "",
+  });
+
   const { id, name, plant, image, seeds, hasAlert = false, onPress } = rack;
 
   // Get real-time sensor data via websocket
@@ -30,7 +37,6 @@ const RackItem: React.FC<RackItemProps> = ({ rack }) => {
 
   const handlePress = async () => {
     if (isLoading || !onPress) return;
-
     setIsLoading(true);
     try {
       await onPress();
@@ -92,10 +98,13 @@ const RackItem: React.FC<RackItemProps> = ({ rack }) => {
 
   const connectionStatus = getConnectionStatus();
 
+  // ── Replaced Alert.alert with InfoModal ───────────────────────────────────
   const handleStatusPress = () => {
-    Alert.alert(connectionStatus.message, connectionStatus.details, [
-      { text: "OK" },
-    ]);
+    setModalContent({
+      title: connectionStatus.message,
+      message: connectionStatus.details,
+    });
+    setModalVisible(true);
   };
 
   const displayData = {
@@ -226,6 +235,15 @@ const RackItem: React.FC<RackItemProps> = ({ rack }) => {
           </Text>
         </View>
       </View>
+
+      {/* ── InfoModal (replaces Alert) ──────────────────────────────────────── */}
+      <InfoModal
+        isVisible={modalVisible}
+        title={modalContent.title}
+        message={modalContent.message}
+        confirmText="OK"
+        onConfirm={() => setModalVisible(false)}
+      />
     </TouchableOpacity>
   );
 };
