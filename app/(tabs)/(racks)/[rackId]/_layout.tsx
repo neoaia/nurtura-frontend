@@ -81,21 +81,6 @@ export default function RackIDLayout() {
             <View className="flex-row items-center pr-2 gap-1">
               <TouchableOpacity
                 onPress={() =>
-                  handleNavigation(`/(tabs)/(racks)/${rackId}/connection`)
-                }
-                disabled={isLoading}
-                activeOpacity={0.7}
-                className={`p-2 rounded-lg ${isLoading ? "opacity-50" : ""}`}
-              >
-                <Image
-                  source={require("@/assets/images/racks/connection.png")}
-                  className="w-6 h-6"
-                  resizeMode="contain"
-                />
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                onPress={() =>
                   handleNavigation(`/(tabs)/(racks)/${rackId}/edit`)
                 }
                 disabled={isLoading}

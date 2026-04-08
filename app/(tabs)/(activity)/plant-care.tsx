@@ -275,28 +275,34 @@ export default function PlantCareScreen() {
       });
 
       if (response?.data) {
-        const mappedData: ActivityDTO[] = response.data
-          .filter((item: any) => item.eventType?.endsWith("_OFF"))
-          .map((item: any) => {
-            const dateObj = new Date(item.timestamp);
-            const isWater = item.eventType.includes("WATERING");
-            return {
-              id: item.id,
-              type: (isWater ? "water" : "light") as "water" | "light",
-              plantName: item.metadata?.ruleName || "Plants",
-              rackName:
-                item.metadata?.rackName || item.rack?.name || "Unknown Rack",
-              time: dateObj.toLocaleTimeString("en-US", {
-                hour: "2-digit",
-                minute: "2-digit",
-              }),
-              date: dateObj,
-              amount: item.metadata?.amount,
-              duration: item.metadata?.duration
-                ? `${Math.round(item.metadata.duration / 60000)} mins`
-                : undefined,
-            };
-          });
+        // Tinanggal ang .filter((item) => item.eventType?.endsWith("_OFF"))
+        // Dahil gusto natin makita pareho ang START at STOP o kahit anong log.
+        const mappedData: ActivityDTO[] = response.data.map((item: any) => {
+          const dateObj = new Date(item.timestamp);
+
+          // I-check kung may "WATER" sa eventType
+          const isWater =
+            item.eventType?.includes("WATERING") ||
+            item.eventType?.includes("WATER");
+
+          return {
+            id: item.id,
+            // Assign as "water" kung may WATERING sa string, else "light"
+            type: (isWater ? "water" : "light") as "water" | "light",
+            plantName: item.metadata?.ruleName || "Plants",
+            rackName:
+              item.metadata?.rackName || item.rack?.name || "Unknown Rack",
+            time: dateObj.toLocaleTimeString("en-US", {
+              hour: "2-digit",
+              minute: "2-digit",
+            }),
+            date: dateObj,
+            amount: item.metadata?.amount, // Siguraduhing existing sa API response nyo
+            duration: item.metadata?.duration
+              ? `${Math.round(item.metadata.duration / 60000)} mins`
+              : undefined,
+          };
+        });
         setActivities(mappedData);
       }
     } catch (error) {

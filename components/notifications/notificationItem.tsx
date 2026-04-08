@@ -88,8 +88,7 @@ export const NotificationItem: React.FC<NotificationItemDTO> = ({
             {title}
           </Text>{" "}
           {"- "}
-          {message}
-          {". "}
+          {message}{" "}
           <Text style={typography["subheader"]} className="text-grayText">
             {getRelativeTime(createdAt)}
           </Text>
