@@ -70,7 +70,7 @@ export default function AddNewRackLayout() {
               headerTitle: () => (
                 <Image source={require("@/assets/images/add-new-rack/progress-bar-4.png")} />
               ),
-              headerShown: true,
+              headerShown: false,
             }}
           />
           <Stack.Screen

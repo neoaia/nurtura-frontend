@@ -5,7 +5,7 @@ import { bleManager } from "@/utils/bluetooth/bleManager";
 import { Buffer } from "buffer";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -27,16 +27,18 @@ export default function AddNewRack2() {
   const [scanning, setScanning] = useState(false);
   const [verifying, setVerifying] = useState(false);
   const [showBackConfirm, setShowBackConfirm] = useState(false);
+  // Guard so a single QR frame only triggers once
+  const hasScannedRef = useRef(false);
 
-  // Reset camera state whenever this screen regains focus
+  // Only reset camera state when screen focuses, not on every render
   useFocusEffect(
     useCallback(() => {
+      hasScannedRef.current = false;
       setScanning(false);
       setVerifying(false);
     }, []),
   );
 
-  // Disconnect BLE and navigate back to step-1
   const disconnectAndGoToStep1 = useCallback(async () => {
     if (deviceId) {
       try {
@@ -77,7 +79,7 @@ export default function AddNewRack2() {
     await disconnectAndGoToStep1();
   };
 
-  const verifyWithESP32 = async (qrData: string) => {
+  const verifyWithESP32 = useCallback(async (qrData: string) => {
     if (!deviceId) {
       Alert.alert("Error", "No device connected. Go back to Step 1.");
       return;
@@ -125,12 +127,15 @@ export default function AddNewRack2() {
             onPress: () =>
               router.push({
                 pathname: "/(tabs)/(add_pages)/(addNewRack)/step-3",
-                params: { deviceId },
+                // Pass the real ESP32 MAC address forward so step-4 can register it correctly
+                params: { deviceId, macAddress: deviceMAC },
               }),
           },
         ]);
       } else {
         setVerifying(false);
+        // Allow user to scan again — reset the guard
+        hasScannedRef.current = false;
         Alert.alert(
           "Verification Failed",
           `QR code doesn't match this rack.\n\nScanned: ${scannedMAC}\nDevice: ${deviceMAC}`,
@@ -138,24 +143,29 @@ export default function AddNewRack2() {
       }
     } catch (error: any) {
       setVerifying(false);
+      hasScannedRef.current = false;
       console.error("Verification error:", error);
       Alert.alert(
         "Verification Error",
         "Could not verify device. Make sure the rack is still connected.",
       );
     }
-  };
+  }, [deviceId, disconnectAndGoToStep1]);
 
-  const handleBarCodeScanned = ({ data }: { data: string }) => {
+  // Memoized and guarded — prevents flickering from multiple frame callbacks
+  const handleBarCodeScanned = useCallback(({ data }: { data: string }) => {
+    if (hasScannedRef.current || verifying) return;
+    hasScannedRef.current = true;
     setScanning(false);
     verifyWithESP32(data);
-  };
+  }, [verifying, verifyWithESP32]);
 
   const handleScanPress = async () => {
     if (!permission?.granted) {
       const res = await requestPermission();
       if (!res.granted) return;
     }
+    hasScannedRef.current = false;
     setScanning(true);
   };
 
@@ -198,7 +208,7 @@ You'll need to run the setup process again."
             className="flex-1 px-4"
             contentContainerStyle={{ paddingTop: 34 }}
           >
-            <View className="mb-9 items-center">
+            <View className="mb-9 ml-4 items-start">
               <Image
                 source={require("@/assets/images/add-new-rack/plant-rack.png")}
                 className="w-40 h-40"
@@ -216,15 +226,8 @@ You'll need to run the setup process again."
             </Text>
           </ScrollView>
 
-          <View className="flex-row gap-3 px-6 pb-6">
-            <BottomButton
-              title="Back"
-              onPress={handleBackPress}
-            />
-            <BottomButton
-              title="Scan QR Code"
-              onPress={handleScanPress}
-            />
+          <View className=" pb-6">
+            <BottomButton title="Scan QR Code" onPress={handleScanPress} />
           </View>
         </>
       ) : (
@@ -235,7 +238,10 @@ You'll need to run the setup process again."
             barcodeScannerSettings={{ barcodeTypes: ["qr"] }}
           />
           <TouchableOpacity
-            onPress={() => setScanning(false)}
+            onPress={() => {
+              hasScannedRef.current = false;
+              setScanning(false);
+            }}
             className="absolute top-12 left-6 bg-black/50 p-3 rounded-full"
           >
             <Text className="text-white font-bold">Cancel</Text>

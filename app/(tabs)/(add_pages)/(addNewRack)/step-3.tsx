@@ -5,7 +5,15 @@ import { bleManager } from "@/utils/bluetooth/bleManager";
 import { Buffer } from "buffer";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useCallback, useRef, useState } from "react";
-import { Alert, ScrollView, Text, View } from "react-native";
+import {
+  Alert,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { typography } from "@/assets/fonts/Text";
 
 const SERVICE_UUID = "4fafc201-1fb5-459e-8fcc-c5c9c331914b";
 const SSID_CHAR_UUID = "beb5483e-36e1-4688-b7f5-ea07361b26a8";
@@ -15,9 +23,10 @@ const RESET_CHAR_UUID = "ffffffff-ffff-ffff-ffff-ffffffffffff";
 const MONITOR_TRANSACTION_ID = "wifi-status-monitor";
 
 export default function AddNewRack3() {
-  const { deviceId } = useLocalSearchParams();
+  const { deviceId, macAddress } = useLocalSearchParams();
   const [ssid, setSsid] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showBackConfirm, setShowBackConfirm] = useState(false);
   const isProcessed = useRef(false);
@@ -37,7 +46,6 @@ export default function AddNewRack3() {
     }
   };
 
-  // Disconnect BLE and go back to step-1
   const disconnectAndGoToStep1 = useCallback(async () => {
     cancelMonitor();
     if (deviceId) {
@@ -56,12 +64,10 @@ export default function AddNewRack3() {
     router.replace("/(tabs)/(add_pages)/(addNewRack)/step-1");
   }, [deviceId]);
 
-  // Handle back button - show confirmation modal
   const handleBackPress = () => {
     setShowBackConfirm(true);
   };
 
-  // Confirmed back - reset ESP32 then disconnect
   const handleBackConfirmed = async () => {
     setShowBackConfirm(false);
     setLoading(true);
@@ -73,9 +79,7 @@ export default function AddNewRack3() {
       );
 
       if (isConnected) {
-        console.log("[Step3] Sending factory reset command to ESP32...");
         try {
-          // Send reset command to ESP32
           await bleManager.writeCharacteristicWithoutResponseForDevice(
             deviceId as string,
             SERVICE_UUID,
@@ -83,14 +87,12 @@ export default function AddNewRack3() {
             Buffer.from("FACTORY_RESET").toString("base64"),
           );
           console.log("[Step3] Reset command sent to ESP32");
-          // Give ESP32 time to process the reset
           await new Promise((resolve) => setTimeout(resolve, 1000));
         } catch (e) {
           console.log("[Step3] Reset command failed (continuing anyway):", e);
         }
       }
 
-      // Always disconnect BLE regardless of reset success
       try {
         const stillConnected = await bleManager.isDeviceConnected(
           deviceId as string,
@@ -107,7 +109,6 @@ export default function AddNewRack3() {
     }
 
     setLoading(false);
-    // Navigate back to step-1
     router.replace("/(tabs)/(add_pages)/(addNewRack)/step-1");
   };
 
@@ -122,13 +123,11 @@ export default function AddNewRack3() {
       return;
     }
 
-    // Cancel any monitor/timeout left over from a previous attempt
     cancelMonitor();
     setLoading(true);
     isProcessed.current = false;
 
     try {
-      // Verify the BLE connection is still alive before writing.
       const isConnected = await bleManager.isDeviceConnected(
         deviceId as string,
       );
@@ -151,8 +150,6 @@ export default function AddNewRack3() {
           if (!subscriptionRef.current) return;
 
           if (error) {
-            // The BLE connection drops when the ESP32 switches its radio to
-            // WiFi — this is expected and not a fatal error at this point.
             console.log("[Step3] Monitor error (may be expected):", error.message);
             return;
           }
@@ -179,16 +176,19 @@ export default function AddNewRack3() {
                     onPress: () =>
                       router.push({
                         pathname: "/(tabs)/(add_pages)/(addNewRack)/step-4",
-                        params: { deviceId },
+                        // Forward both deviceId and the real MAC address
+                        params: { deviceId, macAddress },
                       }),
                   },
                 ]);
               } else {
+                // Stay on this screen — let user fix credentials and retry
                 console.log("[Step3] WiFi connection failed");
+                isProcessed.current = false; // allow retry
                 Alert.alert(
                   "Connection Failed",
-                  "Could not connect to WiFi. Please check:\n\n• WiFi name is correct\n• Password is correct\n• Network is 2.4GHz (not 5GHz)\n\nTap \"Go Back\" to try a different network.",
-                  [{ text: "Go Back", onPress: disconnectAndGoToStep1 }],
+                  "Could not connect to WiFi. Please check:\n\n• WiFi name is correct\n• Password is correct\n• Network is 2.4GHz (not 5GHz)",
+                  [{ text: "Try Again", style: "cancel" }],
                 );
               }
             }
@@ -199,7 +199,6 @@ export default function AddNewRack3() {
         MONITOR_TRANSACTION_ID,
       );
 
-      // Let the monitor settle before writing credentials
       await new Promise((resolve) => setTimeout(resolve, 500));
 
       console.log("[Step3] Sending SSID...");
@@ -271,7 +270,7 @@ Are you sure you want to reset?"
         className="flex-1 px-6"
         contentContainerStyle={{ paddingTop: 40 }}
       >
-        <Text className="text-2xl font-bold mb-6">Connect to WiFi</Text>
+        <Text style={typography["h1-bold"]} className="text-black mb-6">Connect to WiFi</Text>
 
         <TextInputField
           label="WiFi Name (SSID)"
@@ -281,14 +280,28 @@ Are you sure you want to reset?"
           editable={!loading}
         />
 
-        <TextInputField
-          label="WiFi Password"
-          onChangeText={setPassword}
-          value={password}
-          secureTextEntry={true}
-          autoCapitalize="none"
-          editable={!loading}
-        />
+        {/* Password field with eye toggle */}
+        <View className="relative">
+          <TextInputField
+            label="WiFi Password"
+            onChangeText={setPassword}
+            value={password}
+            secureTextEntry={!showPassword}
+            autoCapitalize="none"
+            editable={!loading}
+          />
+          <TouchableOpacity
+            onPress={() => setShowPassword((v) => !v)}
+            className="absolute right-4 top-1/2 -translate-y-1/2"
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <Ionicons
+              name={showPassword ? "eye-off-outline" : "eye-outline"}
+              size={22}
+              color="#9ca3af"
+            />
+          </TouchableOpacity>
+        </View>
 
         {loading && (
           <Text className="text-gray-500 text-center mt-4">
@@ -297,12 +310,7 @@ Are you sure you want to reset?"
         )}
       </ScrollView>
 
-      <View className="flex-row gap-3 px-6 pb-6">
-        <BottomButton
-          title="Back"
-          onPress={handleBackPress}
-          disabled={loading}
-        />
+      <View className="pb-6">
         <BottomButton
           title="Send Credentials"
           onPress={handleConnect}
