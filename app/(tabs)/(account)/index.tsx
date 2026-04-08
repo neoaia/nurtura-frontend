@@ -1,13 +1,13 @@
 import { typography } from "@/assets/fonts/Text";
 import SecurityIcon from "@/assets/images/icons/lock.svg";
 import LogoutIcon from "@/assets/images/icons/logout.svg";
-import { OnboardingTutorialModal } from "@/components/onboarding/tutorialModal"; // Added
+import { OnboardingTutorialModal } from "@/components/onboarding/tutorialModal";
 import { ProfileCard } from "@/components/settings/profileCard";
 import ProfileCardSkeleton from "@/components/settings/skeleton/profileCardSkeleton";
 import { MenuCard } from "@/components/shared/menubtn";
-
 import { useAuth } from "@/contexts/AuthContext";
 import useFetch from "@/hooks/useFetch";
+import { useOnboarding } from "@/hooks/useOnboarding";
 import { createLogger } from "@/utils/logger";
 import { useFocusEffect } from "@react-navigation/native";
 import { useRouter } from "expo-router";
@@ -19,7 +19,7 @@ import { userService } from "../../../services/userService";
 import { UserDetails } from "../../../types/interface";
 
 const logger = createLogger("AccountScreen");
-const screenHeight = Dimensions.get("window").height; 
+const screenHeight = Dimensions.get("window").height;
 
 export default function AccountScreen() {
   const [savedValues, setSavedValues] = useState<Partial<UserDetails>>({});
@@ -29,12 +29,11 @@ export default function AccountScreen() {
   const { logout } = useAuth();
   const router = useRouter();
 
-  const [tutorialStep, setTutorialStep] = useState(1);
-  const TOTAL_STEPS = 2;
-
-  const handleNextStep = () => {
-    setTutorialStep((prev) => (prev < TOTAL_STEPS ? prev + 1 : 0));
-  };
+  // ── Tutorial Logic ─────────────────────────────────────────────────────────
+  const { shouldShow, tutorialStep, handleNextStep } = useOnboarding(
+    "account",
+    2,
+  );
 
   const getTutorialContent = (step: number) => {
     switch (step) {
@@ -60,10 +59,10 @@ export default function AccountScreen() {
       case 2:
         return {
           title: "Time to Grow!",
-          desc: "All done! Your plants can’t wait to sprout into action with you.",
+          desc: "All done! Your plants can't wait to sprout into action with you.",
           image: require("@/assets/nuri/waving.png"),
           position: { bottom: 0, right: -70 },
-          offset: screenHeight / 2 - 100, 
+          offset: screenHeight / 2 - 100,
           component: null,
         };
       default:
@@ -73,7 +72,7 @@ export default function AccountScreen() {
 
   const currentTutorial = getTutorialContent(tutorialStep);
 
-  // ── Data Fetching ─────────────────────────────────────────────────────────
+  // ── Data Fetching ──────────────────────────────────────────────────────────
   const { refetch: getUserInfo } = useFetch("/users", {
     method: "GET",
     autoFetch: false,
@@ -111,7 +110,7 @@ export default function AccountScreen() {
     useCallback(() => {
       getUserInfoData();
       checkUserProvider();
-    }, [])
+    }, []),
   );
 
   useEffect(() => {
@@ -138,7 +137,9 @@ export default function AccountScreen() {
               <ProfileCard
                 name="Profile"
                 username={
-                  (formValues.firstName || "") + " " + (formValues.lastName || "") || "User"
+                  (formValues.firstName || "") +
+                    " " +
+                    (formValues.lastName || "") || "User"
                 }
                 onPress={handleProfilePress}
               />
@@ -168,9 +169,9 @@ export default function AccountScreen() {
         </View>
       </ScrollView>
 
-      {currentTutorial && (
+      {shouldShow && currentTutorial && (
         <OnboardingTutorialModal
-          visible={tutorialStep > 0}
+          visible={shouldShow}
           onClose={handleNextStep}
           title={currentTutorial.title}
           subtitle={currentTutorial.desc}

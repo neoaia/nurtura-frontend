@@ -7,6 +7,7 @@ import { OnboardingTutorialModal } from "@/components/onboarding/tutorialModal";
 import { DateRangePicker } from "@/components/shared/datetimepicker";
 import Dropdown, { DropdownOption } from "@/components/shared/dropdown";
 import useFetch from "@/hooks/useFetch";
+import { useOnboarding } from "@/hooks/useOnboarding";
 import { activityService } from "@/services/activityService";
 import { rackService } from "@/services/rackService";
 import { GetRackActivitiesResponseDTO } from "@/types/activity.dto";
@@ -68,6 +69,7 @@ const ListHeader: React.FC<ListHeaderProps> = ({
   useEffect(() => {
     loadRacks();
   }, []);
+
   return (
     <View className="bg-white">
       <View className="mt-4 mb-4 gap-3">
@@ -79,7 +81,7 @@ const ListHeader: React.FC<ListHeaderProps> = ({
           onSelect={(item) => setSelectedRack(item)}
           label="Selected Rack"
           Icon={RackIcon}
-        ></Dropdown>
+        />
       </View>
     </View>
   );
@@ -101,17 +103,14 @@ const groupActivitiesByDate = (
     const itemDate = new Date(item.timestamp).setHours(0, 0, 0, 0);
     let title = "";
 
-    if (itemDate === today) {
-      title = "Today";
-    } else if (itemDate === yesterday) {
-      title = "Yesterday";
-    } else {
+    if (itemDate === today) title = "Today";
+    else if (itemDate === yesterday) title = "Yesterday";
+    else
       title = new Date(itemDate).toLocaleDateString("en-US", {
         month: "long",
         day: "numeric",
         year: "numeric",
       });
-    }
 
     if (!groups[title]) groups[title] = [];
     groups[title].push(item);
@@ -158,10 +157,17 @@ export default function RackActivity() {
   const [dateRange, setDateRange] = useState<{
     start: Date | null;
     end: Date | null;
-  }>({ start: null, end: null });
+  }>({
+    start: null,
+    end: null,
+  });
   const [selectedRack, setSelectedRack] = useState<DropdownOption | null>(null);
-  const [tutorialStep, setTutorialStep] = useState(1);
-  const TOTAL_STEPS = 2;
+
+  // ── Tutorial Logic ─────────────────────────────────────────────────────────
+  const { shouldShow, tutorialStep, handleNextStep } = useOnboarding(
+    "rack-activity",
+    2,
+  );
 
   const [activities, setActivities] = useState<
     (RackActivityItemProps & { timestamp: string })[]
@@ -180,10 +186,6 @@ export default function RackActivity() {
       setSelectedRack(null);
     };
   }, []);
-
-  const handleNextStep = () => {
-    setTutorialStep((prev) => (prev < TOTAL_STEPS ? prev + 1 : 0));
-  };
 
   const getTutorialContent = (step: number) => {
     switch (step) {
@@ -325,9 +327,9 @@ export default function RackActivity() {
         )}
       />
 
-      {currentTutorial && (
+      {shouldShow && currentTutorial && (
         <OnboardingTutorialModal
-          visible={tutorialStep > 0}
+          visible={shouldShow}
           onClose={handleNextStep}
           title={currentTutorial.title}
           subtitle={currentTutorial.desc}

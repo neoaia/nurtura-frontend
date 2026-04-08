@@ -46,13 +46,21 @@ export interface ServerToClientEvents {
     subscribedRacks: string[];
     totalConnections: number;
   }) => void;
+  userNotification: (data: {
+    notification: Notification;
+    timestamp: string;
+  }) => void;
   error: (data: { message: string; error: Error }) => void;
   connect_error: (error: Error) => void;
   disconnect: (reason: string) => void;
 }
 
 export interface ClientToServerEvents {
-  subscribeToRack: (data: { rackId: string; userId: string }) => void;
+  subscribeToRack: (data: { rackId: string }) => void;
   unsubscribeFromRack: (data: { rackId: string }) => void;
   getStatus: () => void;
+  subscribeToUserNotifications: () => void;
+  unsubscribeFromUserNotifications: () => void;
+  subscribeToUserNotificationsAck: () => void;
+  unsubscribeFromUserNotificationsAck: () => void;
 }

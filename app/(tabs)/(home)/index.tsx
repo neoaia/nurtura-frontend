@@ -2,16 +2,18 @@ import { typography } from "@/assets/fonts/Text";
 import { RecentActivityBarSkeleton } from "@/components/home/skeleton/recentActivityBarSkeleton";
 import { SummaryCardSkeleton } from "@/components/home/skeleton/summaryCardSkeleton";
 import { OnboardingTutorialModal } from "@/components/onboarding/tutorialModal";
+import { useAuth } from "@/contexts/AuthContext";
 import { useAsyncState } from "@/hooks/useAsyncState";
 import useFetch from "@/hooks/useFetch";
-import { notificationService } from "@/services/notificationService";
+import { useOnboarding } from "@/hooks/useOnboarding";
 import { plantService } from "@/services/plantService";
 import { rackService } from "@/services/rackService";
 import { userService } from "@/services/userService";
 import { UserDetails } from "@/types/interface";
-import { NotificationsResponseDTO } from "@/types/notification.dto";
+import { Notification } from "@/types/socket.interface";
+import { socketService } from "@/utils/websocket/socket";
 import { router, useFocusEffect } from "expo-router";
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useRef, useState } from "react";
 import {
   Dimensions,
   Image,
@@ -40,18 +42,41 @@ const mockApiResponse = {
 };
 
 export default function HomeScreen() {
+  const { user } = useAuth();
   const [userInfo, setUserInfo] = useState<Partial<UserDetails>>({});
   const [highlight] = useState(mockApiResponse.highlight);
   const [hasUnread, setHasUnread] = useState(false);
   const displayName = userInfo.firstName || "User";
 
-  // #region ── Tutorial Logic ─────────────────────────────────────────────────
-  const [tutorialStep, setTutorialStep] = useState(1);
-  const TOTAL_STEPS = 5;
+  // ── Socket Handler ─────────────────────────────────────────────────────────
+  const onUserNotification = useRef(
+    (data: { notification: Notification; timestamp: string }) => {
+      // Kung may bagong notification at unread ito, mag-a-update ang bell icon sa real-time
+      if (!data.notification.isRead) {
+        setHasUnread(true);
+      }
+    },
+  ).current;
 
-  const handleNextStep = () => {
-    setTutorialStep((prev) => (prev < TOTAL_STEPS ? prev + 1 : 0));
-  };
+  // ── Socket Setup ───────────────────────────────────────────────────────────
+  const setupSocket = useCallback(async () => {
+    if (!user?.token) return;
+
+    try {
+      await socketService.connect(user.token);
+
+      // Idempotent registration
+      socketService.off("userNotification", onUserNotification);
+      socketService.on("userNotification", onUserNotification);
+
+      socketService.subscribeToUserNotifications();
+    } catch (error) {
+      console.error("Socket setup failed in HomeScreen:", error);
+    }
+  }, [user?.token, onUserNotification]);
+
+  // ── Tutorial Logic ─────────────────────────────────────────────────────────
+  const { shouldShow, tutorialStep, handleNextStep } = useOnboarding("home", 5);
 
   const getTutorialContent = (step: number) => {
     switch (step) {
@@ -165,7 +190,6 @@ export default function HomeScreen() {
   };
 
   const currentTutorial = getTutorialContent(tutorialStep);
-  // #endregion
 
   // ── States ─────────────────────────────────────────────────────────────────
   const {
@@ -205,12 +229,6 @@ export default function HomeScreen() {
   );
 
   const { refetch: getPlantCare } = useFetch("/racks/activities/plant-care", {
-    method: "GET",
-    autoFetch: false,
-    withAuth: true,
-  });
-
-  const { refetch: fetchNotificationCount } = useFetch("/notifications", {
     method: "GET",
     autoFetch: false,
     withAuth: true,
@@ -277,27 +295,34 @@ export default function HomeScreen() {
     }
   }, [getPlantCare, setActivityLoading, setRecentActivity]);
 
-  const fetchNotificationStatus = useCallback(async () => {
-    try {
-      const response: NotificationsResponseDTO =
-        await notificationService.getAllNotifications(fetchNotificationCount);
-      setHasUnread((response?.unreadCount ?? 0) > 0);
-    } catch (error) {
-      console.error("Failed to fetch notification status:", error);
-    }
-  }, [fetchNotificationCount]);
-
+  // ── Focus Effect ───────────────────────────────────────────────────────────
   useFocusEffect(
     useCallback(() => {
       fetchUserInfo();
       fetchSummary();
       fetchActivity();
-      fetchNotificationStatus();
-    }, [fetchUserInfo, fetchSummary, fetchActivity, fetchNotificationStatus]),
+      setupSocket();
+
+      return () => {
+        // Cleanup socket pag umalis sa screen
+        socketService.off("userNotification", onUserNotification);
+        socketService.unsubscribeFromUserNotifications();
+      };
+    }, [
+      fetchUserInfo,
+      fetchSummary,
+      fetchActivity,
+      setupSocket,
+      onUserNotification,
+    ]),
   );
 
   // ── Handlers ───────────────────────────────────────────────────────────────
-  const handleNotificationPress = () => router.push("/notifications");
+  const handleNotificationPress = () => {
+    // Tanggalin ang alert optimistically at mag-navigate
+    setHasUnread(false);
+    router.push("/notifications");
+  };
   const handleCardPress = (type: string) =>
     router.push(type === "racks" ? "/(tabs)/(racks)" : "/(tabs)/(plants)");
   const handleAddRack = () => console.log("Add Rack");
@@ -348,9 +373,9 @@ export default function HomeScreen() {
         </View>
       </ScrollView>
 
-      {currentTutorial && (
+      {shouldShow && currentTutorial && (
         <OnboardingTutorialModal
-          visible={tutorialStep > 0}
+          visible={shouldShow}
           onClose={handleNextStep}
           title={currentTutorial.title}
           subtitle={currentTutorial.desc}

@@ -1,13 +1,17 @@
 import { typography } from "@/assets/fonts/Text";
-import { OnboardingTutorialModal } from "@/components/onboarding/tutorialModal"; // Added
+import { OnboardingTutorialModal } from "@/components/onboarding/tutorialModal";
 import AddRackButton from "@/components/racks/addRackItemBtn";
 import RackItem from "@/components/racks/rackItem";
 import RackItemSkeleton from "@/components/racks/skeleton/rackItemSkeleton";
+import { useAuth } from "@/contexts/AuthContext";
 import useFetch from "@/hooks/useFetch";
+import { useOnboarding } from "@/hooks/useOnboarding";
 import { rackService } from "@/services/rackService";
 import { GetRackInfoDTO } from "@/types/rack.dto";
+import { SensorReading } from "@/types/socket.interface";
+import { socketService } from "@/utils/websocket/socket";
 import { router, useFocusEffect } from "expo-router";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Dimensions,
   FlatList,
@@ -30,14 +34,123 @@ export default function RacksScreen() {
   const [error, setError] = useState<string | null>(null);
 
   const hasLoadedOnce = useRef(false);
+  // Track which rackIds we're currently subscribed to so we
+  // don't double-subscribe or forget to unsubscribe stragglers
+  const subscribedRackIds = useRef<Set<string>>(new Set());
+
+  const { user } = useAuth(); // { id: string, ... }
+
+  // ── Socket subscriptions ──────────────────────────────────────────────────
+
+  // One shared handler per event type — checks rackId internally.
+  // Defined with useRef so the function reference is stable across renders,
+  // which lets us call socketService.off() with the exact same reference.
+  const onSensorData = useRef(
+    (payload: { rackId: string; data: SensorReading }) => {
+      const { rackId, data } = payload;
+      setRacks((prev) =>
+        prev.map((r) =>
+          r.id === rackId
+            ? {
+                ...r,
+                water: data.waterLevel ?? r.water,
+                humidity: data.humidity ?? r.humidity,
+                temperature: data.temperature ?? r.temperature,
+              }
+            : r,
+        ),
+      );
+    },
+  ).current;
+
+  const onInitialData = useRef(
+    (payload: { rackId: string; data: SensorReading | null }) => {
+      if (!payload.data) return;
+      onSensorData({ rackId: payload.rackId, data: payload.data });
+    },
+  ).current;
+
+  const onDeviceStatus = useRef(
+    (payload: { rackId: string; status: string }) => {
+      setRacks((prev) =>
+        prev.map((r) =>
+          r.id === payload.rackId
+            ? {
+                ...r,
+                hasAlert:
+                  payload.status === "offline" || payload.status === "error",
+              }
+            : r,
+        ),
+      );
+    },
+  ).current;
+
+  const onAlert = useRef((payload: { rackId: string }) => {
+    setRacks((prev) =>
+      prev.map((r) => (r.id === payload.rackId ? { ...r, hasAlert: true } : r)),
+    );
+  }).current;
+
+  const subscribeToRacks = useCallback(
+    (rackList: GetRackInfoDTO[]) => {
+      if (!user?.uid) return;
+
+      const incomingIds = new Set(rackList.map((r) => r.id));
+
+      // Unsubscribe from racks no longer in the list
+      subscribedRackIds.current.forEach((id) => {
+        if (!incomingIds.has(id)) {
+          socketService.unsubscribeFromRack(id);
+          subscribedRackIds.current.delete(id);
+        }
+      });
+
+      // Register shared event handlers once (idempotent — off then on)
+      socketService.off("sensorData", onSensorData);
+      socketService.off("initialData", onInitialData);
+      socketService.off("deviceStatus", onDeviceStatus);
+      socketService.off("alert", onAlert);
+
+      socketService.on("sensorData", onSensorData);
+      socketService.on("initialData", onInitialData);
+      socketService.on("deviceStatus", onDeviceStatus);
+      socketService.on("alert", onAlert);
+
+      // Subscribe to each new rack
+      rackList.forEach((rack) => {
+        if (subscribedRackIds.current.has(rack.id)) return;
+        socketService.subscribeToRack(rack.id);
+        subscribedRackIds.current.add(rack.id);
+      });
+    },
+    [user?.uid, onSensorData, onInitialData, onDeviceStatus, onAlert],
+  );
+
+  const unsubscribeAll = useCallback(() => {
+    subscribedRackIds.current.forEach((id) => {
+      socketService.unsubscribeFromRack(id);
+    });
+    subscribedRackIds.current.clear();
+
+    socketService.off("sensorData", onSensorData);
+    socketService.off("initialData", onInitialData);
+    socketService.off("deviceStatus", onDeviceStatus);
+    socketService.off("alert", onAlert);
+  }, [onSensorData, onInitialData, onDeviceStatus, onAlert]);
+
+  // Full cleanup on unmount
+  useEffect(() => {
+    return () => {
+      unsubscribeAll();
+    };
+  }, [unsubscribeAll]);
 
   // ── Tutorial Logic ────────────────────────────────────────────────────────
-  const [tutorialStep, setTutorialStep] = useState(1);
-  const TOTAL_STEPS = 4;
-
-  const handleNextStep = () => {
-    setTutorialStep((prev) => (prev < TOTAL_STEPS ? prev + 1 : 0));
-  };
+  const { shouldShow, tutorialStep, handleNextStep } = useOnboarding(
+    "racks",
+    4,
+  );
 
   const getTutorialContent = (step: number) => {
     switch (step) {
@@ -65,7 +178,7 @@ export default function RacksScreen() {
                 }}
               />
             </View>
-          )
+          ),
         };
       case 2:
         return {
@@ -78,7 +191,7 @@ export default function RacksScreen() {
             <View className="px-4 w-full">
               <AddRackButton onPress={() => {}} />
             </View>
-          )
+          ),
         };
       case 3:
         return {
@@ -89,16 +202,16 @@ export default function RacksScreen() {
           offset: screenHeight - 300,
           component: (
             <View className="items-center justify-center">
-               <View className="bg-white p-4 rounded-[20px] items-center justify-center shadow-sm w-[72px] h-[72px]">
+              <View className="bg-white p-4 rounded-[20px] items-center justify-center shadow-sm w-[72px] h-[72px]">
                 <Text className="text-primary text-4xl">+</Text>
               </View>
             </View>
-          )
+          ),
         };
       case 4:
         return {
           title: "Activity",
-          desc: "See what your garden’s been up to! Track watering, growth, and all your plant care moments.",
+          desc: "See what your garden's been up to! Track watering, growth, and all your plant care moments.",
           image: require("@/assets/nuri/joyful.png"),
           position: { bottom: 290, right: -50 },
           offset: screenHeight - 300,
@@ -112,7 +225,7 @@ export default function RacksScreen() {
                 />
               </View>
             </View>
-          )
+          ),
         };
       default:
         return null;
@@ -147,18 +260,27 @@ export default function RacksScreen() {
             temperature: 0,
             hasAlert: rack.status === "offline" || rack.status === "error",
           }));
+
         setRacks(mappedRacks);
+
+        // ✅ Ensure socket is connected before subscribing
+        if (user?.token) {
+          await socketService.connect(user.token);
+        }
+        subscribeToRacks(mappedRacks);
       } else {
         setRacks([]);
+        unsubscribeAll();
       }
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to load racks";
+      const message =
+        err instanceof Error ? err.message : "Failed to load racks";
       setError(message);
     } finally {
       hasLoadedOnce.current = true;
       setLoading(false);
     }
-  }, [getAllRacks]);
+  }, [getAllRacks, subscribeToRacks, unsubscribeAll, user?.token]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -170,7 +292,11 @@ export default function RacksScreen() {
     useCallback(() => {
       if (!hasLoadedOnce.current) setLoading(true);
       fetchRacks();
-    }, [fetchRacks]),
+
+      return () => {
+        unsubscribeAll();
+      };
+    }, [fetchRacks, unsubscribeAll]),
   );
 
   const handleCardPress = useCallback((rackId: string) => {
@@ -194,7 +320,9 @@ export default function RacksScreen() {
   const renderHeader = useCallback(
     () => (
       <View className="flex flex-row justify-between items-center w-full mb-5 mt-8 px-3">
-        <Text style={typography["title-bold"]} className="text-black text-5xl">Racks</Text>
+        <Text style={typography["title-bold"]} className="text-black text-5xl">
+          Racks
+        </Text>
         <TouchableOpacity onPress={handlePreviouslyOwned} className="pr-1">
           <ArchiveButton width={22} height={22} />
         </TouchableOpacity>
@@ -247,21 +375,40 @@ export default function RacksScreen() {
         ListEmptyComponent={
           error ? (
             <View className="flex-1 justify-center items-center py-20 gap-4">
-              <Text style={typography["button-bold"]} className="text-grayText text-center">Something went wrong</Text>
-              <TouchableOpacity onPress={handleRetry} className="bg-primary px-6 py-3 rounded-xl">
-                <Text style={typography["button"]} className="text-white">Retry</Text>
+              <Text
+                style={typography["button-bold"]}
+                className="text-grayText text-center"
+              >
+                Something went wrong
+              </Text>
+              <TouchableOpacity
+                onPress={handleRetry}
+                className="bg-primary px-6 py-3 rounded-xl"
+              >
+                <Text style={typography["button"]} className="text-white">
+                  Retry
+                </Text>
               </TouchableOpacity>
             </View>
           ) : null
         }
-        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 20, flexGrow: 1 }}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#86975A" />}
+        contentContainerStyle={{
+          paddingHorizontal: 16,
+          paddingBottom: 20,
+          flexGrow: 1,
+        }}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor="#86975A"
+          />
+        }
       />
 
-      {/* Tutorial Overlay - Now inside the RacksScreen component */}
-      {currentTutorial && (
+      {shouldShow && currentTutorial && (
         <OnboardingTutorialModal
-          visible={tutorialStep > 0}
+          visible={shouldShow}
           onClose={handleNextStep}
           title={currentTutorial.title}
           subtitle={currentTutorial.desc}

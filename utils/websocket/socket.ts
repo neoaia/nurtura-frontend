@@ -46,11 +46,11 @@ class SocketService {
 
       logger.log("Initializing socket connection", {
         socketUrl: SOCKET_URL,
-        namespace: "/sensors",
+        namespace: "/updates",
         hasToken: Boolean(this.token),
       });
 
-      this.socket = io(`${SOCKET_URL}/sensors`, {
+      this.socket = io(`${SOCKET_URL}/updates`, {
         transports: ["websocket", "polling"],
         reconnection: true,
         reconnectionAttempts: 3,
@@ -147,7 +147,7 @@ class SocketService {
     }
   }
 
-  subscribeToRack(rackId: string, userId: string): void {
+  subscribeToRack(rackId: string): void {
     if (!this.socket?.connected) {
       logger.warn("Cannot subscribe to rack — socket not connected", {
         rackId,
@@ -155,8 +155,8 @@ class SocketService {
       return;
     }
 
-    logger.log("Subscribing to rack", { rackId, userId });
-    this.socket.emit("subscribeToRack", { rackId, userId });
+    logger.log("Subscribing to rack", { rackId });
+    this.socket.emit("subscribeToRack", { rackId });
   }
 
   unsubscribeFromRack(rackId: string): void {
@@ -240,6 +240,54 @@ class SocketService {
 
   getSocketId(): string | null {
     return this.socket?.id ?? null;
+  }
+
+  subscribeToUserNotifications(): void {
+    if (!this.socket?.connected) {
+      logger.warn(
+        "Cannot subscribe to user notifications — socket not connected",
+      );
+      return;
+    }
+
+    logger.log("Subscribing to user notifications");
+    this.socket.emit("subscribeToUserNotifications");
+  }
+
+  unsubscribeFromUserNotifications(): void {
+    if (!this.socket?.connected) {
+      logger.warn(
+        "Cannot unsubscribe from user notifications — socket not connected",
+      );
+      return;
+    }
+
+    logger.log("Unsubscribing from user notifications");
+    this.socket.emit("unsubscribeFromUserNotifications");
+  }
+
+  subscribeToUserNotificationsAck(): void {
+    if (!this.socket?.connected) {
+      logger.warn(
+        "Cannot subscribe to user notifications acknowledgment — socket not connected",
+      );
+      return;
+    }
+
+    logger.log("Subscribing to user notifications acknowledgment");
+    this.socket.emit("subscribeToUserNotificationsAck");
+  }
+
+  unsubscribeFromUserNotificationsAck(): void {
+    if (!this.socket?.connected) {
+      logger.warn(
+        "Cannot unsubscribe from user notifications acknowledgment — socket not connected",
+      );
+      return;
+    }
+
+    logger.log("Unsubscribing from user notifications acknowledgment");
+    this.socket.emit("unsubscribeFromUserNotificationsAck");
   }
 
   private restoreEventListeners(): void {

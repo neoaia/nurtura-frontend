@@ -92,11 +92,16 @@ const Care = () => {
       });
 
       if (response?.data) {
-        const mappedData: ActivityWithDate[] = response.data
-          .filter((item: any) => item.eventType?.endsWith("_OFF"))
-          .map((item: any) => {
+        // Tinanggal na ang .filter(...) para masama lahat ng activities
+        const mappedData: ActivityWithDate[] = response.data.map(
+          (item: any) => {
             const dateObj = new Date(item.timestamp);
-            const isWater = item.eventType.includes("WATERING");
+
+            // Mas flexible na checker para sa water events
+            const isWater =
+              item.eventType?.includes("WATERING") ||
+              item.eventType?.includes("WATER");
+
             return {
               id: item.id,
               type: (isWater ? "water" : "light") as "water" | "light",
@@ -112,7 +117,8 @@ const Care = () => {
                 ? `${Math.round(item.metadata.duration / 60000)} mins`
                 : undefined,
             };
-          });
+          },
+        );
         setActivities(mappedData);
       }
     } catch (error) {

@@ -1,10 +1,11 @@
 import { typography } from "@/assets/fonts/Text";
 import { PlantChart } from "@/components/activity/plantChart";
 import { PlantItem } from "@/components/activity/plantingItem";
-import { OnboardingTutorialModal } from "@/components/onboarding/tutorialModal"; // Added
+import { OnboardingTutorialModal } from "@/components/onboarding/tutorialModal";
 import { DateRangePicker } from "@/components/shared/datetimepicker";
 import Dropdown, { DropdownOption } from "@/components/shared/dropdown";
 import useFetch from "@/hooks/useFetch";
+import { useOnboarding } from "@/hooks/useOnboarding";
 import { plantService } from "@/services/plantService";
 import { rackService } from "@/services/rackService";
 import { PlantedItemDTO } from "@/types/activity.dto";
@@ -42,17 +43,14 @@ const groupPlantsByDate = (data: PlantedItemDTO[]) => {
     const itemDate = new Date(item.date).setHours(0, 0, 0, 0);
     let title = "";
 
-    if (itemDate === today) {
-      title = "Today";
-    } else if (itemDate === yesterday) {
-      title = "Yesterday";
-    } else {
+    if (itemDate === today) title = "Today";
+    else if (itemDate === yesterday) title = "Yesterday";
+    else
       title = new Date(itemDate).toLocaleDateString("en-US", {
         month: "long",
         day: "numeric",
         year: "numeric",
       });
-    }
 
     if (!groups[title]) groups[title] = [];
     groups[title].push(item);
@@ -116,9 +114,8 @@ const ListHeader: React.FC<ListHeaderProps> = ({
           onSelect={(item) => setSelectedRack(item)}
           label="Selected Rack"
           Icon={RackIcon}
-        ></Dropdown>
+        />
       </View>
-
       <View className="items-center mt-6 mb-4">
         <PlantChart
           title="Planting"
@@ -137,10 +134,18 @@ export default function PlantingScreen() {
   const [dateRange, setDateRange] = useState<{
     start: Date | null;
     end: Date | null;
-  }>({ start: null, end: null });
+  }>({
+    start: null,
+    end: null,
+  });
   const [selectedRack, setSelectedRack] = useState<DropdownOption | null>(null);
-  const [tutorialStep, setTutorialStep] = useState(1);
-  const TOTAL_STEPS = 2;
+
+  // ── Tutorial Logic ─────────────────────────────────────────────────────────
+  const { shouldShow, tutorialStep, handleNextStep } = useOnboarding(
+    "planting",
+    2,
+  );
+
   const [plants, setPlants] = useState<PlantedItemDTO[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -159,10 +164,6 @@ export default function PlantingScreen() {
       setSelectedRack(null);
     };
   }, []);
-
-  const handleNextStep = () => {
-    setTutorialStep((prev) => (prev < TOTAL_STEPS ? prev + 1 : 0));
-  };
 
   const getTutorialContent = (step: number) => {
     const chartDataForTutorial =
@@ -236,7 +237,6 @@ export default function PlantingScreen() {
   const fetchPlants = useCallback(async () => {
     try {
       setLoading(true);
-
       const startISO = dateRange.start
         ? new Date(new Date(dateRange.start).setHours(0, 0, 0, 0)).toISOString()
         : undefined;
@@ -265,15 +265,14 @@ export default function PlantingScreen() {
 
           let finalPlantName = "Unknown Plant";
           let finalQuantity = "0";
-          let oldPlantName = undefined; // Idinagdag natin ang variable na ito
+          let oldPlantName = undefined;
 
           if (eventType === "PLANT_ADDED") {
             finalPlantName = meta.plantName || "Unknown Plant";
             finalQuantity = meta.quantity ? `${meta.quantity}` : "0";
           } else if (eventType === "PLANT_CHANGED") {
-            // Kunin ang new plant name at previous plant name sa metadata
             finalPlantName = meta.newPlantName || "Unknown Plant";
-            oldPlantName = meta.previousPlantName || "Unknown Plant"; // <-- Eto yung luma
+            oldPlantName = meta.previousPlantName || "Unknown Plant";
             finalQuantity = meta.quantity ? `${meta.quantity}` : "0";
           } else if (eventType === "PLANT_REMOVED") {
             finalPlantName = meta.plantName || "A plant";
@@ -284,7 +283,7 @@ export default function PlantingScreen() {
             id: item.id,
             eventType: item.eventType,
             plantName: finalPlantName,
-            oldPlantName: oldPlantName, // <-- Ipapasa natin dito!
+            oldPlantName,
             rackName:
               meta.rackName || item.rack?.name || item.rackId || "Unknown Rack",
             time: dateObj.toLocaleTimeString("en-US", {
@@ -296,17 +295,7 @@ export default function PlantingScreen() {
           };
         });
 
-        // Kung gusto mong i-filter out yung mga tinanggal (PLANT_REMOVED) sa UI,
-        // i-uncomment mo itong block sa ibaba:
-        /*
-        const filteredData = mappedData.filter((item: any) => {
-          const originalEvent = response.data.find((r: any) => r.id === item.id);
-          return originalEvent?.eventType !== "PLANT_REMOVED";
-        });
-        setPlants(filteredData);
-        */
-
-        setPlants(mappedData); // Tanggalin ito kung gagamitin mo yung filter sa itaas
+        setPlants(mappedData);
       }
     } catch (error) {
       console.error("Failed to fetch plants:", error);
@@ -381,9 +370,9 @@ export default function PlantingScreen() {
         showsVerticalScrollIndicator={false}
       />
 
-      {currentTutorial && (
+      {shouldShow && currentTutorial && (
         <OnboardingTutorialModal
-          visible={tutorialStep > 0}
+          visible={shouldShow}
           onClose={handleNextStep}
           title={currentTutorial.title}
           subtitle={currentTutorial.desc}

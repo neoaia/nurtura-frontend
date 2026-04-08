@@ -6,7 +6,9 @@ import { OnboardingTutorialModal } from "@/components/onboarding/tutorialModal";
 import { DateRangePicker } from "@/components/shared/datetimepicker";
 import Dropdown, { DropdownOption } from "@/components/shared/dropdown";
 import useFetch from "@/hooks/useFetch";
+import { useOnboarding } from "@/hooks/useOnboarding";
 import { plantService } from "@/services/plantService";
+import { rackService } from "@/services/rackService";
 import { ActivityDTO } from "@/types/activity.dto";
 import React, { useCallback, useEffect, useState } from "react";
 import {
@@ -16,8 +18,6 @@ import {
   Text,
   View,
 } from "react-native";
-
-import { rackService } from "@/services/rackService";
 import RackIcon from "../../../assets/images/icons/rack(gray).svg";
 
 const screenWidth = Dimensions.get("window").width;
@@ -89,7 +89,7 @@ const ListHeader: React.FC<ListHeaderProps> = ({
           onSelect={(item) => setSelectedRack(item)}
           label="Selected Rack"
           Icon={RackIcon}
-        ></Dropdown>
+        />
       </View>
 
       <View className="mt-6 mb-3 items-center">
@@ -142,17 +142,14 @@ const groupActivitiesByDate = (data: ActivityDTO[]) => {
     const itemDate = new Date(item.date).setHours(0, 0, 0, 0);
     let title = "";
 
-    if (itemDate === today) {
-      title = "Today";
-    } else if (itemDate === yesterday) {
-      title = "Yesterday";
-    } else {
+    if (itemDate === today) title = "Today";
+    else if (itemDate === yesterday) title = "Yesterday";
+    else
       title = new Date(itemDate).toLocaleDateString("en-US", {
         month: "long",
         day: "numeric",
         year: "numeric",
       });
-    }
 
     if (!groups[title]) groups[title] = [];
     groups[title].push(item);
@@ -165,15 +162,11 @@ const groupActivitiesByDate = (data: ActivityDTO[]) => {
 };
 
 export default function PlantCareScreen() {
-  const [tutorialStep, setTutorialStep] = useState(1);
-  const TOTAL_STEPS = 3;
-
-  const handleNextStep = () => {
-    setTutorialStep((prev) => {
-      const next = prev + 1;
-      return next > TOTAL_STEPS ? 0 : next;
-    });
-  };
+  // ── Tutorial Logic ─────────────────────────────────────────────────────────
+  const { shouldShow, tutorialStep, handleNextStep } = useOnboarding(
+    "plant-care",
+    3,
+  );
 
   const getTutorialContent = (step: number) => {
     switch (step) {
@@ -235,6 +228,7 @@ export default function PlantCareScreen() {
   };
 
   const currentTutorial = getTutorialContent(tutorialStep);
+
   const [activeTab, setActiveTab] = useState<"water" | "light">("water");
   const [dateRange, setDateRange] = useState<{
     start: Date | null;
@@ -244,7 +238,6 @@ export default function PlantCareScreen() {
     end: null,
   });
   const [selectedRack, setSelectedRack] = useState<DropdownOption | null>(null);
-
   const [activities, setActivities] = useState<ActivityDTO[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -282,28 +275,34 @@ export default function PlantCareScreen() {
       });
 
       if (response?.data) {
-        const mappedData: ActivityDTO[] = response.data
-          .filter((item: any) => item.eventType?.endsWith("_OFF"))
-          .map((item: any) => {
-            const dateObj = new Date(item.timestamp);
-            const isWater = item.eventType.includes("WATERING");
-            return {
-              id: item.id,
-              type: (isWater ? "water" : "light") as "water" | "light",
-              plantName: item.metadata?.ruleName || "Plants",
-              rackName:
-                item.metadata?.rackName || item.rack?.name || "Unknown Rack",
-              time: dateObj.toLocaleTimeString("en-US", {
-                hour: "2-digit",
-                minute: "2-digit",
-              }),
-              date: dateObj,
-              amount: item.metadata?.amount,
-              duration: item.metadata?.duration
-                ? `${Math.round(item.metadata.duration / 60000)} mins`
-                : undefined,
-            };
-          });
+        // Tinanggal ang .filter((item) => item.eventType?.endsWith("_OFF"))
+        // Dahil gusto natin makita pareho ang START at STOP o kahit anong log.
+        const mappedData: ActivityDTO[] = response.data.map((item: any) => {
+          const dateObj = new Date(item.timestamp);
+
+          // I-check kung may "WATER" sa eventType
+          const isWater =
+            item.eventType?.includes("WATERING") ||
+            item.eventType?.includes("WATER");
+
+          return {
+            id: item.id,
+            // Assign as "water" kung may WATERING sa string, else "light"
+            type: (isWater ? "water" : "light") as "water" | "light",
+            plantName: item.metadata?.ruleName || "Plants",
+            rackName:
+              item.metadata?.rackName || item.rack?.name || "Unknown Rack",
+            time: dateObj.toLocaleTimeString("en-US", {
+              hour: "2-digit",
+              minute: "2-digit",
+            }),
+            date: dateObj,
+            amount: item.metadata?.amount, // Siguraduhing existing sa API response nyo
+            duration: item.metadata?.duration
+              ? `${Math.round(item.metadata.duration / 60000)} mins`
+              : undefined,
+          };
+        });
         setActivities(mappedData);
       }
     } catch (error) {
@@ -381,9 +380,9 @@ export default function PlantCareScreen() {
         }
       />
 
-      {tutorialStep > 0 && currentTutorial && (
+      {shouldShow && currentTutorial && (
         <OnboardingTutorialModal
-          visible={true}
+          visible={shouldShow}
           onClose={handleNextStep}
           title={currentTutorial.title}
           subtitle={currentTutorial.desc}
