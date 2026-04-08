@@ -1,6 +1,7 @@
+import { DebouncedTouchableOpacity } from "@/components/shared/debouncedTouchable";
 import { router } from "expo-router";
 import React from "react";
-import { Image, Text, TouchableOpacity, View } from "react-native";
+import { Image, Text, View } from "react-native";
 import { typography } from "../../assets/fonts/Text";
 import { HighlightDTO } from "../../types/home.dto";
 
@@ -37,7 +38,7 @@ export const Highlight: React.FC<HighlightProps> = ({
               >
                 {description}
               </Text>
-              <TouchableOpacity
+              <DebouncedTouchableOpacity
                 onPress={onAddRackPress}
                 className="bg-white rounded-lg py-3 px-6 self-start"
                 activeOpacity={0.8}
@@ -48,7 +49,7 @@ export const Highlight: React.FC<HighlightProps> = ({
                 >
                   {buttonText}
                 </Text>
-              </TouchableOpacity>
+              </DebouncedTouchableOpacity>
             </View>
 
             {/* Character image — head bleeds into paddingTop zone */}

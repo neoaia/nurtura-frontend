@@ -3,6 +3,7 @@ import { OnboardingTutorialModal } from "@/components/onboarding/tutorialModal";
 import AddRackButton from "@/components/racks/addRackItemBtn";
 import RackItem from "@/components/racks/rackItem";
 import RackItemSkeleton from "@/components/racks/skeleton/rackItemSkeleton";
+import { DebouncedTouchableOpacity } from "@/components/shared/debouncedTouchable";
 import { useAuth } from "@/contexts/AuthContext";
 import useFetch from "@/hooks/useFetch";
 import { useOnboarding } from "@/hooks/useOnboarding";
@@ -18,7 +19,6 @@ import {
   Image,
   RefreshControl,
   Text,
-  TouchableOpacity,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -323,9 +323,12 @@ export default function RacksScreen() {
         <Text style={typography["title-bold"]} className="text-black text-5xl">
           Racks
         </Text>
-        <TouchableOpacity onPress={handlePreviouslyOwned} className="pr-1">
+        <DebouncedTouchableOpacity
+          onPress={handlePreviouslyOwned}
+          className="pr-1"
+        >
           <ArchiveButton width={22} height={22} />
-        </TouchableOpacity>
+        </DebouncedTouchableOpacity>
       </View>
     ),
     [handlePreviouslyOwned],
@@ -381,14 +384,14 @@ export default function RacksScreen() {
               >
                 Something went wrong
               </Text>
-              <TouchableOpacity
+              <DebouncedTouchableOpacity
                 onPress={handleRetry}
                 className="bg-primary px-6 py-3 rounded-xl"
               >
                 <Text style={typography["button"]} className="text-white">
                   Retry
                 </Text>
-              </TouchableOpacity>
+              </DebouncedTouchableOpacity>
             </View>
           ) : null
         }

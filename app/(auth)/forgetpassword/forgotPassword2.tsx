@@ -1,4 +1,5 @@
 /* eslint-disable react/no-unescaped-entities */
+import { DebouncedTouchableOpacity } from "@/components/shared/debouncedTouchable";
 import { useAuth } from "@/contexts/AuthContext";
 import useFetch from "@/hooks/useFetch";
 import { authService } from "@/services/authService";
@@ -7,13 +8,12 @@ import { router, useLocalSearchParams } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
-    Alert,
-    NativeSyntheticEvent,
-    Text,
-    TextInput,
-    TextInputKeyPressEventData,
-    TouchableOpacity,
-    View,
+  Alert,
+  NativeSyntheticEvent,
+  Text,
+  TextInput,
+  TextInputKeyPressEventData,
+  View,
 } from "react-native";
 
 const logger = createLogger("ForgotPassword2");
@@ -236,7 +236,7 @@ const ForgotPassword2 = () => {
           <Text className="text-base text-gray-700 leading-normal">
             Didn't receive the code?{" "}
           </Text>
-          <TouchableOpacity
+          <DebouncedTouchableOpacity
             onPress={handleResendPress}
             disabled={timer > 0 || loading}
           >
@@ -247,7 +247,7 @@ const ForgotPassword2 = () => {
             >
               {loading && timer === 0 ? "Sending..." : "Resend code"}
             </Text>
-          </TouchableOpacity>
+          </DebouncedTouchableOpacity>
 
           {timer > 0 && (
             <Text className="ml-2 text-base text-gray-500">({timer}s)</Text>
@@ -256,7 +256,7 @@ const ForgotPassword2 = () => {
       </View>
 
       <View className="w-full">
-        <TouchableOpacity
+        <DebouncedTouchableOpacity
           onPress={handleNextPress}
           className={`w-full p-6 rounded-[12px] mt-2 flex items-center ${
             allFilled && !loading ? "bg-primary" : "bg-[#919191]"
@@ -266,7 +266,7 @@ const ForgotPassword2 = () => {
           <Text className="text-white text-xl font-bold">
             {loading ? "Loading..." : "Next"}
           </Text>
-        </TouchableOpacity>
+        </DebouncedTouchableOpacity>
       </View>
     </View>
   );

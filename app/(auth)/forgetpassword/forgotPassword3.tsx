@@ -1,3 +1,4 @@
+import { DebouncedTouchableOpacity } from "@/components/shared/debouncedTouchable";
 import { useAuth } from "@/contexts/AuthContext";
 import useFetch from "@/hooks/useFetch";
 import { authService } from "@/services/authService";
@@ -9,15 +10,7 @@ import {
 import { router, useLocalSearchParams } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import React, { useEffect, useState } from "react";
-import {
-    Alert,
-    Image,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    TouchableWithoutFeedback,
-    View,
-} from "react-native";
+import { Alert, Image, Text, TextInput, View } from "react-native";
 
 const ForgotPassword3 = () => {
   const [password, setPassword] = useState("");
@@ -167,19 +160,21 @@ const ForgotPassword3 = () => {
             </Text>
           )}
 
-          <TouchableWithoutFeedback onPress={togglePasswordVisibility}>
-            <View className="absolute right-5 top-[50%] -translate-y-1/2 pr-2">
-              <Image
-                source={
-                  isPasswordVisible
-                    ? require("@/assets/images/eyeopen.png")
-                    : require("@/assets/images/eyeclosed.png")
-                }
-                className="w-5 h-5"
-                resizeMode="contain"
-              />
-            </View>
-          </TouchableWithoutFeedback>
+          <DebouncedTouchableOpacity
+            onPress={togglePasswordVisibility}
+            className="absolute right-5 top-[50%] -translate-y-1/2 pr-2"
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <Image
+              source={
+                isPasswordVisible
+                  ? require("@/assets/images/eyeopen.png")
+                  : require("@/assets/images/eyeclosed.png")
+              }
+              className="w-5 h-5"
+              resizeMode="contain"
+            />
+          </DebouncedTouchableOpacity>
         </View>
 
         <View className="relative w-full mb-[20px]">
@@ -224,24 +219,26 @@ const ForgotPassword3 = () => {
               </Text>
             )}
 
-          <TouchableWithoutFeedback onPress={togglePasswordVisibility}>
-            <View className="absolute right-5 top-[50%] -translate-y-1/2 pr-2">
-              <Image
-                source={
-                  isPasswordVisible
-                    ? require("@/assets/images/eyeopen.png")
-                    : require("@/assets/images/eyeclosed.png")
-                }
-                className="w-5 h-5"
-                resizeMode="contain"
-              />
-            </View>
-          </TouchableWithoutFeedback>
+          <DebouncedTouchableOpacity
+            onPress={togglePasswordVisibility}
+            className="absolute right-5 top-[50%] -translate-y-1/2 pr-2"
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <Image
+              source={
+                isPasswordVisible
+                  ? require("@/assets/images/eyeopen.png")
+                  : require("@/assets/images/eyeclosed.png")
+              }
+              className="w-5 h-5"
+              resizeMode="contain"
+            />
+          </DebouncedTouchableOpacity>
         </View>
       </View>
 
       <View className="w-full">
-        <TouchableOpacity
+        <DebouncedTouchableOpacity
           onPress={handleNextPress}
           className={`w-full p-6 rounded-[12px] mt-2 flex items-center ${
             isNextButtonEnabled ? "bg-primary" : "bg-[#919191]"
@@ -251,7 +248,7 @@ const ForgotPassword3 = () => {
           <Text className="text-white text-[16px] font-bold">
             {loading ? "Loading..." : "Finish"}
           </Text>
-        </TouchableOpacity>
+        </DebouncedTouchableOpacity>
       </View>
     </View>
   );

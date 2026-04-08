@@ -145,7 +145,7 @@ function RootLayoutNav() {
       {user?.uid && segments[0] !== "(auth)" ? (
         <NotificationBridge userId={user.uid} />
       ) : null}
-      <Stack screenOptions={{ headerShown: false }} initialRouteName="(auth)">
+      <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="(auth)" />
         <Stack.Screen name="(tabs)" />
       </Stack>

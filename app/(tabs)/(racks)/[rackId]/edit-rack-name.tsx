@@ -1,10 +1,11 @@
+import { DebouncedTouchableOpacity } from "@/components/shared/debouncedTouchable";
 import React, {
   useCallback,
   useEffect,
   useLayoutEffect,
   useState,
 } from "react";
-import { Alert, ScrollView, TouchableOpacity, View } from "react-native";
+import { Alert, ScrollView, View } from "react-native";
 
 import CancelIcon from "@/assets/buttons/cancel.svg";
 import SaveIcon from "@/assets/buttons/save.svg";
@@ -113,17 +114,17 @@ export default function EditRackName() {
       navigation.setOptions({
         headerRight: () => (
           <View className="flex-row items-center gap-4 pr-2">
-            <TouchableOpacity onPress={handleCancel} hitSlop={8}>
+            <DebouncedTouchableOpacity onPress={handleCancel} hitSlop={8}>
               <CancelIcon width={22} height={22} />
-            </TouchableOpacity>
+            </DebouncedTouchableOpacity>
             {hasChanges && (
-              <TouchableOpacity
+              <DebouncedTouchableOpacity
                 onPress={handleSave}
                 disabled={saving}
                 hitSlop={8}
               >
                 <SaveIcon width={22} height={22} />
-              </TouchableOpacity>
+              </DebouncedTouchableOpacity>
             )}
           </View>
         ),
@@ -131,13 +132,13 @@ export default function EditRackName() {
     } else {
       navigation.setOptions({
         headerRight: () => (
-          <TouchableOpacity
+          <DebouncedTouchableOpacity
             onPress={() => setIsEditing(true)}
             className="pr-2"
             hitSlop={8}
           >
             <EditIcon width={22} height={22} />
-          </TouchableOpacity>
+          </DebouncedTouchableOpacity>
         ),
       });
     }

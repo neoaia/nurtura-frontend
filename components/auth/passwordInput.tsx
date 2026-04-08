@@ -1,5 +1,6 @@
 import { typography } from "@/assets/fonts/Text";
-import { Image, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { DebouncedTouchableOpacity } from "@/components/shared/debouncedTouchable";
+import { Image, Text, TextInput, View } from "react-native";
 
 interface PasswordInputProps {
   value: string;
@@ -54,7 +55,7 @@ export const PasswordInput = ({
         />
       </View>
 
-      <TouchableOpacity
+      <DebouncedTouchableOpacity
         onPress={onToggleVisibility}
         activeOpacity={1}
         className="absolute right-5 pr-2 top-1/2 -translate-y-1/2"
@@ -68,7 +69,7 @@ export const PasswordInput = ({
           className="w-5 h-5"
           resizeMode="contain"
         />
-      </TouchableOpacity>
+      </DebouncedTouchableOpacity>
     </View>
   );
 };

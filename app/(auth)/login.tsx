@@ -4,6 +4,7 @@ import { typography } from "@/assets/fonts/Text";
 import { EmailInput } from "@/components/auth/emailInput";
 import { GoogleSignInButton } from "@/components/auth/googleSignInButton";
 import { PasswordInput } from "@/components/auth/passwordInput";
+import { DebouncedTouchableOpacity } from "@/components/shared/debouncedTouchable";
 import { Divider } from "@/components/shared/divider";
 import { PrimaryButton } from "@/components/shared/primaryButton";
 import { useAuth } from "@/contexts/AuthContext";
@@ -13,7 +14,7 @@ import { cleanInput, validateEmail } from "@/utils/validation";
 import { router, useNavigation } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { useState } from "react";
-import { Alert, Image, Text, TouchableOpacity, View } from "react-native";
+import { Alert, Image, Text, View } from "react-native";
 import "../globals.css";
 
 export default function LoginScreen() {
@@ -200,19 +201,22 @@ export default function LoginScreen() {
           </Text>
         )}
 
-        <Text
-          style={typography["subheader"]}
-          className="ml-2 mt-2 text-grayText"
-        >
-          Forgot password?{" "}
-          <Text
-            style={typography["subheader-bold"]}
-            className="text-primary underline"
-            onPress={handleForgotPassword}
-          >
-            Reset here.
+        <View className="ml-2 mt-2 flex-row flex-wrap items-center">
+          <Text style={typography["subheader"]} className="text-grayText">
+            Forgot password?{" "}
           </Text>
-        </Text>
+          <DebouncedTouchableOpacity
+            onPress={handleForgotPassword}
+            disabled={loading}
+          >
+            <Text
+              style={typography["subheader-bold"]}
+              className="text-primary underline"
+            >
+              Reset here.
+            </Text>
+          </DebouncedTouchableOpacity>
+        </View>
 
         <Divider />
 
@@ -220,7 +224,7 @@ export default function LoginScreen() {
       </View>
 
       <View className="absolute bottom-10 w-full">
-        <TouchableOpacity
+        <DebouncedTouchableOpacity
           onPress={() => navigation.navigate("signup" as never)}
           className="mt-4 mb-5"
           disabled={loading}
@@ -237,7 +241,7 @@ export default function LoginScreen() {
               Create one here.
             </Text>
           </Text>
-        </TouchableOpacity>
+        </DebouncedTouchableOpacity>
 
         <PrimaryButton
           onPress={handleLogin}

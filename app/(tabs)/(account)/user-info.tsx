@@ -1,5 +1,6 @@
 import { typography } from "@/assets/fonts/Text";
 import EditIcon from "@/assets/images/icons/editIcon.svg";
+import { DebouncedTouchableOpacity } from "@/components/shared/debouncedTouchable";
 import { TextInputFieldSkeleton } from "@/components/shared/skeleton/textInputFieldSkeleton";
 import { TextInputField } from "@/components/shared/textInputField";
 import useFetch from "@/hooks/useFetch";
@@ -12,7 +13,7 @@ import React, {
   useMemo,
   useState,
 } from "react";
-import { ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { ScrollView, Text, View } from "react-native";
 import CancelIcon from "../../../assets/buttons/cancel.svg";
 import SaveIcon from "../../../assets/buttons/save.svg";
 import { userService } from "../../../services/userService";
@@ -114,17 +115,17 @@ export default function UserInformationScreen() {
       navigation.setOptions({
         headerRight: () => (
           <View className="flex-row items-center gap-4 pr-2">
-            <TouchableOpacity onPress={handleCancel} hitSlop={8}>
+            <DebouncedTouchableOpacity onPress={handleCancel} hitSlop={8}>
               <CancelIcon width={22} height={22} />
-            </TouchableOpacity>
+            </DebouncedTouchableOpacity>
             {hasChanges && (
-              <TouchableOpacity
+              <DebouncedTouchableOpacity
                 onPress={handleSubmitUserInfo}
                 disabled={loading}
                 hitSlop={8}
               >
                 <SaveIcon width={22} height={22} />
-              </TouchableOpacity>
+              </DebouncedTouchableOpacity>
             )}
           </View>
         ),
@@ -132,13 +133,13 @@ export default function UserInformationScreen() {
     } else {
       navigation.setOptions({
         headerRight: () => (
-          <TouchableOpacity
+          <DebouncedTouchableOpacity
             onPress={() => setIsEditing(true)}
             className="pr-2"
             hitSlop={8}
           >
             <EditIcon width={22} height={22} />
-          </TouchableOpacity>
+          </DebouncedTouchableOpacity>
         ),
       });
     }

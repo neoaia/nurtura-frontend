@@ -1,19 +1,14 @@
+import { typography } from "@/assets/fonts/Text";
 import { ConfirmationModal } from "@/components/modals/confirmationModal";
 import { BottomButton } from "@/components/shared/bottomButton";
+import { DebouncedTouchableOpacity } from "@/components/shared/debouncedTouchable";
 import { TextInputField } from "@/components/shared/textInputField";
 import { bleManager } from "@/utils/bluetooth/bleManager";
+import { Ionicons } from "@expo/vector-icons";
 import { Buffer } from "buffer";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useCallback, useRef, useState } from "react";
-import {
-  Alert,
-  ScrollView,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
-import { Ionicons } from "@expo/vector-icons";
-import { typography } from "@/assets/fonts/Text";
+import { Alert, ScrollView, Text, View } from "react-native";
 
 const SERVICE_UUID = "4fafc201-1fb5-459e-8fcc-c5c9c331914b";
 const SSID_CHAR_UUID = "beb5483e-36e1-4688-b7f5-ea07361b26a8";
@@ -41,7 +36,7 @@ export default function AddNewRack3() {
     if (subscriptionRef.current) {
       try {
         bleManager.cancelTransaction(MONITOR_TRANSACTION_ID);
-      } catch (_) { }
+      } catch (_) {}
       subscriptionRef.current = null;
     }
   };
@@ -119,7 +114,10 @@ export default function AddNewRack3() {
     }
 
     if (!ssid.trim() || !password.trim()) {
-      Alert.alert("Input Required", "Please enter both WiFi name and password.");
+      Alert.alert(
+        "Input Required",
+        "Please enter both WiFi name and password.",
+      );
       return;
     }
 
@@ -150,7 +148,10 @@ export default function AddNewRack3() {
           if (!subscriptionRef.current) return;
 
           if (error) {
-            console.log("[Step3] Monitor error (may be expected):", error.message);
+            console.log(
+              "[Step3] Monitor error (may be expected):",
+              error.message,
+            );
             return;
           }
 
@@ -270,7 +271,9 @@ Are you sure you want to reset?"
         className="flex-1 px-6"
         contentContainerStyle={{ paddingTop: 40 }}
       >
-        <Text style={typography["h1-bold"]} className="text-black mb-6">Connect to WiFi</Text>
+        <Text style={typography["h1-bold"]} className="text-black mb-6">
+          Connect to WiFi
+        </Text>
 
         <TextInputField
           label="WiFi Name (SSID)"
@@ -290,7 +293,7 @@ Are you sure you want to reset?"
             autoCapitalize="none"
             editable={!loading}
           />
-          <TouchableOpacity
+          <DebouncedTouchableOpacity
             onPress={() => setShowPassword((v) => !v)}
             className="absolute right-4 top-1/2 -translate-y-1/2"
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
@@ -300,7 +303,7 @@ Are you sure you want to reset?"
               size={22}
               color="#9ca3af"
             />
-          </TouchableOpacity>
+          </DebouncedTouchableOpacity>
         </View>
 
         {loading && (

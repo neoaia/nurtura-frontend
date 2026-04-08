@@ -1,20 +1,20 @@
 import { typography } from "@/assets/fonts/Text";
-import { BottomButton } from "@/components/shared/bottomButton";
 import { ConfirmationModal } from "@/components/modals/confirmationModal";
+import { BottomButton } from "@/components/shared/bottomButton";
+import { DebouncedTouchableOpacity } from "@/components/shared/debouncedTouchable";
 import { bleManager } from "@/utils/bluetooth/bleManager";
 import { Buffer } from "buffer";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import React, { useCallback, useRef, useState } from "react";
 import {
-  ActivityIndicator,
-  Alert,
-  Image,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Alert,
+    Image,
+    ScrollView,
+    StyleSheet,
+    Text,
+    View,
 } from "react-native";
 
 const SERVICE_UUID = "4fafc201-1fb5-459e-8fcc-c5c9c331914b";
@@ -79,86 +79,92 @@ export default function AddNewRack2() {
     await disconnectAndGoToStep1();
   };
 
-  const verifyWithESP32 = useCallback(async (qrData: string) => {
-    if (!deviceId) {
-      Alert.alert("Error", "No device connected. Go back to Step 1.");
-      return;
-    }
-
-    setVerifying(true);
-
-    try {
-      const isConnected = await bleManager.isDeviceConnected(
-        deviceId as string,
-      );
-      if (!isConnected) {
-        setVerifying(false);
-        Alert.alert(
-          "Connection Lost",
-          "The rack disconnected. Please go back and connect again.",
-          [{ text: "Go Back", onPress: disconnectAndGoToStep1 }],
-        );
+  const verifyWithESP32 = useCallback(
+    async (qrData: string) => {
+      if (!deviceId) {
+        Alert.alert("Error", "No device connected. Go back to Step 1.");
         return;
       }
 
-      const characteristic = await bleManager.readCharacteristicForDevice(
-        deviceId as string,
-        SERVICE_UUID,
-        DEVICE_ID_CHAR_UUID,
-      );
+      setVerifying(true);
 
-      if (!characteristic?.value) {
-        throw new Error("Could not read device ID from rack");
-      }
+      try {
+        const isConnected = await bleManager.isDeviceConnected(
+          deviceId as string,
+        );
+        if (!isConnected) {
+          setVerifying(false);
+          Alert.alert(
+            "Connection Lost",
+            "The rack disconnected. Please go back and connect again.",
+            [{ text: "Go Back", onPress: disconnectAndGoToStep1 }],
+          );
+          return;
+        }
 
-      const deviceMAC = Buffer.from(characteristic.value, "base64")
-        .toString()
-        .trim();
-      const scannedMAC = qrData.trim();
+        const characteristic = await bleManager.readCharacteristicForDevice(
+          deviceId as string,
+          SERVICE_UUID,
+          DEVICE_ID_CHAR_UUID,
+        );
 
-      console.log("ESP32 MAC:", deviceMAC);
-      console.log("QR MAC:", scannedMAC);
+        if (!characteristic?.value) {
+          throw new Error("Could not read device ID from rack");
+        }
 
-      if (scannedMAC.toLowerCase() === deviceMAC.toLowerCase()) {
+        const deviceMAC = Buffer.from(characteristic.value, "base64")
+          .toString()
+          .trim();
+        const scannedMAC = qrData.trim();
+
+        console.log("ESP32 MAC:", deviceMAC);
+        console.log("QR MAC:", scannedMAC);
+
+        if (scannedMAC.toLowerCase() === deviceMAC.toLowerCase()) {
+          setVerifying(false);
+          Alert.alert("Verified!", "Rack identity confirmed!", [
+            {
+              text: "Continue",
+              onPress: () =>
+                router.push({
+                  pathname: "/(tabs)/(add_pages)/(addNewRack)/step-3",
+                  // Pass the real ESP32 MAC address forward so step-4 can register it correctly
+                  params: { deviceId, macAddress: deviceMAC },
+                }),
+            },
+          ]);
+        } else {
+          setVerifying(false);
+          // Allow user to scan again — reset the guard
+          hasScannedRef.current = false;
+          Alert.alert(
+            "Verification Failed",
+            `QR code doesn't match this rack.\n\nScanned: ${scannedMAC}\nDevice: ${deviceMAC}`,
+          );
+        }
+      } catch (error: any) {
         setVerifying(false);
-        Alert.alert("Verified!", "Rack identity confirmed!", [
-          {
-            text: "Continue",
-            onPress: () =>
-              router.push({
-                pathname: "/(tabs)/(add_pages)/(addNewRack)/step-3",
-                // Pass the real ESP32 MAC address forward so step-4 can register it correctly
-                params: { deviceId, macAddress: deviceMAC },
-              }),
-          },
-        ]);
-      } else {
-        setVerifying(false);
-        // Allow user to scan again — reset the guard
         hasScannedRef.current = false;
+        console.error("Verification error:", error);
         Alert.alert(
-          "Verification Failed",
-          `QR code doesn't match this rack.\n\nScanned: ${scannedMAC}\nDevice: ${deviceMAC}`,
+          "Verification Error",
+          "Could not verify device. Make sure the rack is still connected.",
         );
       }
-    } catch (error: any) {
-      setVerifying(false);
-      hasScannedRef.current = false;
-      console.error("Verification error:", error);
-      Alert.alert(
-        "Verification Error",
-        "Could not verify device. Make sure the rack is still connected.",
-      );
-    }
-  }, [deviceId, disconnectAndGoToStep1]);
+    },
+    [deviceId, disconnectAndGoToStep1],
+  );
 
   // Memoized and guarded — prevents flickering from multiple frame callbacks
-  const handleBarCodeScanned = useCallback(({ data }: { data: string }) => {
-    if (hasScannedRef.current || verifying) return;
-    hasScannedRef.current = true;
-    setScanning(false);
-    verifyWithESP32(data);
-  }, [verifying, verifyWithESP32]);
+  const handleBarCodeScanned = useCallback(
+    ({ data }: { data: string }) => {
+      if (hasScannedRef.current || verifying) return;
+      hasScannedRef.current = true;
+      setScanning(false);
+      verifyWithESP32(data);
+    },
+    [verifying, verifyWithESP32],
+  );
 
   const handleScanPress = async () => {
     if (!permission?.granted) {
@@ -237,7 +243,7 @@ You'll need to run the setup process again."
             onBarcodeScanned={handleBarCodeScanned}
             barcodeScannerSettings={{ barcodeTypes: ["qr"] }}
           />
-          <TouchableOpacity
+          <DebouncedTouchableOpacity
             onPress={() => {
               hasScannedRef.current = false;
               setScanning(false);
@@ -245,7 +251,7 @@ You'll need to run the setup process again."
             className="absolute top-12 left-6 bg-black/50 p-3 rounded-full"
           >
             <Text className="text-white font-bold">Cancel</Text>
-          </TouchableOpacity>
+          </DebouncedTouchableOpacity>
         </View>
       )}
     </View>

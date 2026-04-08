@@ -1,5 +1,6 @@
 import { typography } from "@/assets/fonts/Text";
-import { Text, TouchableOpacity, View } from "react-native";
+import { DebouncedTouchableOpacity } from "@/components/shared/debouncedTouchable";
+import { Text, View } from "react-native";
 import Svg, { Line } from "react-native-svg";
 
 interface QuantityPickerProps {
@@ -54,24 +55,24 @@ export const QuantityPicker = ({
 }: QuantityPickerProps) => {
   return (
     <View className="border-[2px] border-grayText flex justify-between items-center flex-row w-full px-2 rounded-full">
-      <TouchableOpacity
+      <DebouncedTouchableOpacity
         className="p-6 my-1 rounded-full bg-[#E5EDCF] items-center justify-center"
         onPress={onSubtractPress}
       >
         <MinusIcon />
-      </TouchableOpacity>
+      </DebouncedTouchableOpacity>
 
       <View className="flex-col items-center py-3">
         <Text style={typography["button-bold"]}>{quantity}</Text>
         <Text style={typography["subheader"]}>{title}</Text>
       </View>
 
-      <TouchableOpacity
+      <DebouncedTouchableOpacity
         className="p-6 my-1 rounded-full bg-[#E5EDCF] items-center justify-center"
         onPress={onAddPress}
       >
         <PlusIcon />
-      </TouchableOpacity>
+      </DebouncedTouchableOpacity>
     </View>
   );
 };

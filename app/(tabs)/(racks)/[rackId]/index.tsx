@@ -6,6 +6,7 @@ import { OnboardingTutorialModal } from "@/components/onboarding/tutorialModal";
 import PlantStatusIndicators from "@/components/racks/plantStatusIndicators";
 import { PlantStatusIndicatorsSkeleton } from "@/components/racks/skeleton/plantStatusIndicatorsSkeleton";
 import { BottomButton } from "@/components/shared/bottomButton";
+import { DebouncedTouchableOpacity } from "@/components/shared/debouncedTouchable";
 import { MenuCard } from "@/components/shared/menubtn";
 import { MenuCardSkeleton } from "@/components/shared/skeleton/menuCardSkeleton";
 import { SmallDescriptionSkeleton } from "@/components/shared/skeleton/smallDescriptionSkeleton";
@@ -16,15 +17,7 @@ import { rackService } from "@/services/rackService";
 import { useFocusEffect } from "@react-navigation/native";
 import { router, useLocalSearchParams } from "expo-router"; // Added Stack
 import React, { useCallback, useState } from "react";
-import {
-  Alert,
-  Dimensions,
-  Image,
-  ScrollView,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { Alert, Dimensions, Image, ScrollView, Text, View } from "react-native";
 import DateIcon from "../../../../assets/images/icons/date.svg";
 import SoilIcon from "../../../../assets/images/icons/soil.svg";
 import { PLANT_IMAGES } from "../../../../utils/constants";
@@ -73,13 +66,13 @@ const RackInfo = () => {
             <View className="items-center justify-center">
               <View className="bg-white p-4 rounded-[20px] items-center justify-center shadow-sm w-[72px] h-[72px]">
                 <Image
-                    source={require("@/assets/images/racks/edit.png")}
-                    style={{ width: 22, height: 22 }}
-                    resizeMode="contain"
-                  />
+                  source={require("@/assets/images/racks/edit.png")}
+                  style={{ width: 22, height: 22 }}
+                  resizeMode="contain"
+                />
               </View>
             </View>
-          )
+          ),
         };
       case 2:
         return {
@@ -96,7 +89,7 @@ const RackInfo = () => {
                 </Text>
               </View>
             </View>
-          )
+          ),
         };
       default:
         return null;
@@ -246,7 +239,7 @@ const RackInfo = () => {
         >
           You haven&apos;t added a plant in your rack yet.
         </Text>
-        <TouchableOpacity
+        <DebouncedTouchableOpacity
           onPress={() => {
             console.log("Navigating to step-2 with params:", {
               rackId,
@@ -267,7 +260,7 @@ const RackInfo = () => {
           <Text style={typography["button-bold"]} className="text-black">
             Add a Plant
           </Text>
-        </TouchableOpacity>
+        </DebouncedTouchableOpacity>
 
         {currentTutorial && (
           <OnboardingTutorialModal

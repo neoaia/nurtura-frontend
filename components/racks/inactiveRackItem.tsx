@@ -1,7 +1,8 @@
 import { typography } from "@/assets/fonts/Text";
+import { DebouncedTouchableOpacity } from "@/components/shared/debouncedTouchable";
 import { GetRackInfoDTO } from "@/types/rack.dto";
 import React, { useState } from "react";
-import { Image, Text, TouchableOpacity, View } from "react-native";
+import { Image, Text, View } from "react-native";
 
 interface RackItemProps {
   rack: GetRackInfoDTO & { createdAt?: string; updatedAt?: string }; // In-update ko yung type in case di pa nakalagay sa DTO mo
@@ -45,7 +46,7 @@ const InactiveRackItem: React.FC<RackItemProps> = ({ rack }) => {
   };
 
   return (
-    <TouchableOpacity
+    <DebouncedTouchableOpacity
       onPress={handlePress}
       disabled={isLoading}
       activeOpacity={0.7}
@@ -111,7 +112,7 @@ const InactiveRackItem: React.FC<RackItemProps> = ({ rack }) => {
           </Text>
         </View>
       </View>
-    </TouchableOpacity>
+    </DebouncedTouchableOpacity>
   );
 };
 

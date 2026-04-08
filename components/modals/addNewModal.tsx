@@ -1,16 +1,17 @@
+import { DebouncedTouchableOpacity } from "@/components/shared/debouncedTouchable";
 import BottomSheet, {
-  BottomSheetBackdrop,
-  BottomSheetView,
+    BottomSheetBackdrop,
+    BottomSheetView,
 } from "@gorhom/bottom-sheet";
 import { router } from "expo-router";
 import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
+    useCallback,
+    useEffect,
+    useMemo,
+    useRef,
+    useState,
 } from "react";
-import { Text, TouchableOpacity, View } from "react-native";
+import { Text, View } from "react-native";
 import { typography } from "../../assets/fonts/Text";
 import PlantIcon from "../../assets/images/icons/plant(Add).svg";
 import RackIcon from "../../assets/images/icons/rack(Add).svg";
@@ -45,7 +46,7 @@ const OptionButton: React.FC<OptionButtonProps> = ({ label, onPress }) => {
   };
 
   return (
-    <TouchableOpacity
+    <DebouncedTouchableOpacity
       className={`items-center mb-5 ${isLoading ? "opacity-50" : ""}`}
       onPress={handlePress}
       disabled={isLoading}
@@ -57,7 +58,7 @@ const OptionButton: React.FC<OptionButtonProps> = ({ label, onPress }) => {
       <Text style={typography["subheader"]} className="text-[#86975A]">
         {label}
       </Text>
-    </TouchableOpacity>
+    </DebouncedTouchableOpacity>
   );
 };
 

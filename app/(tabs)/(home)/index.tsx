@@ -2,6 +2,7 @@ import { typography } from "@/assets/fonts/Text";
 import { RecentActivityBarSkeleton } from "@/components/home/skeleton/recentActivityBarSkeleton";
 import { SummaryCardSkeleton } from "@/components/home/skeleton/summaryCardSkeleton";
 import { OnboardingTutorialModal } from "@/components/onboarding/tutorialModal";
+import { DebouncedTouchableOpacity } from "@/components/shared/debouncedTouchable";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAsyncState } from "@/hooks/useAsyncState";
 import useFetch from "@/hooks/useFetch";
@@ -20,7 +21,6 @@ import {
   ScrollView,
   StatusBar,
   Text,
-  TouchableOpacity,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -321,10 +321,10 @@ export default function HomeScreen() {
   const handleNotificationPress = () => {
     // Tanggalin ang alert optimistically at mag-navigate
     setHasUnread(false);
-    router.push("/notifications");
+    router.push("/(tabs)/notifications");
   };
   const handleCardPress = (type: string) =>
-    router.push(type === "racks" ? "/(tabs)/(racks)" : "/(tabs)/(plants)");
+    router.push(type === "racks" ? "/(tabs)/(racks)" : "/(tabs)/(racks)");
   const handleAddRack = () => console.log("Add Rack");
 
   return (
@@ -338,13 +338,13 @@ export default function HomeScreen() {
           <Text style={typography["h1-bold"]} className="text-black">
             Hi {displayName}!
           </Text>
-          <TouchableOpacity onPress={handleNotificationPress}>
+          <DebouncedTouchableOpacity onPress={handleNotificationPress}>
             {hasUnread ? (
               <ActiveNotificationIcon width={24} height={24} />
             ) : (
               <InactiveNotificationIcon width={24} height={24} />
             )}
-          </TouchableOpacity>
+          </DebouncedTouchableOpacity>
         </View>
 
         <View className="flex-1 bg-white mt-2">

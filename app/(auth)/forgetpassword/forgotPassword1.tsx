@@ -1,3 +1,4 @@
+import { DebouncedTouchableOpacity } from "@/components/shared/debouncedTouchable";
 import useFetch from "@/hooks/useFetch";
 import { authService } from "@/services/authService";
 import { createLogger } from "@/utils/logger";
@@ -6,14 +7,7 @@ import { useFocusEffect } from "@react-navigation/native";
 import { router } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import React, { useCallback, useEffect, useState } from "react";
-import {
-    Alert,
-    BackHandler,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
-} from "react-native";
+import { Alert, BackHandler, Text, TextInput, View } from "react-native";
 
 const logger = createLogger("ForgotPassword1");
 
@@ -295,7 +289,7 @@ const ForgotPassword1 = () => {
       </View>
 
       <View className="w-full">
-        <TouchableOpacity
+        <DebouncedTouchableOpacity
           onPress={handleNextPress}
           className={`w-full p-6 rounded-[12px] mt-2 flex items-center ${
             isNextButtonEnabled ? "bg-primary" : "bg-[#919191]"
@@ -305,7 +299,7 @@ const ForgotPassword1 = () => {
           <Text className="text-white text-xl font-bold">
             {loading ? "Loading..." : "Next"}
           </Text>
-        </TouchableOpacity>
+        </DebouncedTouchableOpacity>
       </View>
     </View>
   );
