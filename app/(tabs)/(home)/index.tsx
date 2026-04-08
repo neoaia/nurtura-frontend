@@ -16,12 +16,12 @@ import { socketService } from "@/utils/websocket/socket";
 import { router, useFocusEffect } from "expo-router";
 import React, { useCallback, useRef, useState } from "react";
 import {
-  Dimensions,
-  Image,
-  ScrollView,
-  StatusBar,
-  Text,
-  View,
+    Dimensions,
+    Image,
+    ScrollView,
+    StatusBar,
+    Text,
+    View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import ActiveNotificationIcon from "../../../assets/images/icons/active_notification.svg";

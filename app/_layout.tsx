@@ -2,6 +2,7 @@ import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { OnboardingProvider } from "@/contexts/OnboardingContext";
 import { useNotificationHandler } from "@/hooks/useNotificationHandler";
 import { createLogger } from "@/utils/logger";
+import { NavigationService, ROUTES } from "@/utils/navigationUtils";
 import { useRegisterForPushNotifications } from "@/utils/notification";
 import { useFonts } from "expo-font";
 import { Stack, useRouter, useSegments } from "expo-router";
@@ -73,6 +74,7 @@ function RootLayoutNav() {
   const { user, loading } = useAuth();
   const segments = useSegments();
   const router = useRouter();
+  const navService = new NavigationService(router);
 
   const [isBypassCheckComplete, setIsBypassCheckComplete] = useState(false);
 
@@ -102,13 +104,19 @@ function RootLayoutNav() {
       const inSignupFlow = inAuthGroup && segments[1] === "signup";
       const inLoginScreen = inAuthGroup && segments[1] === "login";
       const inForgotPasswordFlow =
-        inAuthGroup && segments[1] === "forgetpassword";
+        inAuthGroup && segments[1] === "forgotPassword";
       const flag = await SecureStore.getItemAsync(GOOGLE_SIGNUP_FLAG_KEY);
       const isSigningUpFlag = flag === "true";
 
+      // User not authenticated and trying to access app
       if (!user && !inAuthGroup) {
-        router.replace("/(auth)/login");
-      } else if (
+        // Use replace to prevent back navigation to app screens
+        navService.replace(ROUTES.AUTH.LOGIN);
+        return;
+      }
+
+      // User is authenticated but in auth flow (shouldn't happen unless flag is set)
+      if (
         user &&
         inAuthGroup &&
         !inSignupFlow &&
@@ -116,12 +124,14 @@ function RootLayoutNav() {
         !isSigningUpFlag &&
         !inForgotPasswordFlow
       ) {
-        router.replace("/(tabs)/(home)");
+        // Use replace to prevent back to auth flows
+        navService.replace(ROUTES.TABS.HOME.INDEX);
+        return;
       }
     };
 
     runGuard();
-  }, [user, isReady, router, segments]);
+  }, [user, isReady, segments, navService]);
 
   if (!isReady) {
     return (

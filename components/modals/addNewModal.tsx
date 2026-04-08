@@ -1,9 +1,10 @@
 import { DebouncedTouchableOpacity } from "@/components/shared/debouncedTouchable";
+import { NavigationService, ROUTES } from "@/utils/navigationUtils";
 import BottomSheet, {
     BottomSheetBackdrop,
     BottomSheetView,
 } from "@gorhom/bottom-sheet";
-import { router } from "expo-router";
+import { useRouter } from "expo-router";
 import React, {
     useCallback,
     useEffect,
@@ -66,6 +67,8 @@ export const AddNewModal: React.FC<AddNewModalProps> = ({
   isVisible,
   onClose,
 }) => {
+  const router = useRouter();
+  const navService = new NavigationService(router);
   const bottomSheetRef = useRef<BottomSheet>(null);
   const snapPoints = useMemo(() => ["30%"], []);
 
@@ -99,15 +102,20 @@ export const AddNewModal: React.FC<AddNewModalProps> = ({
     [],
   );
 
+  /**
+   * Handle navigation with proper cleanup
+   * Closes sheet and modal, then navigates after a brief delay
+   */
   const handleNavigation = useCallback(
-    (route: string) => {
+    (pathname: string) => {
       bottomSheetRef.current?.close();
       onClose();
+      // Small delay to ensure modal is closed before navigation
       setTimeout(() => {
-        router.push(route as any);
+        navService.push(pathname);
       }, 100);
     },
-    [onClose],
+    [onClose, navService],
   );
 
   return (
@@ -140,13 +148,11 @@ export const AddNewModal: React.FC<AddNewModalProps> = ({
         <View className="flex-row gap-6 justify-center w-full">
           <OptionButton
             label="Plant"
-            onPress={() =>
-              handleNavigation("/(add_pages)/(addNewPlant)/step-1")
-            }
+            onPress={() => handleNavigation(ROUTES.TABS.ADD.PLANT.STEP_1)}
           />
           <OptionButton
             label="Rack"
-            onPress={() => handleNavigation("/(add_pages)/(addNewRack)/step-1")}
+            onPress={() => handleNavigation(ROUTES.TABS.ADD.RACK.STEP_1)}
           />
         </View>
       </BottomSheetView>
