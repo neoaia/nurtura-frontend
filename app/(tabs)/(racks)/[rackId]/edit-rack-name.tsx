@@ -1,8 +1,8 @@
 import React, {
-    useCallback,
-    useEffect,
-    useLayoutEffect,
-    useState,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useState,
 } from "react";
 import { Alert, ScrollView, TouchableOpacity, View } from "react-native";
 
@@ -79,11 +79,15 @@ export default function EditRackName() {
 
     setSaving(true);
     try {
-      const response = await rackService.updateRackbyId(updateRack, {
+      const updateData = {
         name: rackName.trim(),
         mqttTopic: rackData?.mqttTopic || "",
         description: rackData?.description || "",
-      });
+      };
+
+      console.log("Sending update data:", updateData);
+
+      const response = await rackService.updateRackbyId(updateRack, updateData);
 
       if (response) {
         setSavedRackName(rackName.trim());
@@ -91,9 +95,11 @@ export default function EditRackName() {
         Alert.alert("Success", "Rack name updated successfully");
       }
     } catch (error) {
+      console.error("Update error:", error);
       Alert.alert("Error", "Failed to update rack name");
     } finally {
       setSaving(false);
+      console.log("Updated rack name:", rackName.trim());
     }
   }, [rackName, rackData, updateRack]);
 
@@ -135,7 +141,7 @@ export default function EditRackName() {
         ),
       });
     }
-  }, [isEditing, loading, hasChanges, saving]);
+  }, [isEditing, loading, hasChanges, saving, handleCancel, handleSave]);
 
   return (
     <View className="flex-1 bg-white">

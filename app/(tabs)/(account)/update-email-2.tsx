@@ -81,7 +81,7 @@ export default function UpdateEmailScreen2() {
       }
 
       router.push({
-        pathname: "/(tabs)/(account)/update-email-2",
+        pathname: "/(tabs)/(account)/update-email-3",
         params: { email },
       });
     } catch (error) {

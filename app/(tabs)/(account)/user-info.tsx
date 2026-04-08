@@ -1,6 +1,3 @@
-import React, { useEffect, useLayoutEffect, useMemo, useState } from "react";
-import { ScrollView, Text, TouchableOpacity, View } from "react-native";
-
 import { typography } from "@/assets/fonts/Text";
 import EditIcon from "@/assets/images/icons/editIcon.svg";
 import { TextInputFieldSkeleton } from "@/components/shared/skeleton/textInputFieldSkeleton";
@@ -8,6 +5,14 @@ import { TextInputField } from "@/components/shared/textInputField";
 import useFetch from "@/hooks/useFetch";
 import { UserDetails } from "@/types/interface";
 import { useNavigation } from "expo-router";
+import React, {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useState,
+} from "react";
+import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 import CancelIcon from "../../../assets/buttons/cancel.svg";
 import SaveIcon from "../../../assets/buttons/save.svg";
 import { userService } from "../../../services/userService";
@@ -76,12 +81,14 @@ export default function UserInformationScreen() {
     setFormValues((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleCancel = () => {
+  // Binalot sa useCallback para fresh palagi ang state
+  const handleCancel = useCallback(() => {
     setFormValues(savedValues);
     setIsEditing(false);
-  };
+  }, [savedValues]);
 
-  const handleSubmitUserInfo = async () => {
+  // Binalot din sa useCallback para ma-track niya nang maayos ang latest formValues
+  const handleSubmitUserInfo = useCallback(async () => {
     setLoading(true);
     try {
       const response = await userService.updateUser(updateUserInfo, formValues);
@@ -94,9 +101,9 @@ export default function UserInformationScreen() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [formValues, updateUserInfo]);
 
-  // Sync header buttons whenever relevant state changes
+  // Idinagdag ang handleCancel at handleSubmitUserInfo sa dependencies
   useLayoutEffect(() => {
     if (isLoadingProfile) {
       navigation.setOptions({ headerRight: undefined });
@@ -135,7 +142,14 @@ export default function UserInformationScreen() {
         ),
       });
     }
-  }, [isEditing, isLoadingProfile, hasChanges, loading]);
+  }, [
+    isEditing,
+    isLoadingProfile,
+    hasChanges,
+    loading,
+    handleCancel,
+    handleSubmitUserInfo,
+  ]);
 
   return (
     <View className="flex-1 bg-white">

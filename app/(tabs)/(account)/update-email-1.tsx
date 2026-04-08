@@ -11,13 +11,13 @@ import { router } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-    Alert,
-    NativeSyntheticEvent,
-    ScrollView,
-    Text,
-    TextInput,
-    TextInputKeyPressEventData,
-    View,
+  Alert,
+  NativeSyntheticEvent,
+  ScrollView,
+  Text,
+  TextInput,
+  TextInputKeyPressEventData,
+  View,
 } from "react-native";
 
 export default function UpdateEmailScreen1() {
@@ -226,8 +226,8 @@ export default function UpdateEmailScreen1() {
           style={typography["subheader"]}
           className="pl-2 mb-6 text-black leading-normal"
         >
-          To change your email, we first need to confirm it's you. Enter the
-          5-digit code sent to your current email address:{" "}
+          To change your email, we first need to confirm it&apos;s you. Enter
+          the 5-digit code sent to your current email address:{" "}
           <Text style={typography["subheader-bold"]} className="text-primary">
             {currentEmail}
           </Text>
