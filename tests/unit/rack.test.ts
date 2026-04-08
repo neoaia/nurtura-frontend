@@ -1,6 +1,7 @@
 import { rackService } from "@/services/rackService";
 import {
     DeleteRackResponseDTO,
+    GetAllRacksResponseDTO,
     GetRackCurrentStateResponseDTO,
     GetRackInfoResponseDTO,
     GetRackStatusResponseDTO,
@@ -8,7 +9,6 @@ import {
     RegisterRackResponseDTO,
     UpdateRackRequestDTO,
     UpdateRackResponseDTO,
-    GetAllRacksResponseDTO
 } from "@/types/rack.dto";
 
 describe("rackService", () => {
@@ -123,14 +123,24 @@ describe("rackService", () => {
         message: "Rack info retrieved successfully",
         rack: {
           id: "clx123abc456",
+          userId: "user-123",
           name: "Living Room Farm",
           macAddress: "00:1A:2B:3C:4D:5E",
           mqttTopic: "nurtura/rack/living-room",
           description: "Vertical farm for herbs",
-          status: "ONLINE",
+          currentPlantId: null,
+          quantity: 0,
+          plantedAt: null,
+          lastHarvestAt: null,
+          harvestCount: 0,
           isActive: true,
+          status: "ONLINE",
+          lastActivityAt: "2025-02-01T10:30:00.000Z",
           lastSeenAt: "2025-02-01T10:30:00.000Z",
+          lastWateredAt: "2025-02-01T10:30:00.000Z",
+          lastLightOnAt: "2025-02-01T10:30:00.000Z",
           createdAt: "2025-01-15T08:00:00.000Z",
+          updatedAt: "2025-02-01T10:30:00.000Z",
         },
       };
 
@@ -188,12 +198,24 @@ describe("rackService", () => {
         message: "Rack info retrieved successfully",
         rack: {
           id: "clx123abc456",
+          userId: "user-123",
           name: "Living Room Farm",
           macAddress: "00:1A:2B:3C:4D:5E",
-          status: "OFFLINE",
+          mqttTopic: "nurtura/rack/living-room",
+          description: "Vertical farm for herbs",
+          currentPlantId: null,
+          quantity: 0,
+          plantedAt: null,
+          lastHarvestAt: null,
+          harvestCount: 0,
           isActive: false,
+          status: "OFFLINE",
+          lastActivityAt: "2025-02-01T08:00:00.000Z",
           lastSeenAt: "2025-02-01T08:00:00.000Z",
+          lastWateredAt: "2025-02-01T08:00:00.000Z",
+          lastLightOnAt: "2025-02-01T08:00:00.000Z",
           createdAt: "2025-01-15T08:00:00.000Z",
+          updatedAt: "2025-02-01T08:00:00.000Z",
         },
       };
 

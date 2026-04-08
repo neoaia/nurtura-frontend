@@ -1,17 +1,19 @@
 import { typography } from "@/assets/fonts/Text";
 import EditIcon from "@/assets/images/icons/editIcon.svg";
+import { InfoModal } from "@/components/modals/infoModal";
 import { DebouncedTouchableOpacity } from "@/components/shared/debouncedTouchable";
 import { TextInputFieldSkeleton } from "@/components/shared/skeleton/textInputFieldSkeleton";
 import { TextInputField } from "@/components/shared/textInputField";
 import useFetch from "@/hooks/useFetch";
 import { UserDetails } from "@/types/interface";
+import { cleanAlphanumericInput, cleanNameInput } from "@/utils/validation";
 import { useNavigation } from "expo-router";
 import React, {
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useState,
+    useCallback,
+    useEffect,
+    useLayoutEffect,
+    useMemo,
+    useState,
 } from "react";
 import { ScrollView, Text, View } from "react-native";
 import CancelIcon from "../../../assets/buttons/cancel.svg";
@@ -24,6 +26,22 @@ export default function UserInformationScreen() {
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
+
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalTitle, setModalTitle] = useState("");
+  const [modalMessage, setModalMessage] = useState("");
+  const [onModalConfirm, setOnModalConfirm] = useState<() => void>(() => {});
+
+  const showModal = (
+    title: string,
+    message: string,
+    onConfirm: () => void = () => setModalVisible(false),
+  ) => {
+    setModalTitle(title);
+    setModalMessage(message);
+    setOnModalConfirm(() => onConfirm);
+    setModalVisible(true);
+  };
 
   const navigation = useNavigation();
 
@@ -79,7 +97,13 @@ export default function UserInformationScreen() {
   }, [formValues, savedValues]);
 
   const handleChange = (field: keyof UserDetails, value: string) => {
-    setFormValues((prev) => ({ ...prev, [field]: value }));
+    let cleanedValue = value;
+    if (["firstName", "middleName", "lastName", "suffix"].includes(field)) {
+      cleanedValue = cleanNameInput(value);
+    } else {
+      cleanedValue = cleanAlphanumericInput(value);
+    }
+    setFormValues((prev) => ({ ...prev, [field]: cleanedValue }));
   };
 
   // Binalot sa useCallback para fresh palagi ang state
@@ -90,15 +114,25 @@ export default function UserInformationScreen() {
 
   // Binalot din sa useCallback para ma-track niya nang maayos ang latest formValues
   const handleSubmitUserInfo = useCallback(async () => {
+    if (!formValues.firstName?.trim() || !formValues.lastName?.trim()) {
+      showModal("Error", "First name and last name are required");
+      return;
+    }
+
     setLoading(true);
     try {
       const response = await userService.updateUser(updateUserInfo, formValues);
       if (response) {
         setSavedValues(formValues);
         setIsEditing(false);
+        showModal("Success", "User information updated successfully", () => {
+          setIsEditing(false);
+          setModalVisible(false);
+        });
       }
     } catch (error) {
       console.error("Failed to update user info:", error);
+      showModal("Error", "Failed to update user information");
     } finally {
       setLoading(false);
     }
@@ -279,6 +313,16 @@ export default function UserInformationScreen() {
           </>
         )}
       </ScrollView>
+
+      <InfoModal
+        isVisible={modalVisible}
+        title={modalTitle}
+        message={modalMessage}
+        onConfirm={() => {
+          onModalConfirm();
+          setModalVisible(false);
+        }}
+      />
     </View>
   );
 }

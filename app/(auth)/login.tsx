@@ -4,6 +4,7 @@ import { typography } from "@/assets/fonts/Text";
 import { EmailInput } from "@/components/auth/emailInput";
 import { GoogleSignInButton } from "@/components/auth/googleSignInButton";
 import { PasswordInput } from "@/components/auth/passwordInput";
+import { InfoModal } from "@/components/modals/infoModal";
 import { DebouncedTouchableOpacity } from "@/components/shared/debouncedTouchable";
 import { Divider } from "@/components/shared/divider";
 import { PrimaryButton } from "@/components/shared/primaryButton";
@@ -15,7 +16,7 @@ import { cleanInput, validateEmail } from "@/utils/validation";
 import { useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { useState } from "react";
-import { Alert, Image, Text, View } from "react-native";
+import { Image, Text, View } from "react-native";
 import "../globals.css";
 
 export default function LoginScreen() {
@@ -25,6 +26,22 @@ export default function LoginScreen() {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [isLoginInvalid, setIsLoginInvalid] = useState(false);
   const [emailError, setEmailError] = useState<string>("");
+
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalTitle, setModalTitle] = useState("");
+  const [modalMessage, setModalMessage] = useState("");
+  const [onModalConfirm, setOnModalConfirm] = useState<() => void>(() => {});
+
+  const showModal = (
+    title: string,
+    message: string,
+    onConfirm: () => void = () => setModalVisible(false),
+  ) => {
+    setModalTitle(title);
+    setModalMessage(message);
+    setOnModalConfirm(() => onConfirm);
+    setModalVisible(true);
+  };
 
   const router = useRouter();
   const navService = new NavigationService(router);
@@ -74,7 +91,7 @@ export default function LoginScreen() {
     const trimmedEmail = email.trim();
 
     if (!trimmedEmail || !password) {
-      Alert.alert("Error", "Please fill in all fields");
+      showModal("Error", "Please fill in all fields");
       return;
     }
 
@@ -89,10 +106,7 @@ export default function LoginScreen() {
       navService.replace(ROUTES.TABS.HOME.INDEX);
     } catch (error) {
       setIsLoginInvalid(true);
-      Alert.alert(
-        "Login Failed",
-        "Invalid email or password. Please try again.",
-      );
+      showModal("Login Failed", "Invalid email or password. Please try again.");
       console.log("Login error:", error);
     } finally {
       setLoading(false);
@@ -107,7 +121,7 @@ export default function LoginScreen() {
       const { userData } = await googleSignInAndVerify();
 
       if (!userData?.email) {
-        Alert.alert(
+        showModal(
           "Google Sign-In Failed",
           "Unable to retrieve your email from Google.",
         );
@@ -126,7 +140,10 @@ export default function LoginScreen() {
       const needsOnboarding = onboardingResponse.needsOnboarding;
 
       if (!onboardingResponse.success) {
-        Alert.alert("Unable to proceed with Google Sign-In. Please try again.");
+        showModal(
+          "Error",
+          "Unable to proceed with Google Sign-In. Please try again.",
+        );
         console.log(onboardingResponse.message);
         return;
       }
@@ -155,7 +172,7 @@ export default function LoginScreen() {
         navService.replace(ROUTES.TABS.HOME.INDEX);
       }
     } catch (error) {
-      Alert.alert(
+      showModal(
         "Google Sign-In Failed",
         "Unable to sign in with Google. Please try again.",
       );
@@ -252,6 +269,16 @@ export default function LoginScreen() {
           title="Login"
         />
       </View>
+
+      <InfoModal
+        isVisible={modalVisible}
+        title={modalTitle}
+        message={modalMessage}
+        onConfirm={() => {
+          onModalConfirm();
+          setModalVisible(false);
+        }}
+      />
     </View>
   );
 }

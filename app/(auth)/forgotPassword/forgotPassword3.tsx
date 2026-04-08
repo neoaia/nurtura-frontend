@@ -1,3 +1,4 @@
+import { InfoModal } from "@/components/modals/infoModal";
 import { DebouncedTouchableOpacity } from "@/components/shared/debouncedTouchable";
 import { useAuth } from "@/contexts/AuthContext";
 import useFetch from "@/hooks/useFetch";
@@ -10,13 +11,29 @@ import {
 import { router, useLocalSearchParams } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import React, { useEffect, useState } from "react";
-import { Alert, Image, Text, TextInput, View } from "react-native";
+import { Image, Text, TextInput, View } from "react-native";
 
 const ForgotPassword3 = () => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalTitle, setModalTitle] = useState("");
+  const [modalMessage, setModalMessage] = useState("");
+  const [onModalConfirm, setOnModalConfirm] = useState<() => void>(() => {});
+
+  const showModal = (
+    title: string,
+    message: string,
+    onConfirm: () => void = () => setModalVisible(false),
+  ) => {
+    setModalTitle(title);
+    setModalMessage(message);
+    setOnModalConfirm(() => onConfirm);
+    setModalVisible(true);
+  };
 
   const { email } = useLocalSearchParams();
   const { logout } = useAuth();
@@ -40,7 +57,7 @@ const ForgotPassword3 = () => {
 
   const handleNextPress = async () => {
     if (!email) {
-      Alert.alert(
+      showModal(
         "Error",
         "Email is missing. Please restart the password reset process.",
       );
@@ -49,7 +66,11 @@ const ForgotPassword3 = () => {
 
     setLoading(true);
 
-    if (!passwordsMatch) return Alert.alert("Error", "Passwords do not match.");
+    if (!passwordsMatch) {
+      showModal("Error", "Passwords do not match.");
+      setLoading(false);
+      return;
+    }
 
     try {
       const resetResponse = await authService.resetPassword(
@@ -58,7 +79,7 @@ const ForgotPassword3 = () => {
       );
 
       if (!resetResponse.success) {
-        Alert.alert(
+        showModal(
           "Error",
           resetResponse.message ||
             "Failed to reset password. Please try again.",
@@ -70,14 +91,11 @@ const ForgotPassword3 = () => {
       await SecureStore.deleteItemAsync("forgotPasswordInProgress");
       await logout();
 
-      Alert.alert("Success", "Your password has been reset successfully.", [
-        {
-          text: "OK",
-          onPress: () => router.replace("/(auth)/login"),
-        },
-      ]);
+      showModal("Success", "Your password has been reset successfully.", () =>
+        router.replace("/(auth)/login"),
+      );
     } catch (error) {
-      Alert.alert("Error", "Failed to reset password. Please try again.");
+      showModal("Error", "Failed to reset password. Please try again.");
       setLoading(false);
       return;
     } finally {
@@ -250,6 +268,16 @@ const ForgotPassword3 = () => {
           </Text>
         </DebouncedTouchableOpacity>
       </View>
+
+      <InfoModal
+        isVisible={modalVisible}
+        title={modalTitle}
+        message={modalMessage}
+        onConfirm={() => {
+          onModalConfirm();
+          setModalVisible(false);
+        }}
+      />
     </View>
   );
 };

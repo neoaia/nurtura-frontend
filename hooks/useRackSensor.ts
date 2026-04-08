@@ -75,7 +75,7 @@ export const useRackSensor = (rackId?: string) => {
         socketService.on("deviceStatus", handleDeviceStatus);
         socketService.on("error", handleSocketError);
 
-        socketService.subscribeToRack(rackId, user.uid || "");
+        socketService.subscribeToRack(rackId);
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
         logger.error("Failed to connect socket", message);

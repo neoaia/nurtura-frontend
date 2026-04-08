@@ -1,19 +1,21 @@
 import { DebouncedTouchableOpacity } from "@/components/shared/debouncedTouchable";
 import React, {
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useState,
+    useCallback,
+    useEffect,
+    useLayoutEffect,
+    useState,
 } from "react";
-import { Alert, ScrollView, View } from "react-native";
+import { ScrollView, View } from "react-native";
 
 import CancelIcon from "@/assets/buttons/cancel.svg";
 import SaveIcon from "@/assets/buttons/save.svg";
 import EditIcon from "@/assets/images/icons/editIcon.svg";
+import { InfoModal } from "@/components/modals/infoModal";
 import { TextInputFieldSkeleton } from "@/components/shared/skeleton/textInputFieldSkeleton";
 import { TextInputField } from "@/components/shared/textInputField";
 import useFetch from "@/hooks/useFetch";
 import { rackService } from "@/services/rackService";
+import { cleanNameInput } from "@/utils/validation";
 import { useLocalSearchParams, useNavigation } from "expo-router";
 
 export default function EditRackName() {
@@ -26,6 +28,22 @@ export default function EditRackName() {
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalTitle, setModalTitle] = useState("");
+  const [modalMessage, setModalMessage] = useState("");
+  const [onModalConfirm, setOnModalConfirm] = useState<() => void>(() => {});
+
+  const showModal = (
+    title: string,
+    message: string,
+    onConfirm: () => void = () => setModalVisible(false),
+  ) => {
+    setModalTitle(title);
+    setModalMessage(message);
+    setOnModalConfirm(() => onConfirm);
+    setModalVisible(true);
+  };
 
   const { refetch: getRackInfo } = useFetch(`/racks/${rackId}`, {
     method: "GET",
@@ -54,7 +72,7 @@ export default function EditRackName() {
           setLoading(false);
         }
       } catch (error) {
-        Alert.alert("Error", "Failed to load rack information");
+        showModal("Error", "Failed to load rack information");
       }
     };
 
@@ -74,7 +92,7 @@ export default function EditRackName() {
 
   const handleSave = useCallback(async () => {
     if (!rackName.trim()) {
-      Alert.alert("Error", "Rack name cannot be empty");
+      showModal("Error", "Rack name cannot be empty");
       return;
     }
 
@@ -93,11 +111,14 @@ export default function EditRackName() {
       if (response) {
         setSavedRackName(rackName.trim());
         setIsEditing(false);
-        Alert.alert("Success", "Rack name updated successfully");
+        showModal("Success", "Rack name updated successfully", () => {
+          setIsEditing(false);
+          setModalVisible(false);
+        });
       }
     } catch (error) {
       console.error("Update error:", error);
-      Alert.alert("Error", "Failed to update rack name");
+      showModal("Error", "Failed to update rack name");
     } finally {
       setSaving(false);
       console.log("Updated rack name:", rackName.trim());
@@ -157,12 +178,22 @@ export default function EditRackName() {
           <TextInputField
             label="Rack Name"
             value={rackName}
-            onChangeText={setRackName}
+            onChangeText={(text) => setRackName(cleanNameInput(text))}
             editable={isEditing}
             placeholder="Enter rack name"
           />
         )}
       </ScrollView>
+
+      <InfoModal
+        isVisible={modalVisible}
+        title={modalTitle}
+        message={modalMessage}
+        onConfirm={() => {
+          onModalConfirm();
+          setModalVisible(false);
+        }}
+      />
     </View>
   );
 }
