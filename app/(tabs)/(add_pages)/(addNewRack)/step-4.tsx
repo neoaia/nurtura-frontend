@@ -14,7 +14,7 @@ const RACK_NAME_CHAR_UUID = "a1b2c3d4-e5f6-7890-abcd-ef1234567890";
 const RESET_CHAR_UUID = "ffffffff-ffff-ffff-ffff-ffffffffffff";
 
 export default function AddNewRack4() {
-  const { deviceId } = useLocalSearchParams();
+  const { deviceId, macAddress } = useLocalSearchParams();
   const [rackName, setRackName] = useState("");
   const [loading, setLoading] = useState(false);
   const [showBackConfirm, setShowBackConfirm] = useState(false);
@@ -107,12 +107,9 @@ export default function AddNewRack4() {
     const nameToSend = rackName.trim() || "Nurtura";
     setLoading(true);
 
-    // Best-effort: send the name to the ESP32 if still connected.
-    // By this point BLE is usually already disconnected so we swallow errors.
+    // Best-effort: send name to ESP32 if still connected
     try {
-      const isConnected = await bleManager.isDeviceConnected(
-        deviceId as string,
-      );
+      const isConnected = await bleManager.isDeviceConnected(deviceId as string);
       if (isConnected) {
         await bleManager.writeCharacteristicWithoutResponseForDevice(
           deviceId as string,
@@ -129,7 +126,7 @@ export default function AddNewRack4() {
     try {
       const { data, error } = await registerRack({
         body: {
-          macAddress: deviceId as string,
+          macAddress: macAddress as string,  // ← use real ESP32 MAC, not BLE deviceId
           name: nameToSend,
         },
       });
@@ -139,7 +136,7 @@ export default function AddNewRack4() {
           "Error",
           error?.message || "Failed to register rack. Please try again.",
         );
-        setLoading(false);
+
         return;
       }
 
@@ -182,10 +179,10 @@ You'll need to run the setup process again."
       />
 
       <ScrollView
-        className="flex-1 px-4"
+        className="flex-1 px-6 py-24"
         contentContainerStyle={{ paddingTop: 34 }}
       >
-        <Text style={typography["h1-bold"]} className="text-black mb-3">
+        <Text style={typography["h1-bold"]} className="text-black mb-2">
           Customize your <Text className="text-primary">Nurtura Rack</Text>
         </Text>
         <Text style={typography["subheader"]} className="mb-6">
@@ -199,12 +196,7 @@ You'll need to run the setup process again."
         />
       </ScrollView>
 
-      <View className="flex-row gap-3 px-6 pb-6">
-        <BottomButton
-          title="Back"
-          onPress={handleBackPress}
-          disabled={loading}
-        />
+      <View className="pb-6">
         <BottomButton
           title="Finish"
           onPress={handleNextPress}

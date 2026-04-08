@@ -14,7 +14,7 @@ import {
   Platform,
   Text,
   TouchableOpacity,
-  View
+  View,
 } from "react-native";
 import { State } from "react-native-ble-plx";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -28,24 +28,20 @@ export default function AddNewRack1() {
   const [isEnablingBluetooth, setIsEnablingBluetooth] = useState(false);
   const lastConnectedIdRef = useRef<string | null>(null);
 
-  // Stop scanning when screen loses focus, but DON'T disconnect BLE
-  // (BLE disconnect is handled by the step that navigated away)
   useFocusEffect(
     useCallback(() => {
       return () => {
-        // Cleanup when screen loses focus
         try {
           bleManager.stopDeviceScan();
-        } catch (_) {}
+        } catch (_) { }
         setIsScanning(false);
       };
     }, []),
   );
 
-  // Clean up scan on unmount
   useEffect(() => {
     return () => {
-      bleManager.stopDeviceScan().catch(() => {});
+      bleManager.stopDeviceScan().catch(() => { });
     };
   }, []);
 
@@ -92,16 +88,16 @@ export default function AddNewRack1() {
 
     const allGranted =
       result["android.permission.BLUETOOTH_CONNECT"] ===
-        PermissionsAndroid.RESULTS.GRANTED &&
+      PermissionsAndroid.RESULTS.GRANTED &&
       result["android.permission.BLUETOOTH_SCAN"] ===
-        PermissionsAndroid.RESULTS.GRANTED;
+      PermissionsAndroid.RESULTS.GRANTED;
 
     if (!allGranted) {
       const permanentlyDenied =
         result["android.permission.BLUETOOTH_CONNECT"] ===
-          PermissionsAndroid.RESULTS.NEVER_ASK_AGAIN ||
+        PermissionsAndroid.RESULTS.NEVER_ASK_AGAIN ||
         result["android.permission.BLUETOOTH_SCAN"] ===
-          PermissionsAndroid.RESULTS.NEVER_ASK_AGAIN;
+        PermissionsAndroid.RESULTS.NEVER_ASK_AGAIN;
 
       if (permanentlyDenied) {
         Alert.alert(
@@ -190,6 +186,14 @@ export default function AddNewRack1() {
     setIsScanning(false);
 
     try {
+      // Cancel any stale existing connection before attempting a new one
+      const alreadyConnected = await bleManager.isDeviceConnected(device.id);
+      if (alreadyConnected) {
+        console.log("Device already connected, cancelling first...");
+        await bleManager.cancelDeviceConnection(device.id);
+        await new Promise((resolve) => setTimeout(resolve, 500));
+      }
+
       console.log("Connecting to:", device.id);
       const connectedDevice = await bleManager.connectToDevice(device.id);
       await connectedDevice.discoverAllServicesAndCharacteristics();
@@ -261,16 +265,17 @@ export default function AddNewRack1() {
           renderItem={({ item }) => (
             <TouchableOpacity
               onPress={() => connectToDevice(item)}
-              className="p-5 bg-gray-50 mb-3 rounded-2xl border border-gray-100 flex-row justify-between items-center"
+              className="p-5 bg-gray-50 mb-3 rounded-2xl border border-gray-100 border-[2px] flex-row justify-between items-center"
             >
-              <View>
-                <Text className="font-bold text-lg">
+              <View className="flex-1 mr-2">
+                <Text className="text-black mb-1" style={typography["button-bold"]}>
                   {item.name || "Nurtura Rack"}
                 </Text>
-                <Text className="text-gray-400 text-xs">{item.id}</Text>
+                <Text className="text-grayText" style={typography["subheader"]}>{item.id}</Text>
               </View>
-              <View className="bg-primary px-3 py-1 rounded-full">
-                <Text className="text-white text-xs font-bold">Connect</Text>
+
+              <View className="bg-primary w-[120px] py-3 rounded-xl items-center justify-center">
+                <Text style={typography["button-bold"]} className="text-white">Connect</Text>
               </View>
             </TouchableOpacity>
           )}
