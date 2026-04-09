@@ -10,16 +10,17 @@ import { useOnboarding } from "@/hooks/useOnboarding";
 import { rackService } from "@/services/rackService";
 import { GetRackInfoDTO } from "@/types/rack.dto";
 import { SensorReading } from "@/types/socket.interface";
+import { NavigationService, ROUTES } from "@/utils/navigationUtils";
 import { socketService } from "@/utils/websocket/socket";
-import { router, useFocusEffect } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  Dimensions,
-  FlatList,
-  Image,
-  RefreshControl,
-  Text,
-  View,
+    Dimensions,
+    FlatList,
+    Image,
+    RefreshControl,
+    Text,
+    View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import ArchiveButton from "../../../assets/buttons/archive.svg";
@@ -39,6 +40,8 @@ export default function RacksScreen() {
   const subscribedRackIds = useRef<Set<string>>(new Set());
 
   const { user } = useAuth(); // { id: string, ... }
+  const router = useRouter();
+  const navService = new NavigationService(router);
 
   // ── Socket subscriptions ──────────────────────────────────────────────────
 
@@ -299,17 +302,20 @@ export default function RacksScreen() {
     }, [fetchRacks, unsubscribeAll]),
   );
 
-  const handleCardPress = useCallback((rackId: string) => {
-    router.push(`/(tabs)/(racks)/${rackId}` as any);
-  }, []);
+  const handleCardPress = useCallback(
+    (rackId: string) => {
+      navService.push(ROUTES.TABS.RACKS.DETAIL(rackId));
+    },
+    [navService],
+  );
 
   const handleAddRack = useCallback(() => {
-    router.push("/(tabs)/(add_pages)/(addNewRack)");
-  }, []);
+    navService.push(ROUTES.TABS.ADD.RACK.STEP_1);
+  }, [navService]);
 
   const handlePreviouslyOwned = useCallback(() => {
-    router.push("/(tabs)/(racks)/previously-owned");
-  }, []);
+    navService.push(ROUTES.TABS.RACKS.PREVIOUSLY_OWNED);
+  }, [navService]);
 
   const handleRetry = useCallback(() => {
     setLoading(true);

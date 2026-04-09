@@ -4,11 +4,13 @@ import { ScrollView, Text, View } from "react-native";
 import { typography } from "@/assets/fonts/Text";
 import { EmailInput } from "@/components/auth/emailInput";
 import { ConfirmationModal } from "@/components/modals/confirmationModal";
+import { InfoModal } from "@/components/modals/infoModal";
 import { PrimaryButton } from "@/components/shared/primaryButton";
 import { useBackWarning } from "@/hooks/shared/useBackWarning";
 import useFetch from "@/hooks/useFetch";
 import { authService } from "@/services/authService";
 import { logger } from "@/utils/logger";
+import { NavigationService, ROUTES } from "@/utils/navigationUtils";
 import { cleanInput, validateEmail } from "@/utils/validation";
 import { router } from "expo-router";
 
@@ -19,6 +21,17 @@ export default function UpdateEmailScreen2() {
   const [emailError, setEmailError] = useState("");
   const [isEmailValid, setIsEmailValid] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [infoModalVisible, setInfoModalVisible] = useState(false);
+  const [infoModalTitle, setInfoModalTitle] = useState("");
+  const [infoModalMessage, setInfoModalMessage] = useState("");
+
+  const showInfoModal = (title: string, message: string) => {
+    setInfoModalTitle(title);
+    setInfoModalMessage(message);
+    setInfoModalVisible(true);
+  };
+
+  const navService = new NavigationService(router);
 
   const { refetch: checkEmailExists } = useFetch("/users/exists", {
     method: "GET",
@@ -80,10 +93,7 @@ export default function UpdateEmailScreen2() {
         return;
       }
 
-      router.push({
-        pathname: "/(tabs)/(account)/update-email-3",
-        params: { email },
-      });
+      navService.push(ROUTES.TABS.ACCOUNT.UPDATE_EMAIL_3, { email });
     } catch (error) {
       logger.error("Unexpected error in handleNextPress", error);
 
@@ -92,7 +102,7 @@ export default function UpdateEmailScreen2() {
           ? "Network error. Please check your connection and try again."
           : "An unexpected error occurred. Please try again.";
 
-      setEmailError(message);
+      showInfoModal("Error", message);
     } finally {
       setIsLoading(false);
     }
@@ -121,6 +131,13 @@ export default function UpdateEmailScreen2() {
           onPress={handleNextPress}
           disabled={!isEmailValid}
           loading={isLoading}
+        />
+
+        <InfoModal
+          isVisible={infoModalVisible}
+          title={infoModalTitle}
+          message={infoModalMessage}
+          onConfirm={() => setInfoModalVisible(false)}
         />
 
         <ConfirmationModal

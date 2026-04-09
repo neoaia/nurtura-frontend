@@ -12,16 +12,17 @@ import { rackService } from "@/services/rackService";
 import { userService } from "@/services/userService";
 import { UserDetails } from "@/types/interface";
 import { Notification } from "@/types/socket.interface";
+import { NavigationService, ROUTES } from "@/utils/navigationUtils";
 import { socketService } from "@/utils/websocket/socket";
-import { router, useFocusEffect } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
 import React, { useCallback, useRef, useState } from "react";
 import {
-    Dimensions,
-    Image,
-    ScrollView,
-    StatusBar,
-    Text,
-    View,
+  Dimensions,
+  Image,
+  ScrollView,
+  StatusBar,
+  Text,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import ActiveNotificationIcon from "../../../assets/images/icons/active_notification.svg";
@@ -43,6 +44,8 @@ const mockApiResponse = {
 
 export default function HomeScreen() {
   const { user } = useAuth();
+  const router = useRouter();
+  const navService = new NavigationService(router);
   const [userInfo, setUserInfo] = useState<Partial<UserDetails>>({});
   const [highlight] = useState(mockApiResponse.highlight);
   const [hasUnread, setHasUnread] = useState(false);
@@ -321,11 +324,11 @@ export default function HomeScreen() {
   const handleNotificationPress = () => {
     // Tanggalin ang alert optimistically at mag-navigate
     setHasUnread(false);
-    router.push("/(tabs)/notifications");
+    navService.push(ROUTES.TABS.HOME.NOTIFICATIONS);
   };
   const handleCardPress = (type: string) =>
-    router.push(type === "racks" ? "/(tabs)/(racks)" : "/(tabs)/(racks)");
-  const handleAddRack = () => console.log("Add Rack");
+    navService.push(ROUTES.TABS.RACKS.ROOT);
+  const handleAddRack = () => navService.push(ROUTES.TABS.ADD.RACK.STEP_1);
 
   return (
     <SafeAreaView className="flex-1 bg-white">

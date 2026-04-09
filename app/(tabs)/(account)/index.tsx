@@ -1,6 +1,8 @@
 import { typography } from "@/assets/fonts/Text";
 import SecurityIcon from "@/assets/images/icons/lock.svg";
 import LogoutIcon from "@/assets/images/icons/logout.svg";
+import { ConfirmationModal } from "@/components/modals/confirmationModal";
+import { InfoModal } from "@/components/modals/infoModal";
 import { OnboardingTutorialModal } from "@/components/onboarding/tutorialModal";
 import { ProfileCard } from "@/components/settings/profileCard";
 import ProfileCardSkeleton from "@/components/settings/skeleton/profileCardSkeleton";
@@ -9,6 +11,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import useFetch from "@/hooks/useFetch";
 import { useOnboarding } from "@/hooks/useOnboarding";
 import { createLogger } from "@/utils/logger";
+import { NavigationService, ROUTES } from "@/utils/navigationUtils";
 import { useFocusEffect } from "@react-navigation/native";
 import { useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
@@ -26,8 +29,39 @@ export default function AccountScreen() {
   const [formValues, setFormValues] = useState<Partial<UserDetails>>({});
   const [isGoogleUser, setIsGoogleUser] = useState<boolean>(false);
   const [isLoadingProfile, setIsLoadingProfile] = useState<boolean>(true);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [errorModalVisible, setErrorModalVisible] = useState(false);
+  const [errorModalTitle, setErrorModalTitle] = useState("");
+  const [errorModalMessage, setErrorModalMessage] = useState("");
   const { logout } = useAuth();
   const router = useRouter();
+  const navService = new NavigationService(router);
+
+  const showError = (title: string, message: string) => {
+    setErrorModalTitle(title);
+    setErrorModalMessage(message);
+    setErrorModalVisible(true);
+  };
+
+  const handleLogoutPress = () => setShowLogoutConfirm(true);
+
+  const confirmLogout = async () => {
+    setShowLogoutConfirm(false);
+    try {
+      await logout();
+      navService.replace(ROUTES.AUTH.LOGIN);
+    } catch (error) {
+      console.error("Logout failed:", error);
+      showError(
+        "Logout Failed",
+        "Unable to sign out right now. Please try again.",
+      );
+    }
+  };
+
+  const routerPushUserInfo = () => {
+    navService.push(ROUTES.TABS.ACCOUNT.USER_INFO);
+  };
 
   // ── Tutorial Logic ─────────────────────────────────────────────────────────
   const { shouldShow, tutorialStep, handleNextStep } = useOnboarding(
@@ -103,7 +137,7 @@ export default function AccountScreen() {
   };
 
   const handleProfilePress = () => {
-    router.push("/(tabs)/(account)/user-info");
+    routerPushUserInfo();
   };
 
   useFocusEffect(
@@ -153,7 +187,7 @@ export default function AccountScreen() {
                 description="Manage your password and email."
                 icon={SecurityIcon}
                 iconSize={20}
-                route={"/(tabs)/(account)/security" as any}
+                onPress={() => navService.push(ROUTES.TABS.ACCOUNT.SECURITY)}
               />
             )}
 
@@ -163,7 +197,7 @@ export default function AccountScreen() {
               description="Sign out of your account."
               icon={LogoutIcon}
               iconSize={18}
-              onPress={logout}
+              onPress={handleLogoutPress}
             />
           </View>
         </View>
@@ -182,6 +216,23 @@ export default function AccountScreen() {
           {currentTutorial.component}
         </OnboardingTutorialModal>
       )}
+
+      <ConfirmationModal
+        isVisible={showLogoutConfirm}
+        title="Log out"
+        message="Are you sure you want to sign out of your account?"
+        confirmText="Yes, log out"
+        cancelText="Cancel"
+        onConfirm={confirmLogout}
+        onCancel={() => setShowLogoutConfirm(false)}
+      />
+
+      <InfoModal
+        isVisible={errorModalVisible}
+        title={errorModalTitle}
+        message={errorModalMessage}
+        onConfirm={() => setErrorModalVisible(false)}
+      />
     </SafeAreaView>
   );
 }

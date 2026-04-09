@@ -1,18 +1,20 @@
 import { typography } from "@/assets/fonts/Text";
 import { PasswordInput } from "@/components/auth/passwordInput";
+import { InfoModal } from "@/components/modals/infoModal";
 import { PrimaryButton } from "@/components/shared/primaryButton";
 import useFetch from "@/hooks/useFetch";
 import { authService } from "@/services/authService";
 import { createLogger } from "@/utils/logger";
+import { NavigationService, ROUTES } from "@/utils/navigationUtils";
 import {
-    cleanInput,
-    isStrongPassword,
-    validatePassword,
+  cleanInput,
+  isStrongPassword,
+  validatePassword,
 } from "@/utils/validation";
-import { router } from "expo-router";
+import { useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import React, { useEffect, useState } from "react";
-import { Alert, ScrollView, Text, View } from "react-native";
+import { ScrollView, Text, View } from "react-native";
 
 const logger = createLogger("ChangePassword2");
 
@@ -21,6 +23,11 @@ export default function ChangePassword2() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [verifiedEmail, setVerifiedEmail] = useState<string>("");
+  const [infoModalVisible, setInfoModalVisible] = useState(false);
+  const [infoModalTitle, setInfoModalTitle] = useState("");
+  const [infoModalMessage, setInfoModalMessage] = useState("");
+  const router = useRouter();
+  const navService = new NavigationService(router);
 
   const { refetch: changePassword } = useFetch("/auth/update-password", {
     method: "POST",
@@ -39,6 +46,12 @@ export default function ChangePassword2() {
     validatePassword(confirmPassword) &&
     passwordsMatch;
 
+  const showInfoModal = (title: string, message: string) => {
+    setInfoModalTitle(title);
+    setInfoModalMessage(message);
+    setInfoModalVisible(true);
+  };
+
   useEffect(() => {
     const loadVerifiedEmail = async () => {
       try {
@@ -46,23 +59,18 @@ export default function ChangePassword2() {
           "change_password_verified_email",
         );
         if (!email) {
-          Alert.alert(
+          showInfoModal(
             "Error",
             "Verification required. Please complete the OTP verification first.",
-            [
-              {
-                text: "OK",
-                onPress: () => router.back(),
-              },
-            ],
           );
+          navService.goBack();
           return;
         }
         setVerifiedEmail(email);
         logger.log("Verified email loaded");
       } catch (error) {
         logger.error("Error loading verified email", error);
-        Alert.alert("Error", "Failed to load verification status.");
+        showInfoModal("Error", "Failed to load verification status.");
       }
     };
     loadVerifiedEmail();
@@ -78,7 +86,7 @@ export default function ChangePassword2() {
 
   const handleNextPress = async () => {
     if (!verifiedEmail) {
-      Alert.alert(
+      showInfoModal(
         "Error",
         "Email verification is missing. Please restart the process.",
       );
@@ -86,12 +94,12 @@ export default function ChangePassword2() {
     }
 
     if (!passwordsMatch) {
-      Alert.alert("Error", "Passwords do not match.");
+      showInfoModal("Error", "Passwords do not match.");
       return;
     }
 
     if (!isPasswordValid || !isConfirmPasswordValid) {
-      Alert.alert(
+      showInfoModal(
         "Error",
         "Password must have 8+ characters, uppercase, number & symbol.",
       );
@@ -107,7 +115,7 @@ export default function ChangePassword2() {
       );
 
       if (!response.success) {
-        Alert.alert(
+        showInfoModal(
           "Error",
           response.message || "Failed to change password. Please try again.",
         );
@@ -119,19 +127,15 @@ export default function ChangePassword2() {
 
       await SecureStore.deleteItemAsync("change_password_verified_email");
 
-      router.dismissAll();
-      router.push({
-        pathname: "/(tabs)/(account)/successScreen",
-        params: {
-          type: "other",
-          title: "Password updated!",
-          subtitle: "You can now proceed back to making your account safe.",
-          finishTitle: "Finish",
-        },
+      navService.reset(ROUTES.TABS.ACCOUNT.SUCCESS, {
+        type: "other",
+        title: "Password updated!",
+        subtitle: "You can now proceed back to making your account safe.",
+        finishTitle: "Finish",
       });
     } catch (error) {
       logger.error("Error changing password:", error);
-      Alert.alert("Error", "Failed to change password. Please try again.");
+      showInfoModal("Error", "Failed to change password. Please try again.");
       setLoading(false);
     }
   };
@@ -209,6 +213,12 @@ export default function ChangePassword2() {
           disabled={!isNextButtonEnabled || loading}
         />
       </View>
+      <InfoModal
+        isVisible={infoModalVisible}
+        title={infoModalTitle}
+        message={infoModalMessage}
+        onConfirm={() => setInfoModalVisible(false)}
+      />
     </View>
   );
 }

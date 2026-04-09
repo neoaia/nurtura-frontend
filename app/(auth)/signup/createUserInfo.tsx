@@ -6,10 +6,11 @@ import { useAuth } from "@/contexts/AuthContext";
 import { auth } from "@/firebase";
 import useFetch from "@/hooks/useFetch";
 import { authService } from "@/services/authService";
+import { NavigationService, ROUTES } from "@/utils/navigationUtils";
 import {
-    cleanAlphaInput,
-    cleanAlphanumericInput,
-    cleanNameInput,
+  cleanAlphaInput,
+  cleanAlphanumericInput,
+  cleanNameInput,
 } from "@/utils/validation";
 import { useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
@@ -69,6 +70,7 @@ const CreateUserInfo = () => {
   const { signUp } = useAuth();
 
   const router = useRouter();
+  const navService = new NavigationService(router);
 
   const checkIfFirstNameHasValue = firstName.trim().length > 0;
   const checkIfLastNameHasValue = lastName.trim().length > 0;
@@ -171,7 +173,7 @@ const CreateUserInfo = () => {
 
       console.log("User info submitted successfully.");
       await clearAllSecureStore();
-      router.replace("/(tabs)/(home)");
+      navService.replace(ROUTES.TABS.HOME.INDEX);
     } catch (error) {
       console.error("Error submitting user info:", error);
       showModal("Error", "Failed to submit user info.");

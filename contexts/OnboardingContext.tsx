@@ -3,12 +3,12 @@ import { userService } from "@/services/userService";
 import { UserDetails } from "@/types/interface";
 import * as SecureStore from "expo-secure-store";
 import React, {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useRef,
-  useState,
+    createContext,
+    useCallback,
+    useContext,
+    useEffect,
+    useRef,
+    useState,
 } from "react";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -70,7 +70,13 @@ export function OnboardingProvider({
     withAuth: true,
   });
 
-  // ── Load from SecureStore on mount ──────────────────────────────────────────
+  const { refetch: getUser } = useFetch("/users", {
+    method: "GET",
+    autoFetch: false,
+    withAuth: true,
+  });
+
+  // ── Load from SecureStore / backend on mount ────────────────────────────────
 
   useEffect(() => {
     if (!userId) {
@@ -80,7 +86,7 @@ export function OnboardingProvider({
 
     const loadLocal = async () => {
       try {
-        // 1. Check if already fully completed
+        // 1. Check if already fully completed locally
         const completedFlag = await SecureStore.getItemAsync(
           COMPLETED_KEY(userId),
         );
@@ -90,14 +96,48 @@ export function OnboardingProvider({
           return;
         }
 
-        // 2. Load partial progress
+        // 2. Load partial progress locally
         const stored = await SecureStore.getItemAsync(storageKey(userId));
+        let valid: OnboardingPageKey[] = [];
         if (stored) {
           const parsed: OnboardingPageKey[] = JSON.parse(stored);
-          const valid = parsed.filter((p): p is OnboardingPageKey =>
+          valid = parsed.filter((p): p is OnboardingPageKey =>
             (ALL_ONBOARDING_PAGES as readonly string[]).includes(p),
           );
           setCompletedPages(valid);
+        }
+
+        // 3. Try backend sync whenever local completion is not full
+        const response = await userService.getUser(getUser);
+        const backendPages = response?.userInfo?.completedPages ?? [];
+        const backendCompleted = response?.userInfo?.hasCompletedOnboarding;
+
+        if (
+          backendCompleted ||
+          backendPages.length === ALL_ONBOARDING_PAGES.length
+        ) {
+          setHasCompletedOnboarding(true);
+          setCompletedPages([...ALL_ONBOARDING_PAGES]);
+          await SecureStore.setItemAsync(COMPLETED_KEY(userId), "true");
+          await SecureStore.deleteItemAsync(storageKey(userId));
+          return;
+        }
+
+        const backendValidPages = backendPages.filter(
+          (p): p is OnboardingPageKey =>
+            (ALL_ONBOARDING_PAGES as readonly string[]).includes(p),
+        );
+
+        const mergedPages = Array.from(
+          new Set([...valid, ...backendValidPages]),
+        ) as OnboardingPageKey[];
+
+        if (mergedPages.length > 0) {
+          setCompletedPages(mergedPages);
+          await SecureStore.setItemAsync(
+            storageKey(userId),
+            JSON.stringify(mergedPages),
+          );
         }
       } catch (err) {
         console.error("[Onboarding] Failed to load local progress:", err);
@@ -108,7 +148,7 @@ export function OnboardingProvider({
     };
 
     loadLocal();
-  }, [userId]);
+  }, [userId, getUser]);
 
   // ── Helpers ─────────────────────────────────────────────────────────────────
 

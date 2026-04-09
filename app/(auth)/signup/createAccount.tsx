@@ -4,6 +4,7 @@ import { typography } from "@/assets/fonts/Text";
 import { EmailInput } from "@/components/auth/emailInput";
 import { GoogleSignInButton } from "@/components/auth/googleSignInButton";
 import { ConsentModal } from "@/components/auth/modal/consentModal";
+import { InfoModal } from "@/components/modals/infoModal";
 import { Checkbox } from "@/components/shared/checkbox";
 import { Divider } from "@/components/shared/divider";
 import { PrimaryButton } from "@/components/shared/primaryButton";
@@ -11,6 +12,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import useFetch from "@/hooks/useFetch";
 import { authService } from "@/services/authService";
 import { createLogger } from "@/utils/logger";
+import { NavigationService, ROUTES } from "@/utils/navigationUtils";
 import { cleanInput, validateEmail } from "@/utils/validation";
 import { useFocusEffect } from "@react-navigation/native";
 import { router } from "expo-router";
@@ -47,6 +49,17 @@ const CreateAccount = () => {
   const [currentConsentType, setCurrentConsentType] = useState<
     "TS" | "PP" | null
   >(null);
+  const [infoModalVisible, setInfoModalVisible] = useState(false);
+  const [infoModalTitle, setInfoModalTitle] = useState("");
+  const [infoModalMessage, setInfoModalMessage] = useState("");
+
+  const showInfoModal = (title: string, message: string) => {
+    setInfoModalTitle(title);
+    setInfoModalMessage(message);
+    setInfoModalVisible(true);
+  };
+
+  const navService = new NavigationService(router);
   const [hasScrolledToEnd, setHasScrolledToEnd] = useState(false);
 
   const { googleSignInAndVerify } = useAuth();
@@ -131,7 +144,7 @@ const CreateAccount = () => {
 
     if (!isCheckedTS || !isCheckedPP) {
       logger.warn("Terms not accepted", { isCheckedTS, isCheckedPP });
-      Alert.alert(
+      showInfoModal(
         "Terms Required",
         "Please agree to the Terms of Service and Privacy Policy to continue.",
       );
@@ -161,7 +174,7 @@ const CreateAccount = () => {
 
       if (verifiedEmail === email) {
         logger.log("Email already verified, navigating to createPassword");
-        router.push("/(auth)/signup/createPassword");
+        navService.push(ROUTES.AUTH.SIGNUP.CREATE_PASSWORD);
         return;
       }
 
@@ -171,12 +184,12 @@ const CreateAccount = () => {
       );
 
       if (!emailResponse.success) {
-        Alert.alert("Error", "Unable to verify email. Please try again.");
+        showInfoModal("Error", "Unable to verify email. Please try again.");
         return;
       }
 
       if (!emailResponse.available) {
-        Alert.alert(
+        showInfoModal(
           "Error",
           "This email is already registered. Please use a different email.",
         );
@@ -185,13 +198,10 @@ const CreateAccount = () => {
 
       logger.log("Navigating to emailOTP");
       await SecureStore.setItemAsync("signup_email", email);
-      router.push({
-        pathname: "/(auth)/signup/emailOTP",
-        params: { email },
-      });
+      navService.push(ROUTES.AUTH.SIGNUP.EMAIL_OTP, { email });
     } catch (error) {
       logger.error("Unexpected error in handleNextPress", error);
-      Alert.alert("Error", "An unexpected error occurred. Please try again.");
+      showInfoModal("Error", "An unexpected error occurred. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -219,7 +229,7 @@ const CreateAccount = () => {
 
       if (!userData?.email) {
         logger.warn("No email returned from Google");
-        Alert.alert(
+        showInfoModal(
           "Error",
           "Failed to retrieve email from Google. Please try again.",
         );
@@ -239,7 +249,7 @@ const CreateAccount = () => {
       );
 
       if (!onboardingResponse.success) {
-        Alert.alert(
+        showInfoModal(
           "Error",
           "Unable to proceed with Google Sign-In. Please try again.",
         );
@@ -262,17 +272,14 @@ const CreateAccount = () => {
         await SecureStore.setItemAsync("fromGoogle", "true");
 
         logger.log("Navigating to createUserInfo");
-        router.push({
-          pathname: "/(auth)/signup/createUserInfo",
-          params: { email },
-        });
+        navService.push(ROUTES.AUTH.SIGNUP.CREATE_USER_INFO, { email });
       } else {
         logger.log("User already onboarded, navigating to home");
-        router.replace("/(tabs)/(home)");
+        navService.replace(ROUTES.TABS.HOME.INDEX);
       }
     } catch (error) {
       logger.error("Error during Google Sign-In", error);
-      Alert.alert("Error", "An unexpected error occurred. Please try again.");
+      showInfoModal("Error", "An unexpected error occurred. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -313,7 +320,7 @@ const CreateAccount = () => {
               await Promise.all(
                 STORAGE_KEYS.map((key) => SecureStore.deleteItemAsync(key)),
               );
-              router.back();
+              navService.goBack();
             },
           },
         ]);
@@ -411,6 +418,13 @@ const CreateAccount = () => {
           title="Next"
         />
       </View>
+
+      <InfoModal
+        isVisible={infoModalVisible}
+        title={infoModalTitle}
+        message={infoModalMessage}
+        onConfirm={() => setInfoModalVisible(false)}
+      />
 
       <ConsentModal
         visible={showConsentModal}

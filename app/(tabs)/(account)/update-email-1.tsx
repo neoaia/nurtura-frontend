@@ -2,16 +2,17 @@ import { typography } from "@/assets/fonts/Text";
 import { OTPInput } from "@/components/auth/otpInput";
 import { ResendCode } from "@/components/auth/resendCode";
 import { ConfirmationModal } from "@/components/modals/confirmationModal";
+import { InfoModal } from "@/components/modals/infoModal";
 import { PrimaryButton } from "@/components/shared/primaryButton";
 import { useBackWarning } from "@/hooks/shared/useBackWarning";
 import useFetch from "@/hooks/useFetch";
 import { authService } from "@/services/authService";
 import { logger } from "@/utils/logger";
-import { router } from "expo-router";
+import { NavigationService, ROUTES } from "@/utils/navigationUtils";
+import { useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  Alert,
   NativeSyntheticEvent,
   ScrollView,
   Text,
@@ -27,6 +28,17 @@ export default function UpdateEmailScreen1() {
   const [timer, setTimer] = useState(60);
   const [isLoading, setIsLoading] = useState(false);
   const [currentEmail, setCurrentEmail] = useState<string>("");
+  const [infoModalVisible, setInfoModalVisible] = useState(false);
+  const [infoModalTitle, setInfoModalTitle] = useState("");
+  const [infoModalMessage, setInfoModalMessage] = useState("");
+  const router = useRouter();
+  const navService = new NavigationService(router);
+
+  const showInfoModal = (title: string, message: string) => {
+    setInfoModalTitle(title);
+    setInfoModalMessage(message);
+    setInfoModalVisible(true);
+  };
 
   const allFilled = otp.every((digit) => digit !== "");
   const hasStartedOtp = otp.some((digit) => digit !== "");
@@ -53,16 +65,17 @@ export default function UpdateEmailScreen1() {
         if (email) {
           setCurrentEmail(email);
           logger.log("Current email loaded:", email);
-        } else {
-          Alert.alert(
-            "Error",
-            "Unable to retrieve your email. Please log in again.",
-          );
-          router.back();
+          return;
         }
+
+        showInfoModal(
+          "Error",
+          "Unable to retrieve your email. Please log in again.",
+        );
+        navService.goBack();
       } catch (error) {
         logger.error("Error loading current email:", error);
-        Alert.alert("Error", "Failed to load user information.");
+        showInfoModal("Error", "Failed to load user information.");
       }
     };
     loadCurrentEmail();
@@ -77,7 +90,7 @@ export default function UpdateEmailScreen1() {
         const response = await authService.sendOtp(sendOtp, currentEmail);
 
         if (!response.success) {
-          Alert.alert(
+          showInfoModal(
             "Error",
             response.message || "Failed to send OTP. Please try again.",
           );
@@ -86,13 +99,13 @@ export default function UpdateEmailScreen1() {
         }
 
         if (isResend) {
-          Alert.alert("Success", "OTP has been resent to your email.");
+          showInfoModal("Success", "OTP has been resent to your email.");
           setTimer(60);
         }
 
         logger.log("OTP sent to current email successfully");
       } catch (err: any) {
-        Alert.alert("Error", err.message || "An unexpected error occurred.");
+        showInfoModal("Error", err.message || "An unexpected error occurred.");
       } finally {
         setIsLoading(false);
       }
@@ -136,7 +149,7 @@ export default function UpdateEmailScreen1() {
         setIsOtpInvalid(true);
         setOtp(["", "", "", "", ""]);
         inputs.current[0]?.focus();
-        Alert.alert(
+        showInfoModal(
           "Error",
           response.message || "Invalid OTP. Please try again.",
         );
@@ -146,10 +159,10 @@ export default function UpdateEmailScreen1() {
       logger.log("Current email verified, proceeding to enter new email...");
 
       // Navigate to screen 2 where user enters their new email
-      router.push("/(tabs)/(account)/update-email-2");
+      navService.push(ROUTES.TABS.ACCOUNT.UPDATE_EMAIL_2);
     } catch (error) {
       setIsOtpInvalid(true);
-      Alert.alert("Error", "An unexpected error occurred. Please try again.");
+      showInfoModal("Error", "An unexpected error occurred. Please try again.");
       logger.error("OTP verification error:", error);
     } finally {
       setIsLoading(false);
@@ -275,6 +288,12 @@ export default function UpdateEmailScreen1() {
         onConfirm={handleConfirm}
         cancelText="Cancel"
         onCancel={handleCancel}
+      />
+      <InfoModal
+        isVisible={infoModalVisible}
+        title={infoModalTitle}
+        message={infoModalMessage}
+        onConfirm={() => setInfoModalVisible(false)}
       />
     </View>
   );

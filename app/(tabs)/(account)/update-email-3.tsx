@@ -1,13 +1,14 @@
 import { typography } from "@/assets/fonts/Text";
+import { InfoModal } from "@/components/modals/infoModal";
 import { PrimaryButton } from "@/components/shared/primaryButton";
 import useFetch from "@/hooks/useFetch";
 import { authService } from "@/services/authService";
 import { userService } from "@/services/userService";
 import { logger } from "@/utils/logger";
+import { NavigationService, ROUTES } from "@/utils/navigationUtils";
 import { router, useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-    Alert,
     NativeSyntheticEvent,
     ScrollView,
     Text,
@@ -24,6 +25,17 @@ export default function UpdateEmailScreen3() {
   const [isOtpInvalid, setIsOtpInvalid] = useState(false);
   const [timer, setTimer] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
+  const [infoModalVisible, setInfoModalVisible] = useState(false);
+  const [infoModalTitle, setInfoModalTitle] = useState("");
+  const [infoModalMessage, setInfoModalMessage] = useState("");
+
+  const showInfoModal = (title: string, message: string) => {
+    setInfoModalTitle(title);
+    setInfoModalMessage(message);
+    setInfoModalVisible(true);
+  };
+
+  const navService = new NavigationService(router);
 
   const allFilled = otp.every((digit) => digit !== "");
 
@@ -56,7 +68,7 @@ export default function UpdateEmailScreen3() {
         const response = await authService.sendOtp(sendOtp, email as string);
 
         if (!response.success) {
-          Alert.alert(
+          showInfoModal(
             "Error",
             response.message || "Failed to send OTP. Please try again.",
           );
@@ -65,11 +77,11 @@ export default function UpdateEmailScreen3() {
         }
 
         if (isResend) {
-          Alert.alert("Success", "OTP has been resent to your email.");
+          showInfoModal("Success", "OTP has been resent to your email.");
           setTimer(60);
         }
       } catch (err: any) {
-        Alert.alert("Error", err.message || "An unexpected error occurred.");
+        showInfoModal("Error", err.message || "An unexpected error occurred.");
       } finally {
         setIsLoading(false);
       }
@@ -91,7 +103,7 @@ export default function UpdateEmailScreen3() {
 
       if (!otpResponse.success) {
         setIsOtpInvalid(true);
-        Alert.alert(
+        showInfoModal(
           "Error",
           otpResponse.message || "OTP verification failed. Please try again.",
         );
@@ -104,7 +116,7 @@ export default function UpdateEmailScreen3() {
       });
 
       if (!updateResponse) {
-        Alert.alert(
+        showInfoModal(
           "Error",
           "Failed to update email. Please try again or contact support.",
         );
@@ -112,19 +124,15 @@ export default function UpdateEmailScreen3() {
       }
 
       logger.log("Email updated successfully");
-      router.dismissAll();
-      router.push({
-        pathname: "/(tabs)/(account)/successScreen",
-        params: {
-          type: "other",
-          title: "E-mail updated!",
-          subtitle: "You can now proceed back to making your account safe.",
-          finishTitle: "Finish",
-        },
+      navService.reset(ROUTES.TABS.ACCOUNT.SUCCESS, {
+        type: "other",
+        title: "E-mail updated!",
+        subtitle: "You can now proceed back to making your account safe.",
+        finishTitle: "Finish",
       });
     } catch (error) {
       setIsOtpInvalid(true);
-      Alert.alert("Error", "An unexpected error occurred. Please try again.");
+      showInfoModal("Error", "An unexpected error occurred. Please try again.");
       logger.error("Email update error:", error);
     } finally {
       setIsLoading(false);
@@ -253,6 +261,13 @@ export default function UpdateEmailScreen3() {
           onPress={handleNextPress}
           disabled={!allFilled || isLoading}
           loading={isLoading}
+        />
+
+        <InfoModal
+          isVisible={infoModalVisible}
+          title={infoModalTitle}
+          message={infoModalMessage}
+          onConfirm={() => setInfoModalVisible(false)}
         />
       </View>
     </View>

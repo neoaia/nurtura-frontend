@@ -3,10 +3,11 @@ import { DebouncedTouchableOpacity } from "@/components/shared/debouncedTouchabl
 import { useAuth } from "@/contexts/AuthContext";
 import useFetch from "@/hooks/useFetch";
 import { authService } from "@/services/authService";
+import { NavigationService, ROUTES } from "@/utils/navigationUtils";
 import {
-    cleanInput,
-    isStrongPassword,
-    validatePassword,
+  cleanInput,
+  isStrongPassword,
+  validatePassword,
 } from "@/utils/validation";
 import { router, useLocalSearchParams } from "expo-router";
 import * as SecureStore from "expo-secure-store";
@@ -37,6 +38,7 @@ const ForgotPassword3 = () => {
 
   const { email } = useLocalSearchParams();
   const { logout } = useAuth();
+  const navService = new NavigationService(router);
 
   const isNextButtonEnabled =
     password.length > 0 &&
@@ -92,7 +94,7 @@ const ForgotPassword3 = () => {
       await logout();
 
       showModal("Success", "Your password has been reset successfully.", () =>
-        router.replace("/(auth)/login"),
+        navService.replace(ROUTES.AUTH.LOGIN),
       );
     } catch (error) {
       showModal("Error", "Failed to reset password. Please try again.");

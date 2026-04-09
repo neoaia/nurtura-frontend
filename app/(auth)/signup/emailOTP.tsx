@@ -5,15 +5,16 @@ import { PrimaryButton } from "@/components/shared/primaryButton";
 import useFetch from "@/hooks/useFetch";
 import { authService } from "@/services/authService";
 import { createLogger } from "@/utils/logger";
+import { NavigationService, ROUTES } from "@/utils/navigationUtils";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-    NativeSyntheticEvent,
-    Text,
-    TextInput,
-    TextInputKeyPressEventData,
-    View,
+  NativeSyntheticEvent,
+  Text,
+  TextInput,
+  TextInputKeyPressEventData,
+  View,
 } from "react-native";
 import { OTPInput } from "../../../components/auth/otpInput";
 import "../../globals.css";
@@ -46,6 +47,7 @@ const EmailOTP = () => {
   const allFilled = otp.every((digit) => digit !== "");
 
   const router = useRouter();
+  const navService = new NavigationService(router);
   const { email } = useLocalSearchParams();
 
   const { refetch: sendOtp } = useFetch("/auth/otp/registration", {
@@ -155,10 +157,7 @@ const EmailOTP = () => {
       }
 
       await SecureStore.setItemAsync("verified_email", email as string);
-      router.push({
-        pathname: "/(auth)/signup/createPassword",
-        params: { email },
-      });
+      navService.push(ROUTES.AUTH.SIGNUP.CREATE_PASSWORD, { email });
     } catch (error) {
       setIsOtpInvalid(true);
       showModal("Error", "An unexpected error occurred. Please try again.");

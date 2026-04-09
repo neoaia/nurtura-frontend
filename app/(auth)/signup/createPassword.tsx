@@ -1,12 +1,14 @@
 import { typography } from "@/assets/fonts/Text";
 import { PasswordInput } from "@/components/auth/passwordInput";
+import { InfoModal } from "@/components/modals/infoModal";
 import { PrimaryButton } from "@/components/shared/primaryButton";
 import { createLogger } from "@/utils/logger";
+import { NavigationService, ROUTES } from "@/utils/navigationUtils";
 import { isStrongPassword, validatePassword } from "@/utils/validation";
 import { router, useLocalSearchParams } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { useEffect, useState } from "react";
-import { Alert, Text, View } from "react-native";
+import { Text, View } from "react-native";
 import "../../globals.css";
 
 const logger = createLogger("CreatePassword");
@@ -16,6 +18,17 @@ const CreatePassword = () => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [infoModalVisible, setInfoModalVisible] = useState(false);
+  const [infoModalTitle, setInfoModalTitle] = useState("");
+  const [infoModalMessage, setInfoModalMessage] = useState("");
+
+  const showInfoModal = (title: string, message: string) => {
+    setInfoModalTitle(title);
+    setInfoModalMessage(message);
+    setInfoModalVisible(true);
+  };
+
+  const navService = new NavigationService(router);
 
   const isPasswordValid = isStrongPassword(password);
   const isConfirmPasswordValid = isStrongPassword(confirmPassword);
@@ -49,13 +62,10 @@ const CreatePassword = () => {
     if (passwordsMatch && isPasswordValid && isConfirmPasswordValid) {
       try {
         logger.log("Password validation passed, navigating to createUserInfo");
-        router.push({
-          pathname: "/(auth)/signup/createUserInfo",
-          params: { email },
-        });
+        navService.push(ROUTES.AUTH.SIGNUP.CREATE_USER_INFO, { email });
       } catch (error: any) {
         logger.error("Error during navigation", error);
-        Alert.alert("Error", "Unable to reset password. Please try again.");
+        showInfoModal("Error", "Unable to reset password. Please try again.");
       } finally {
         setLoading(false);
       }
@@ -65,7 +75,7 @@ const CreatePassword = () => {
         isPasswordValid,
         isConfirmPasswordValid,
       });
-      Alert.alert("Invalid Password", "Please check your inputs again.");
+      showInfoModal("Invalid Password", "Please check your inputs again.");
       setLoading(false);
     }
   };
@@ -178,6 +188,13 @@ const CreatePassword = () => {
           title="Next"
         />
       </View>
+
+      <InfoModal
+        isVisible={infoModalVisible}
+        title={infoModalTitle}
+        message={infoModalMessage}
+        onConfirm={() => setInfoModalVisible(false)}
+      />
     </View>
   );
 };

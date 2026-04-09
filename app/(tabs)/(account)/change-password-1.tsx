@@ -2,16 +2,19 @@ import { typography } from "@/assets/fonts/Text";
 import { OTPInput } from "@/components/auth/otpInput";
 import { ResendCode } from "@/components/auth/resendCode";
 import { ConfirmationModal } from "@/components/modals/confirmationModal";
+import { InfoModal } from "@/components/modals/infoModal";
 import { PrimaryButton } from "@/components/shared/primaryButton";
+import { auth } from "@/firebase";
 import { useBackWarning } from "@/hooks/shared/useBackWarning";
 import useFetch from "@/hooks/useFetch";
 import { authService } from "@/services/authService";
+import { userService } from "@/services/userService";
 import { createLogger } from "@/utils/logger";
-import { router } from "expo-router";
+import { NavigationService, ROUTES } from "@/utils/navigationUtils";
+import { useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
-  Alert,
   NativeSyntheticEvent,
   ScrollView,
   Text,
@@ -28,6 +31,9 @@ export default function ChangePassword1() {
   const [isOtpInvalid, setIsOtpInvalid] = useState(false);
   const [timer, setTimer] = useState(60);
   const [userEmail, setUserEmail] = useState<string>("");
+  const [infoModalVisible, setInfoModalVisible] = useState(false);
+  const [infoModalTitle, setInfoModalTitle] = useState("");
+  const [infoModalMessage, setInfoModalMessage] = useState("");
 
   const hasStartedOtp = otp.some((digit) => digit !== "");
   const { showModal, handleConfirm, handleCancel } =
@@ -36,6 +42,20 @@ export default function ChangePassword1() {
   const inputs = useRef<(TextInput | null)[]>([]);
 
   const allFilled = otp.every((digit) => digit !== "");
+  const router = useRouter();
+  const navService = new NavigationService(router);
+
+  const showInfoModal = (title: string, message: string) => {
+    setInfoModalTitle(title);
+    setInfoModalMessage(message);
+    setInfoModalVisible(true);
+  };
+
+  const { refetch: fetchUserDetails } = useFetch("/users", {
+    method: "GET",
+    autoFetch: false,
+    withAuth: true,
+  });
 
   const { refetch: sendOtp } = useFetch("/auth/otp/password-reset", {
     method: "POST",
@@ -52,20 +72,37 @@ export default function ChangePassword1() {
   useEffect(() => {
     const loadUserEmail = async () => {
       try {
-        const email = await SecureStore.getItemAsync("user_email");
+        const firebaseEmail = auth.currentUser?.email;
+        if (firebaseEmail) {
+          setUserEmail(firebaseEmail);
+          logger.log("User email loaded from Firebase:", firebaseEmail);
+          return;
+        }
+
+        const response = await userService.getUser(fetchUserDetails);
+
+        const email = response?.userInfo?.email;
         if (email) {
           setUserEmail(email);
-          logger.log("User email loaded:", email);
-        } else {
-          Alert.alert(
-            "Error",
-            "Unable to retrieve user email. Please log in again.",
-          );
-          router.back();
+          logger.log("User email loaded from backend:", email);
+          return;
         }
+
+        const storedEmail = await SecureStore.getItemAsync("user_email");
+        if (storedEmail) {
+          setUserEmail(storedEmail);
+          logger.log("User email loaded from SecureStore:", storedEmail);
+          return;
+        }
+
+        showInfoModal(
+          "Error",
+          "Unable to retrieve current account email. Please sign in again.",
+        );
+        navService.goBack();
       } catch (error) {
         logger.error("Error loading user email", error);
-        Alert.alert("Error", "Failed to load user information.");
+        showInfoModal("Error", "Failed to load user information.");
       }
     };
     loadUserEmail();
@@ -80,7 +117,7 @@ export default function ChangePassword1() {
         const response = await authService.sendOtp(sendOtp, userEmail);
 
         if (!response.success) {
-          Alert.alert(
+          showInfoModal(
             "Error",
             response.message || "Failed to send OTP. Please try again.",
           );
@@ -89,14 +126,14 @@ export default function ChangePassword1() {
         }
 
         if (isResend) {
-          Alert.alert("Success", "OTP has been resent to your email.");
+          showInfoModal("Success", "OTP has been resent to your email.");
           setTimer(60);
         }
 
         logger.log("OTP sent successfully");
       } catch (err: any) {
         logger.error("Error sending OTP", err);
-        Alert.alert("Error", err.message || "An unexpected error occurred.");
+        showInfoModal("Error", err.message || "An unexpected error occurred.");
       } finally {
         setLoading(false);
       }
@@ -182,7 +219,7 @@ export default function ChangePassword1() {
         setIsOtpInvalid(true);
         setOtp(["", "", "", "", ""]);
         inputs.current[0]?.focus();
-        Alert.alert("Error", "Invalid OTP. Please try again.");
+        showInfoModal("Error", "Invalid OTP. Please try again.");
         setLoading(false);
         return;
       }
@@ -194,10 +231,10 @@ export default function ChangePassword1() {
         userEmail,
       );
 
-      router.push("/(tabs)/(account)/change-password-2");
+      navService.push(ROUTES.TABS.ACCOUNT.CHANGE_PASSWORD_2);
     } catch (error) {
       logger.error("Error verifying OTP:", error);
-      Alert.alert("Error", "Failed to verify OTP. Please try again.");
+      showInfoModal("Error", "Failed to verify OTP. Please try again.");
       setLoading(false);
     }
   };
@@ -266,6 +303,12 @@ export default function ChangePassword1() {
         onConfirm={handleConfirm}
         cancelText="Cancel"
         onCancel={handleCancel}
+      />
+      <InfoModal
+        isVisible={infoModalVisible}
+        title={infoModalTitle}
+        message={infoModalMessage}
+        onConfirm={() => setInfoModalVisible(false)}
       />
     </View>
   );
