@@ -174,3 +174,33 @@ export interface RemovePlantRequestDTO {
 export interface RemovePlantResponseDTO {
   message: string;
 }
+
+export interface CheckIfRackExistsRequestDTO {
+  macAddress: string;
+}
+export interface RackDetails {
+  id: string;
+  userId: string;
+  name: string;
+  macAddress: string;
+  mqttTopic: string;
+  description: string;
+  currentPlantId: string | null;
+  quantity: number;
+  plantedAt: string | null;
+  lastHarvestAt: string | null;
+  harvestCount: number;
+  isActive: boolean;
+  status: string;
+  lastActivityAt: string;
+  lastSeenAt: string;
+  lastWateredAt: string;
+  lastLightOnAt: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CheckIfRackExistsResponseDTO {
+  exists: boolean;
+  rack?: RackDetails;
+}

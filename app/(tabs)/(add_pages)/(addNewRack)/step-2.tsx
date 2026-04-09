@@ -2,19 +2,21 @@ import { typography } from "@/assets/fonts/Text";
 import { ConfirmationModal } from "@/components/modals/confirmationModal";
 import { BottomButton } from "@/components/shared/bottomButton";
 import { DebouncedTouchableOpacity } from "@/components/shared/debouncedTouchable";
+import useFetch from "@/hooks/useFetch";
+import { rackService } from "@/services/rackService"; // adjust to your actual import path
 import { bleManager } from "@/utils/bluetooth/bleManager";
 import { Buffer } from "buffer";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import React, { useCallback, useRef, useState } from "react";
 import {
-    ActivityIndicator,
-    Alert,
-    Image,
-    ScrollView,
-    StyleSheet,
-    Text,
-    View,
+  ActivityIndicator,
+  Alert,
+  Image,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
 } from "react-native";
 
 const SERVICE_UUID = "4fafc201-1fb5-459e-8fcc-c5c9c331914b";
@@ -27,10 +29,14 @@ export default function AddNewRack2() {
   const [scanning, setScanning] = useState(false);
   const [verifying, setVerifying] = useState(false);
   const [showBackConfirm, setShowBackConfirm] = useState(false);
-  // Guard so a single QR frame only triggers once
   const hasScannedRef = useRef(false);
 
-  // Only reset camera state when screen focuses, not on every render
+  const { refetch: checkRackExists } = useFetch("/racks/check", {
+    method: "POST",
+    autoFetch: false,
+    withAuth: true,
+  });
+
   useFocusEffect(
     useCallback(() => {
       hasScannedRef.current = false;
@@ -42,7 +48,6 @@ export default function AddNewRack2() {
   const disconnectAndGoToStep1 = useCallback(async () => {
     if (deviceId) {
       try {
-        console.log("[Step2] Sending reset command to ESP32...");
         try {
           await bleManager.writeCharacteristicWithoutResponseForDevice(
             deviceId as string,
@@ -50,18 +55,15 @@ export default function AddNewRack2() {
             RESET_CHAR_UUID,
             Buffer.from("FACTORY_RESET").toString("base64"),
           );
-          console.log("[Step2] Reset command sent");
           await new Promise((resolve) => setTimeout(resolve, 1000));
         } catch (e) {
           console.log("[Step2] Reset command failed (non-fatal):", e);
         }
-
         const isConnected = await bleManager.isDeviceConnected(
           deviceId as string,
         );
         if (isConnected) {
           await bleManager.cancelDeviceConnection(deviceId as string);
-          console.log("[Step2] BLE disconnected");
         }
       } catch (e) {
         console.log("[Step2] Disconnect error (non-fatal):", e);
@@ -69,10 +71,6 @@ export default function AddNewRack2() {
     }
     router.replace("/(tabs)/(add_pages)/(addNewRack)/step-1");
   }, [deviceId]);
-
-  const handleBackPress = () => {
-    setShowBackConfirm(true);
-  };
 
   const handleBackConfirmed = async () => {
     setShowBackConfirm(false);
@@ -120,42 +118,59 @@ export default function AddNewRack2() {
         console.log("ESP32 MAC:", deviceMAC);
         console.log("QR MAC:", scannedMAC);
 
-        if (scannedMAC.toLowerCase() === deviceMAC.toLowerCase()) {
+        if (scannedMAC.toLowerCase() !== deviceMAC.toLowerCase()) {
           setVerifying(false);
-          Alert.alert("Verified!", "Rack identity confirmed!", [
-            {
-              text: "Continue",
-              onPress: () =>
-                router.push({
-                  pathname: "/(tabs)/(add_pages)/(addNewRack)/step-3",
-                  // Pass the real ESP32 MAC address forward so step-4 can register it correctly
-                  params: { deviceId, macAddress: deviceMAC },
-                }),
-            },
-          ]);
-        } else {
-          setVerifying(false);
-          // Allow user to scan again — reset the guard
           hasScannedRef.current = false;
           Alert.alert(
             "Verification Failed",
             `QR code doesn't match this rack.\n\nScanned: ${scannedMAC}\nDevice: ${deviceMAC}`,
           );
+          return;
+        }
+
+        // ✅ MAC matched — check if rack already exists in the backend
+        console.log("[Step2] MAC verified. Checking if rack exists...");
+
+        try {
+          const result = await rackService.checkIfRackExists(checkRackExists, {
+            macAddress: deviceMAC,
+          });
+
+          setVerifying(false);
+
+          // Pass everything to Step 3 — it will handle both flows
+          router.push({
+            pathname: "/(tabs)/(add_pages)/(addNewRack)/step-3",
+            params: {
+              deviceId,
+              macAddress: deviceMAC,
+              rackExists: result.exists ? "true" : "false",
+              existingRackName: result.rack?.name ?? "",
+              existingRackUpdatedAt: result.rack?.updatedAt ?? "",
+            },
+          });
+        } catch (checkError: any) {
+          console.error("[Step2] Rack-exists check failed:", checkError);
+          setVerifying(false);
+          hasScannedRef.current = false;
+          Alert.alert(
+            "Check Failed",
+            "Could not verify rack status. Please try again.",
+          );
         }
       } catch (error: any) {
         setVerifying(false);
         hasScannedRef.current = false;
-        console.error("Verification error:", error);
+        console.error("[Step2] Verification error:", error);
         Alert.alert(
           "Verification Error",
           "Could not verify device. Make sure the rack is still connected.",
         );
       }
     },
-    [deviceId, disconnectAndGoToStep1],
+    [deviceId, disconnectAndGoToStep1, checkRackExists],
   );
 
-  // Memoized and guarded — prevents flickering from multiple frame callbacks
   const handleBarCodeScanned = useCallback(
     ({ data }: { data: string }) => {
       if (hasScannedRef.current || verifying) return;
@@ -182,14 +197,7 @@ export default function AddNewRack2() {
       <ConfirmationModal
         isVisible={showBackConfirm}
         title="Go Back?"
-        message="Going back will reset your rack to BLE provisioning mode:
-
-• WiFi connection will be cleared
-• MQTT will disconnect
-• Bluetooth will restart
-• The rack will be ready to pair again
-
-You'll need to run the setup process again."
+        message={`Going back will reset your rack to BLE provisioning mode:\n\n• WiFi connection will be cleared\n• MQTT will disconnect\n• Bluetooth will restart\n• The rack will be ready to pair again\n\nYou'll need to run the setup process again.`}
         confirmText="Yes, Reset & Go Back"
         cancelText="Continue"
         onConfirm={handleBackConfirmed}
@@ -220,7 +228,6 @@ You'll need to run the setup process again."
                 className="w-40 h-40"
               />
             </View>
-
             <Text style={typography["h1-bold"]} className="text-black mb-3">
               Verify Connection
             </Text>
@@ -232,7 +239,7 @@ You'll need to run the setup process again."
             </Text>
           </ScrollView>
 
-          <View className=" pb-6">
+          <View className="pb-6">
             <BottomButton title="Scan QR Code" onPress={handleScanPress} />
           </View>
         </>
