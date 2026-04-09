@@ -23,7 +23,7 @@ export default function SuccessPage() {
    * For account operations (password, email), just go back
    */
   const handleFinish = () => {
-    navService.replace(ROUTES.TABS.ACCOUNT.INDEX);
+    navService.replace(ROUTES.TABS.ACCOUNT.ROOT);
   };
 
   return (

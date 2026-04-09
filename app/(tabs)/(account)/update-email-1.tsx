@@ -15,8 +15,6 @@ import { cleanInput, validateEmail } from "@/utils/validation";
 import { router } from "expo-router";
 
 export default function UpdateEmailScreen1() {
-  const { showModal, handleConfirm, handleCancel } = useBackWarning();
-
   const [email, setEmail] = useState("");
   const [emailError, setEmailError] = useState("");
   const [isEmailValid, setIsEmailValid] = useState(false);
@@ -24,6 +22,11 @@ export default function UpdateEmailScreen1() {
   const [infoModalVisible, setInfoModalVisible] = useState(false);
   const [infoModalTitle, setInfoModalTitle] = useState("");
   const [infoModalMessage, setInfoModalMessage] = useState("");
+
+  // Only warn if the user has started typing — same pattern as ChangePassword1
+  const hasStartedEmail = email.length > 0;
+  const { showModal, handleConfirm, handleCancel } =
+    useBackWarning(!hasStartedEmail);
 
   const showInfoModal = (title: string, message: string) => {
     setInfoModalTitle(title);
@@ -43,7 +46,6 @@ export default function UpdateEmailScreen1() {
     if (!email) return ["Email is required"];
 
     const errors: string[] = [];
-
     if (!validateEmail(email))
       errors.push("Please enter a valid email address");
     if (email.length > 254) errors.push("Email address is too long");
@@ -64,7 +66,6 @@ export default function UpdateEmailScreen1() {
   };
 
   const handleNextPress = async () => {
-    // Re-validate on submit in case the user bypasses onChange
     const formatErrors = validateEmailFormat(email);
     if (formatErrors.length > 0) {
       setEmailError(formatErrors[0]);
@@ -93,7 +94,7 @@ export default function UpdateEmailScreen1() {
         return;
       }
 
-      navService.push(ROUTES.TABS.ACCOUNT.UPDATE_EMAIL_3, { email });
+      navService.push(ROUTES.TABS.ACCOUNT.UPDATE_EMAIL_2, { email });
     } catch (error) {
       logger.error("Unexpected error in handleNextPress", error);
 
@@ -132,24 +133,24 @@ export default function UpdateEmailScreen1() {
           disabled={!isEmailValid}
           loading={isLoading}
         />
-
-        <InfoModal
-          isVisible={infoModalVisible}
-          title={infoModalTitle}
-          message={infoModalMessage}
-          onConfirm={() => setInfoModalVisible(false)}
-        />
-
-        <ConfirmationModal
-          isVisible={showModal}
-          onConfirm={handleConfirm}
-          title="Go Back"
-          message="All details you have entered will be restarted and gone."
-          confirmText="Continue"
-          cancelText="Cancel"
-          onCancel={handleCancel}
-        />
       </View>
+
+      <InfoModal
+        isVisible={infoModalVisible}
+        title={infoModalTitle}
+        message={infoModalMessage}
+        onConfirm={() => setInfoModalVisible(false)}
+      />
+
+      <ConfirmationModal
+        isVisible={showModal}
+        title="Go Back?"
+        message="All details you have entered will be restarted and gone."
+        confirmText="Continue"
+        cancelText="Cancel"
+        onConfirm={handleConfirm}
+        onCancel={handleCancel}
+      />
     </View>
   );
 }

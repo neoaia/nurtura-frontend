@@ -14,7 +14,7 @@ All route paths are defined in `utils/navigationUtils.ts` under the `ROUTES` con
 import { ROUTES } from "@/utils/navigationUtils";
 
 // ✅ Good - using defined routes
-navService.push(ROUTES.TABS.HOME.INDEX);
+navService.push(ROUTES.TABS.HOME.ROOT);
 
 // ❌ Bad - hardcoded strings
 router.push("/(tabs)/(home)/index");
@@ -39,7 +39,7 @@ navService.push(ROUTES.TABS.RACKS.DETAIL(rackId));
 
 ```typescript
 // Use when preventing back to current screen
-navService.replace(ROUTES.TABS.HOME.INDEX);
+navService.replace(ROUTES.TABS.HOME.ROOT);
 ```
 
 - **When**: Login success, preventing back to login screen
@@ -50,7 +50,7 @@ navService.replace(ROUTES.TABS.HOME.INDEX);
 
 ```typescript
 // Use after completing major flows
-navService.reset(ROUTES.TABS.HOME.INDEX);
+navService.reset(ROUTES.TABS.HOME.ROOT);
 ```
 
 - **When**: Completing signup, login, or multi-step flows
@@ -84,7 +84,7 @@ navService.push(ROUTES.AUTH.FORGOT_PASSWORD.STEP_1);
 navService.replace(ROUTES.AUTH.LOGIN);
 
 // Signup complete → Home (reset entire auth stack)
-navService.reset(ROUTES.TABS.HOME.INDEX);
+navService.reset(ROUTES.TABS.HOME.ROOT);
 ```
 
 ### Multi-Step Add Flows (Plant/Rack)
@@ -292,12 +292,12 @@ navService.push(ROUTES.TABS.HOME.NOTIFICATIONS);
 ```typescript
 // Bad
 const router = useRouter();
-router.push(ROUTES.TABS.HOME.INDEX); // Inconsistent usage
+router.push(ROUTES.TABS.HOME.ROOT); // Inconsistent usage
 
 // Good
 const router = useRouter();
 const navService = new NavigationService(router);
-navService.push(ROUTES.TABS.HOME.INDEX); // Consistent
+navService.push(ROUTES.TABS.HOME.ROOT); // Consistent
 ```
 
 ### ❌ Don't: Use replace for screen drilling
@@ -315,10 +315,10 @@ navService.push(ROUTES.TABS.ADD.PLANT.STEP_2);
 ```typescript
 // Bad - confusing intent
 router.dismissAll();
-router.push(ROUTES.TABS.HOME.INDEX);
+router.push(ROUTES.TABS.HOME.ROOT);
 
 // Good - clear intent
-navService.reset(ROUTES.TABS.HOME.INDEX);
+navService.reset(ROUTES.TABS.HOME.ROOT);
 ```
 
 ### ❌ Don't: Use dismissAll frequently
@@ -395,7 +395,7 @@ If you're updating existing screens to use `NavigationService`:
    router.push("/(tabs)/(home)");
 
    // New
-   navService.push(ROUTES.TABS.HOME.INDEX);
+   navService.push(ROUTES.TABS.HOME.ROOT);
    ```
 
 4. Update route paths:

@@ -21,7 +21,7 @@ export default function MyScreen() {
   const navService = new NavigationService(router);
 
   const handleNext = () => {
-    navService.push(ROUTES.TABS.HOME.INDEX);
+    navService.push(ROUTES.TABS.HOME.ROOT);
   };
 
   return (
@@ -82,13 +82,13 @@ Done! That's all you need to start using the navigation system.
 
 ```typescript
 // Push: Add to stack (user expects back to work)
-navService.push(ROUTES.TABS.HOME.INDEX);
+navService.push(ROUTES.TABS.HOME.ROOT);
 
 // Replace: Replace screen (prevent back)
-navService.replace(ROUTES.TABS.HOME.INDEX);
+navService.replace(ROUTES.TABS.HOME.ROOT);
 
 // Reset: Clear stack (start fresh)
-navService.reset(ROUTES.TABS.HOME.INDEX);
+navService.reset(ROUTES.TABS.HOME.ROOT);
 
 // Complete: Reset to home (finish flow)
 navService.completeFlow();
@@ -121,7 +121,7 @@ ROUTES.AUTH.FORGOT_PASSWORD.STEP_3;
 ### Tabs
 
 ```typescript
-ROUTES.TABS.HOME.INDEX;
+ROUTES.TABS.HOME.ROOT;
 ROUTES.TABS.HOME.NOTIFICATIONS;
 ROUTES.TABS.RACKS.INDEX;
 ROUTES.TABS.RACKS.DETAIL(rackId);
@@ -165,7 +165,7 @@ ROUTES.TABS.ACCOUNT.SUCCESS;
 
 ```typescript
 // Login → Home (prevent back to login)
-navService.replace(ROUTES.TABS.HOME.INDEX);
+navService.replace(ROUTES.TABS.HOME.ROOT);
 
 // Home → Rack Details (allow back to home)
 navService.push(ROUTES.TABS.RACKS.DETAIL(rackId));
@@ -365,7 +365,7 @@ router.push(path as any)                    ❌
 ### IDE Not Finding Routes
 
 - ✅ Import `ROUTES` from `@/utils/navigationUtils`
-- ✅ Use `ROUTES.TABS.HOME.INDEX` not `ROUTES.TABS.HOME`
+- ✅ Use `ROUTES.TABS.HOME.ROOT` not `ROUTES.TABS.HOME`
 - ✅ IDE will autocomplete once imported
 
 ---

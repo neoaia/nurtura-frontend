@@ -31,8 +31,8 @@ export default function AddNewRack2() {
   const [showBackConfirm, setShowBackConfirm] = useState(false);
   const hasScannedRef = useRef(false);
 
-  const { refetch: checkRackExists } = useFetch("/racks/check", {
-    method: "POST",
+  const { refetch: checkRackExists } = useFetch("/racks/exists", {
+    method: "GET",
     autoFetch: false,
     withAuth: true,
   });

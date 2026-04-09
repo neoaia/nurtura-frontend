@@ -275,7 +275,7 @@ const CreateAccount = () => {
         navService.push(ROUTES.AUTH.SIGNUP.CREATE_USER_INFO, { email });
       } else {
         logger.log("User already onboarded, navigating to home");
-        navService.replace(ROUTES.TABS.HOME.INDEX);
+        navService.replace(ROUTES.TABS.HOME.ROOT);
       }
     } catch (error) {
       logger.error("Error during Google Sign-In", error);

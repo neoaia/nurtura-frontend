@@ -169,7 +169,7 @@ export default function LoginScreen() {
         navService.push(ROUTES.AUTH.SIGNUP.CREATE_USER_INFO, { email });
       } else {
         // Use replace to prevent back to login after successful auth
-        navService.replace(ROUTES.TABS.HOME.INDEX);
+        navService.replace(ROUTES.TABS.HOME.ROOT);
       }
     } catch (error) {
       showModal(

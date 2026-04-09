@@ -297,8 +297,8 @@ export default function ChangePassword1() {
       </View>
       <ConfirmationModal
         isVisible={showModal}
-        title="Your progress will be lost"
-        message="Are you sure you want to cancel?"
+        title="Go Back?"
+        message="Your progress will be lost if you go back."
         confirmText="Continue"
         onConfirm={handleConfirm}
         cancelText="Cancel"

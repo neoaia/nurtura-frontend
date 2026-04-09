@@ -125,7 +125,7 @@ function RootLayoutNav() {
         !inForgotPasswordFlow
       ) {
         // Use replace to prevent back to auth flows
-        navService.replace(ROUTES.TABS.HOME.INDEX);
+        navService.replace(ROUTES.TABS.HOME.ROOT);
         return;
       }
     };

@@ -141,7 +141,7 @@ export const rackService = {
   ): Promise<CheckIfRackExistsResponseDTO> {
     return handleRequest<CheckIfRackExistsResponseDTO>(
       "Checking if rack exists",
-      () => refetch({ body }),
+      () => refetch({ params: { macAddress: body.macAddress } }),
     );
   },
 };

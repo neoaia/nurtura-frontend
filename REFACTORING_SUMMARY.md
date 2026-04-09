@@ -121,7 +121,7 @@ navService.push(ROUTES.TABS.RACKS.DETAIL(rackId));
 
 ```typescript
 // Used to prevent back navigation to certain screens
-navService.replace(ROUTES.TABS.HOME.INDEX);
+navService.replace(ROUTES.TABS.HOME.ROOT);
 
 // User cannot go back to replaced screen
 // Stack: [...] (replaced top element)
@@ -131,7 +131,7 @@ navService.replace(ROUTES.TABS.HOME.INDEX);
 
 ```typescript
 // Used after completing major flows (signup, login, etc.)
-navService.reset(ROUTES.TABS.HOME.INDEX);
+navService.reset(ROUTES.TABS.HOME.ROOT);
 
 // Clears entire stack and prevents going back to intermediate screens
 // Stack: [home] (fresh)

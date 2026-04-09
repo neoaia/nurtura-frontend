@@ -43,10 +43,10 @@ export const ROUTES = {
       CONSENT: "/(auth)/signup/consent",
     },
     FORGOT_PASSWORD: {
-      ROOT: "/(auth)/forgetpassword",
-      STEP_1: "/(auth)/forgetpassword/forgotPassword1",
-      STEP_2: "/(auth)/forgetpassword/forgotPassword2",
-      STEP_3: "/(auth)/forgetpassword/forgotPassword3",
+      ROOT: "/(auth)/forgotPassword",
+      STEP_1: "/(auth)/forgotPassword/forgotPassword1",
+      STEP_2: "/(auth)/forgotPassword/forgotPassword2",
+      STEP_3: "/(auth)/forgotPassword/forgotPassword3",
     },
   },
 
@@ -174,7 +174,7 @@ export class NavigationService {
    * Cleans up entire stack of flow screens
    */
   completeFlow(params?: NavigationParams) {
-    this.reset(ROUTES.TABS.HOME.INDEX, params);
+    this.reset(ROUTES.TABS.HOME.ROOT, params);
   }
 
   /**

@@ -85,9 +85,9 @@ Back navigation unpredictable
 import { ROUTES } from "@/utils/navigationUtils"
 
 // Consistent patterns
-navService.push(ROUTES.TABS.HOME.INDEX)
-navService.replace(ROUTES.TABS.HOME.INDEX)
-navService.reset(ROUTES.TABS.HOME.INDEX)
+navService.push(ROUTES.TABS.HOME.ROOT)
+navService.replace(ROUTES.TABS.HOME.ROOT)
+navService.reset(ROUTES.TABS.HOME.ROOT)
 
 // Type safe
 IDE autocomplete
@@ -137,7 +137,7 @@ Predictable back behavior
 ```typescript
 ROUTES.AUTH.LOGIN;
 ROUTES.AUTH.SIGNUP.CREATE_ACCOUNT;
-ROUTES.TABS.HOME.INDEX;
+ROUTES.TABS.HOME.ROOT;
 ROUTES.TABS.RACKS.DETAIL(rackId);
 // ... 40+ routes with IDE autocomplete
 ```

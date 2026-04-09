@@ -64,9 +64,9 @@
 - **Line 33**: Created `navService` instance
 - **Line 34**: Removed unused `navigation` variable
 - **Line 237**: Updated forgot password link to use `navService.push(ROUTES.AUTH.FORGOT_PASSWORD.STEP_1)`
-- **Line 87**: Updated login success to use `navService.replace(ROUTES.TABS.HOME.INDEX)`
+- **Line 87**: Updated login success to use `navService.replace(ROUTES.TABS.HOME.ROOT)`
 - **Lines 148-150**: Updated Google signup to use `navService.push(ROUTES.AUTH.SIGNUP.CREATE_USER_INFO)`
-- **Line 154**: Updated to use `navService.replace(ROUTES.TABS.HOME.INDEX)`
+- **Line 154**: Updated to use `navService.replace(ROUTES.TABS.HOME.ROOT)`
 - **Impact**: Consistent navigation with centralized route management
 
 ### 4. **Auth Folder Structure**

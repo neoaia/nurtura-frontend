@@ -339,7 +339,11 @@ export default function HomeScreen() {
       >
         <View className="flex flex-row justify-between items-center pl-5 pr-6 mt-7">
           <Text style={typography["h1-bold"]} className="text-black">
-            Hi {displayName}!
+            Hi{" "}
+            {displayName?.length > 10
+              ? `${displayName.substring(0, 10)}...`
+              : displayName}
+            !
           </Text>
           <DebouncedTouchableOpacity onPress={handleNotificationPress}>
             {hasUnread ? (

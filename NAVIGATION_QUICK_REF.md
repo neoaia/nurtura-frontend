@@ -27,7 +27,7 @@ navService.goToAddPlantStep(2);
 ### Replace Screen (Prevent Back)
 
 ```typescript
-navService.replace(ROUTES.TABS.HOME.INDEX);
+navService.replace(ROUTES.TABS.HOME.ROOT);
 navService.replace(ROUTES.AUTH.LOGIN);
 ```
 
@@ -69,7 +69,7 @@ navService.goToForgotPasswordStep(2);
 
 ### Tabs
 
-- `ROUTES.TABS.HOME.INDEX`
+- `ROUTES.TABS.HOME.ROOT`
 - `ROUTES.TABS.RACKS.DETAIL(rackId)`
 - `ROUTES.TABS.ADD.PLANT.STEP_1`
 - `ROUTES.TABS.ACCOUNT.INDEX`
