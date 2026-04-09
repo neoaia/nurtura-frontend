@@ -103,7 +103,7 @@ export default function LoginScreen() {
       await SecureStore.setItemAsync("user_email", trimmedEmail);
       await SecureStore.setItemAsync("auth_provider", "password");
       // Use replace to prevent back navigation to login
-      navService.replace(ROUTES.TABS.HOME.INDEX);
+      navService.replace(ROUTES.TABS.HOME.ROOT);
     } catch (error) {
       setIsLoginInvalid(true);
       showModal("Login Failed", "Invalid email or password. Please try again.");

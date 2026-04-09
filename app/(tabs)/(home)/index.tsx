@@ -25,8 +25,8 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import ActiveNotificationIcon from "../../../assets/images/icons/active_notification.svg";
-import InactiveNotificationIcon from "../../../assets/images/icons/inactive_notification.svg";
+import ActiveNotificationIcon from "../../../assets/images/icons/home/active_notification.svg";
+import InactiveNotificationIcon from "../../../assets/images/icons/home/inactive_notification.svg";
 import { Highlight } from "../../../components/home/highlight";
 import { RecentActivityBar } from "../../../components/home/recentActivityBar";
 import { SummaryCard } from "../../../components/home/summaryCard";
@@ -337,7 +337,7 @@ export default function HomeScreen() {
         className="flex-1 bg-white"
         showsVerticalScrollIndicator={false}
       >
-        <View className="flex flex-row justify-between items-center px-5 mt-7">
+        <View className="flex flex-row justify-between items-center pl-5 pr-6 mt-7">
           <Text style={typography["h1-bold"]} className="text-black">
             Hi {displayName}!
           </Text>

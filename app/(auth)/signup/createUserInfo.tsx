@@ -173,7 +173,7 @@ const CreateUserInfo = () => {
 
       console.log("User info submitted successfully.");
       await clearAllSecureStore();
-      navService.replace(ROUTES.TABS.HOME.INDEX);
+      navService.replace(ROUTES.TABS.HOME.ROOT);
     } catch (error) {
       console.error("Error submitting user info:", error);
       showModal("Error", "Failed to submit user info.");

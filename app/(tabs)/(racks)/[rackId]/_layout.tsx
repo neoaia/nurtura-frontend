@@ -82,7 +82,7 @@ export default function RackIDLayout() {
               >
                 <Image
                   source={require("@/assets/images/racks/edit.png")}
-                  className="w-5 h-5"
+                  className="w-6 h-6"
                   resizeMode="contain"
                 />
               </DebouncedTouchableOpacity>
@@ -91,7 +91,7 @@ export default function RackIDLayout() {
         }}
       />
       <Stack.Screen
-        name="plant-care-activity"
+        name="care"
         options={{ title: "Plant Care Activity", headerTitleAlign: "left" }}
       />
       <Stack.Screen

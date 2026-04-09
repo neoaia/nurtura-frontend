@@ -67,7 +67,7 @@ export const NotificationItem: React.FC<NotificationItemDTO> = ({
   return (
     <View
       // Idinagdag ang 'px-4' class dito
-      className={`px-4 w-full flex-row items-center min-h-[84px] ${
+      className={`px-4 w-full flex-row items-center min-h-[84px] mb-4 ${
         isUnread ? "bg-[#f0f5e7]" : "bg-white"
       }`}
     >

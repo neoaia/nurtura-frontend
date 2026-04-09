@@ -8,7 +8,6 @@ import { PlantStatusIndicatorsSkeleton } from "@/components/racks/skeleton/plant
 import { BottomButton } from "@/components/shared/bottomButton";
 import { DebouncedTouchableOpacity } from "@/components/shared/debouncedTouchable";
 import { MenuCard } from "@/components/shared/menubtn";
-import { MenuCardSkeleton } from "@/components/shared/skeleton/menuCardSkeleton";
 import { SmallDescriptionSkeleton } from "@/components/shared/skeleton/smallDescriptionSkeleton";
 import SmallDescription from "@/components/shared/smallDescription";
 import useFetch from "@/hooks/useFetch";
@@ -388,42 +387,32 @@ const RackInfo = () => {
 
           {/* Menu cards */}
           <View className="flex-col gap-3 mb-8">
-            {loading ? (
-              <>
-                <MenuCardSkeleton />
-                <MenuCardSkeleton />
-              </>
-            ) : (
-              <>
-                <MenuCard
-                  title="Plant Care Activity"
-                  description="Logs based on watering and grow light activity."
-                  icon={PlantCareIcon}
-                  iconSize={25}
-                  onPress={() =>
-                    router.push({
-                      pathname: `/(tabs)/(racks)/${rackId}/care` as any,
-                      params: { rackName },
-                    })
-                  }
-                />
-                <MenuCard
-                  title="Harvest Activity"
-                  description="Records of your past harvests for this plant."
-                  icon={PlantIcon}
-                  onPress={() =>
-                    router.push({
-                      pathname:
-                        `/(tabs)/(racks)/${rackId}/harvest-history` as any,
-                      params: {
-                        rackName,
-                        plantId: activePlant?.plant?.id ?? "",
-                      },
-                    })
-                  }
-                />
-              </>
-            )}
+            <MenuCard
+              title="Plant Care Activity"
+              description="Logs based on watering and grow light activity."
+              icon={PlantCareIcon}
+              iconSize={25}
+              onPress={() =>
+                router.push({
+                  pathname: `/(tabs)/(racks)/${rackId}/care` as any,
+                  params: { rackName },
+                })
+              }
+            />
+            <MenuCard
+              title="Harvest Activity"
+              description="Records of your past harvests for this plant."
+              icon={PlantIcon}
+              onPress={() =>
+                router.push({
+                  pathname: `/(tabs)/(racks)/${rackId}/harvest-history` as any,
+                  params: {
+                    rackName,
+                    plantId: activePlant?.plant?.id ?? "",
+                  },
+                })
+              }
+            />
           </View>
         </ScrollView>
 
