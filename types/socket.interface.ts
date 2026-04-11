@@ -20,6 +20,31 @@ export interface Notification {
   isRead: boolean;
 }
 
+export type AutomationEventType =
+  | "WATERING_START"
+  | "WATERING_STOP"
+  | "LIGHT_ON"
+  | "LIGHT_OFF";
+
+export interface AutomationActivity {
+  id: string;
+  rackId: string;
+  eventType: AutomationEventType;
+  details: string;
+  metadata: {
+    rackName: string;
+    macAddress: string;
+    source: string;
+    ruleId: string;
+    ruleName: string;
+    /** Present on WATERING_STOP events */
+    waterUsedMl?: number;
+    /** Present on LIGHT_OFF events */
+    durationSeconds?: number;
+  };
+  timestamp: Date | string;
+}
+
 export interface ServerToClientEvents {
   connected: (data: { message: string; userId: string }) => void;
   subscribed: (data: { message: string; rackId: string }) => void;
@@ -49,6 +74,14 @@ export interface ServerToClientEvents {
   userNotification: (data: {
     notification: Notification;
     timestamp: string;
+  }) => void;
+  /**
+   * Fired when an automation rule executes a watering or lighting action.
+   * Address: `automationEvent` (see AsyncAPI spec › automationEventTriggered channel)
+   */
+  automationEvent: (data: {
+    event: AutomationEventType;
+    activity: AutomationActivity;
   }) => void;
   error: (data: { message: string; error: Error }) => void;
   connect_error: (error: Error) => void;
