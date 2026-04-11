@@ -1,8 +1,9 @@
 // components/shared/BottomButton.tsx
 import { typography } from "@/assets/fonts/Text";
 import React, { useState } from "react";
-import { Text, TouchableOpacity, View } from "react-native";
+import { Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { DebouncedTouchableOpacity } from "./debouncedTouchable";
 
 interface BottomButtonProps {
   title: string;
@@ -43,7 +44,7 @@ export const BottomButton: React.FC<BottomButtonProps> = ({
         elevation: 24,
       }}
     >
-      <TouchableOpacity
+      <DebouncedTouchableOpacity
         onPress={handlePress}
         disabled={isInteractionDisabled}
         activeOpacity={0.7}
@@ -59,7 +60,7 @@ export const BottomButton: React.FC<BottomButtonProps> = ({
         >
           {isLoading ? "Loading..." : title}
         </Text>
-      </TouchableOpacity>
+      </DebouncedTouchableOpacity>
     </View>
   );
 };

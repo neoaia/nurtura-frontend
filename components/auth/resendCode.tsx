@@ -1,5 +1,6 @@
 import { typography } from "@/assets/fonts/Text";
-import { Text, TouchableOpacity, View } from "react-native";
+import { DebouncedTouchableOpacity } from "@/components/shared/debouncedTouchable";
+import { Text, View } from "react-native";
 
 interface ResendCodeProps {
   onResend: () => void;
@@ -16,7 +17,10 @@ export const ResendCode = ({ onResend, timer, loading }: ResendCodeProps) => {
       >
         Didn&apos;t receive the code?{" "}
       </Text>
-      <TouchableOpacity onPress={onResend} disabled={timer > 0 || loading}>
+      <DebouncedTouchableOpacity
+        onPress={onResend}
+        disabled={timer > 0 || loading}
+      >
         <Text
           style={typography["subheader-bold"]}
           className={` underline ${
@@ -25,7 +29,7 @@ export const ResendCode = ({ onResend, timer, loading }: ResendCodeProps) => {
         >
           Resend code
         </Text>
-      </TouchableOpacity>
+      </DebouncedTouchableOpacity>
 
       {timer > 0 && (
         <Text style={typography["subheader"]} className="ml-2   text-grayText">

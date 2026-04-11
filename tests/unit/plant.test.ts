@@ -1,8 +1,8 @@
 import { plantService } from "../../services/plantService";
 import {
-  CreatePlantRequestDTO,
-  PlantActivitiesRequestDTO,
-  UpdatePlantRequestDTO,
+    CreatePlantRequestDTO,
+    PlantActivitiesRequestDTO,
+    UpdatePlantRequestDTO,
 } from "../../types/plant.dto";
 
 jest.mock("../../utils/logger", () => ({
@@ -587,6 +587,7 @@ describe("plantService", () => {
 
   describe("assignPlantToRack", () => {
     const assignBody = {
+      plantId: "plant-123",
       rackId: "clx2def456",
       quantity: 10,
       plantedAt: "2026-02-01T08:00:00.000Z",

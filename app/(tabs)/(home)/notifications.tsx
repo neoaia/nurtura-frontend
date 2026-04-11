@@ -208,6 +208,9 @@ export default function NotificationScreen() {
             </Text>
           </View>
         )}
+        renderSectionFooter={({ section: { title } }) => (
+          <View className="bg-white py-5 px-6"></View>
+        )}
         showsVerticalScrollIndicator={false}
         stickySectionHeadersEnabled={false}
       />

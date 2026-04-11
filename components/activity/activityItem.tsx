@@ -1,7 +1,8 @@
 import { typography } from "@/assets/fonts/Text";
+import { DebouncedTouchableOpacity } from "@/components/shared/debouncedTouchable";
 import { ActivityDTO } from "@/types/activity.dto";
 import React, { useState } from "react";
-import { Image, Text, TouchableOpacity, View } from "react-native";
+import { Image, Text, View } from "react-native";
 
 interface ActivityItemProps extends ActivityDTO {
   duration?: string; // Para sa light activity
@@ -45,7 +46,7 @@ export const ActivityItem: React.FC<ActivityItemProps> = ({
   };
 
   return (
-    <TouchableOpacity
+    <DebouncedTouchableOpacity
       onPress={handlePress}
       disabled={isLoading}
       activeOpacity={0.7}
@@ -87,7 +88,7 @@ export const ActivityItem: React.FC<ActivityItemProps> = ({
           </Text>
         </Text>
       </View>
-    </TouchableOpacity>
+    </DebouncedTouchableOpacity>
   );
 };
 

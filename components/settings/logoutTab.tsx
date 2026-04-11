@@ -1,12 +1,7 @@
 import { typography } from "@/assets/fonts/Text";
+import { DebouncedTouchableOpacity } from "@/components/shared/debouncedTouchable";
 import React, { useState } from "react";
-import {
-  Image,
-  ImageSourcePropType,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { Image, ImageSourcePropType, Text, View } from "react-native";
 
 interface LogOutTabProps {
   iconSource: ImageSourcePropType;
@@ -33,7 +28,7 @@ export const LogOutRow: React.FC<LogOutTabProps> = ({
   };
 
   return (
-    <TouchableOpacity
+    <DebouncedTouchableOpacity
       className={`w-full flex-row items-center justify-between py-2 px-5 bg-white ${
         isLoading ? "opacity-50" : ""
       }`}
@@ -47,6 +42,6 @@ export const LogOutRow: React.FC<LogOutTabProps> = ({
           {isLoading ? "Logging out..." : label}
         </Text>
       </View>
-    </TouchableOpacity>
+    </DebouncedTouchableOpacity>
   );
 };

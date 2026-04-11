@@ -138,7 +138,7 @@ const AddNewPlant1 = () => {
       <InfoModal
         isVisible={showOccupiedModal}
         title="Rack Unavailable"
-        message="This rack already has a plant. Please select another rack or remove the current plant first."
+        message="This rack already has a plant. Select another rack or remove the current plant first."
         confirmText="Got it!"
         onConfirm={() => setShowOccupiedModal(false)}
       />

@@ -1,13 +1,21 @@
-import React, { useEffect, useLayoutEffect, useMemo, useState } from "react";
-import { ScrollView, Text, TouchableOpacity, View } from "react-native";
-
 import { typography } from "@/assets/fonts/Text";
 import EditIcon from "@/assets/images/icons/editIcon.svg";
+import { InfoModal } from "@/components/modals/infoModal";
+import { DebouncedTouchableOpacity } from "@/components/shared/debouncedTouchable";
 import { TextInputFieldSkeleton } from "@/components/shared/skeleton/textInputFieldSkeleton";
 import { TextInputField } from "@/components/shared/textInputField";
 import useFetch from "@/hooks/useFetch";
 import { UserDetails } from "@/types/interface";
+import { cleanAlphanumericInput, cleanNameInput } from "@/utils/validation";
 import { useNavigation } from "expo-router";
+import React, {
+    useCallback,
+    useEffect,
+    useLayoutEffect,
+    useMemo,
+    useState,
+} from "react";
+import { ScrollView, Text, View } from "react-native";
 import CancelIcon from "../../../assets/buttons/cancel.svg";
 import SaveIcon from "../../../assets/buttons/save.svg";
 import { userService } from "../../../services/userService";
@@ -18,6 +26,22 @@ export default function UserInformationScreen() {
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
+
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalTitle, setModalTitle] = useState("");
+  const [modalMessage, setModalMessage] = useState("");
+  const [onModalConfirm, setOnModalConfirm] = useState<() => void>(() => {});
+
+  const showModal = (
+    title: string,
+    message: string,
+    onConfirm: () => void = () => setModalVisible(false),
+  ) => {
+    setModalTitle(title);
+    setModalMessage(message);
+    setOnModalConfirm(() => onConfirm);
+    setModalVisible(true);
+  };
 
   const navigation = useNavigation();
 
@@ -73,30 +97,48 @@ export default function UserInformationScreen() {
   }, [formValues, savedValues]);
 
   const handleChange = (field: keyof UserDetails, value: string) => {
-    setFormValues((prev) => ({ ...prev, [field]: value }));
+    let cleanedValue = value;
+    if (["firstName", "middleName", "lastName", "suffix"].includes(field)) {
+      cleanedValue = cleanNameInput(value);
+    } else {
+      cleanedValue = cleanAlphanumericInput(value);
+    }
+    setFormValues((prev) => ({ ...prev, [field]: cleanedValue }));
   };
 
-  const handleCancel = () => {
+  // Binalot sa useCallback para fresh palagi ang state
+  const handleCancel = useCallback(() => {
     setFormValues(savedValues);
     setIsEditing(false);
-  };
+  }, [savedValues]);
 
-  const handleSubmitUserInfo = async () => {
+  // Binalot din sa useCallback para ma-track niya nang maayos ang latest formValues
+  const handleSubmitUserInfo = useCallback(async () => {
+    if (!formValues.firstName?.trim() || !formValues.lastName?.trim()) {
+      showModal("Error", "First name and last name are required");
+      return;
+    }
+
     setLoading(true);
     try {
       const response = await userService.updateUser(updateUserInfo, formValues);
       if (response) {
         setSavedValues(formValues);
         setIsEditing(false);
+        showModal("Success", "User information updated successfully", () => {
+          setIsEditing(false);
+          setModalVisible(false);
+        });
       }
     } catch (error) {
       console.error("Failed to update user info:", error);
+      showModal("Error", "Failed to update user information");
     } finally {
       setLoading(false);
     }
-  };
+  }, [formValues, updateUserInfo]);
 
-  // Sync header buttons whenever relevant state changes
+  // Idinagdag ang handleCancel at handleSubmitUserInfo sa dependencies
   useLayoutEffect(() => {
     if (isLoadingProfile) {
       navigation.setOptions({ headerRight: undefined });
@@ -107,17 +149,17 @@ export default function UserInformationScreen() {
       navigation.setOptions({
         headerRight: () => (
           <View className="flex-row items-center gap-4 pr-2">
-            <TouchableOpacity onPress={handleCancel} hitSlop={8}>
+            <DebouncedTouchableOpacity onPress={handleCancel} hitSlop={8}>
               <CancelIcon width={22} height={22} />
-            </TouchableOpacity>
+            </DebouncedTouchableOpacity>
             {hasChanges && (
-              <TouchableOpacity
+              <DebouncedTouchableOpacity
                 onPress={handleSubmitUserInfo}
                 disabled={loading}
                 hitSlop={8}
               >
                 <SaveIcon width={22} height={22} />
-              </TouchableOpacity>
+              </DebouncedTouchableOpacity>
             )}
           </View>
         ),
@@ -125,17 +167,24 @@ export default function UserInformationScreen() {
     } else {
       navigation.setOptions({
         headerRight: () => (
-          <TouchableOpacity
+          <DebouncedTouchableOpacity
             onPress={() => setIsEditing(true)}
             className="pr-2"
             hitSlop={8}
           >
             <EditIcon width={22} height={22} />
-          </TouchableOpacity>
+          </DebouncedTouchableOpacity>
         ),
       });
     }
-  }, [isEditing, isLoadingProfile, hasChanges, loading]);
+  }, [
+    isEditing,
+    isLoadingProfile,
+    hasChanges,
+    loading,
+    handleCancel,
+    handleSubmitUserInfo,
+  ]);
 
   return (
     <View className="flex-1 bg-white">
@@ -264,6 +313,16 @@ export default function UserInformationScreen() {
           </>
         )}
       </ScrollView>
+
+      <InfoModal
+        isVisible={modalVisible}
+        title={modalTitle}
+        message={modalMessage}
+        onConfirm={() => {
+          onModalConfirm();
+          setModalVisible(false);
+        }}
+      />
     </View>
   );
 }

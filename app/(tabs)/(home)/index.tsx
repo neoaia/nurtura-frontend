@@ -2,6 +2,7 @@ import { typography } from "@/assets/fonts/Text";
 import { RecentActivityBarSkeleton } from "@/components/home/skeleton/recentActivityBarSkeleton";
 import { SummaryCardSkeleton } from "@/components/home/skeleton/summaryCardSkeleton";
 import { OnboardingTutorialModal } from "@/components/onboarding/tutorialModal";
+import { DebouncedTouchableOpacity } from "@/components/shared/debouncedTouchable";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAsyncState } from "@/hooks/useAsyncState";
 import useFetch from "@/hooks/useFetch";
@@ -11,8 +12,9 @@ import { rackService } from "@/services/rackService";
 import { userService } from "@/services/userService";
 import { UserDetails } from "@/types/interface";
 import { Notification } from "@/types/socket.interface";
+import { NavigationService, ROUTES } from "@/utils/navigationUtils";
 import { socketService } from "@/utils/websocket/socket";
-import { router, useFocusEffect } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
 import React, { useCallback, useRef, useState } from "react";
 import {
   Dimensions,
@@ -20,12 +22,11 @@ import {
   ScrollView,
   StatusBar,
   Text,
-  TouchableOpacity,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import ActiveNotificationIcon from "../../../assets/images/icons/active_notification.svg";
-import InactiveNotificationIcon from "../../../assets/images/icons/inactive_notification.svg";
+import ActiveNotificationIcon from "../../../assets/images/icons/home/active_notification.svg";
+import InactiveNotificationIcon from "../../../assets/images/icons/home/inactive_notification.svg";
 import { Highlight } from "../../../components/home/highlight";
 import { RecentActivityBar } from "../../../components/home/recentActivityBar";
 import { SummaryCard } from "../../../components/home/summaryCard";
@@ -43,6 +44,8 @@ const mockApiResponse = {
 
 export default function HomeScreen() {
   const { user } = useAuth();
+  const router = useRouter();
+  const navService = new NavigationService(router);
   const [userInfo, setUserInfo] = useState<Partial<UserDetails>>({});
   const [highlight] = useState(mockApiResponse.highlight);
   const [hasUnread, setHasUnread] = useState(false);
@@ -321,11 +324,11 @@ export default function HomeScreen() {
   const handleNotificationPress = () => {
     // Tanggalin ang alert optimistically at mag-navigate
     setHasUnread(false);
-    router.push("/notifications");
+    navService.push(ROUTES.TABS.HOME.NOTIFICATIONS);
   };
   const handleCardPress = (type: string) =>
-    router.push(type === "racks" ? "/(tabs)/(racks)" : "/(tabs)/(plants)");
-  const handleAddRack = () => console.log("Add Rack");
+    navService.push(ROUTES.TABS.RACKS.ROOT);
+  const handleAddRack = () => navService.push(ROUTES.TABS.ADD.RACK.STEP_1);
 
   return (
     <SafeAreaView className="flex-1 bg-white">
@@ -334,17 +337,21 @@ export default function HomeScreen() {
         className="flex-1 bg-white"
         showsVerticalScrollIndicator={false}
       >
-        <View className="flex flex-row justify-between items-center px-5 mt-7">
+        <View className="flex flex-row justify-between items-center pl-5 pr-6 mt-7">
           <Text style={typography["h1-bold"]} className="text-black">
-            Hi {displayName}!
+            Hi{" "}
+            {displayName?.length > 10
+              ? `${displayName.substring(0, 10)}...`
+              : displayName}
+            !
           </Text>
-          <TouchableOpacity onPress={handleNotificationPress}>
+          <DebouncedTouchableOpacity onPress={handleNotificationPress}>
             {hasUnread ? (
               <ActiveNotificationIcon width={24} height={24} />
             ) : (
               <InactiveNotificationIcon width={24} height={24} />
             )}
-          </TouchableOpacity>
+          </DebouncedTouchableOpacity>
         </View>
 
         <View className="flex-1 bg-white mt-2">

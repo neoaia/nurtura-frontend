@@ -1,19 +1,15 @@
+import { InfoModal } from "@/components/modals/infoModal";
+import { DebouncedTouchableOpacity } from "@/components/shared/debouncedTouchable";
 import useFetch from "@/hooks/useFetch";
 import { authService } from "@/services/authService";
 import { createLogger } from "@/utils/logger";
+import { NavigationService, ROUTES } from "@/utils/navigationUtils";
 import { cleanInput, validateEmail } from "@/utils/validation";
 import { useFocusEffect } from "@react-navigation/native";
 import { router } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import React, { useCallback, useEffect, useState } from "react";
-import {
-    Alert,
-    BackHandler,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
-} from "react-native";
+import { Alert, BackHandler, Text, TextInput, View } from "react-native";
 
 const logger = createLogger("ForgotPassword1");
 
@@ -24,6 +20,17 @@ const ForgotPassword1 = () => {
   const [email, setEmail] = useState("");
   const [isFirstMount, setIsFirstMount] = useState(true);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
+  const [infoModalVisible, setInfoModalVisible] = useState(false);
+  const [infoModalTitle, setInfoModalTitle] = useState("");
+  const [infoModalMessage, setInfoModalMessage] = useState("");
+
+  const showInfoModal = (title: string, message: string) => {
+    setInfoModalTitle(title);
+    setInfoModalMessage(message);
+    setInfoModalVisible(true);
+  };
+
+  const navService = new NavigationService(router);
 
   const isNextButtonEnabled = email.length > 0 && isEmailValid;
 
@@ -145,7 +152,7 @@ const ForgotPassword1 = () => {
               } catch (error) {
                 logger.error("Error clearing storage on back", error);
               }
-              router.back();
+              navService.goBack();
             },
           },
         ]);
@@ -186,7 +193,7 @@ const ForgotPassword1 = () => {
 
       if (!emailResponse.success) {
         logger.warn("Email availability check failed");
-        Alert.alert("Error", "Unable to verify email. Please try again.");
+        showInfoModal("Error", "Unable to verify email. Please try again.");
         return;
       }
 
@@ -203,7 +210,7 @@ const ForgotPassword1 = () => {
 
       if (!providerResponse.success) {
         logger.warn("Provider check failed");
-        Alert.alert(
+        showInfoModal(
           "Error",
           "Unable to verify sign-in methods. Please try again.",
         );
@@ -231,7 +238,7 @@ const ForgotPassword1 = () => {
               text: "Use Google",
               onPress: () => {
                 logger.log("User chose Google, navigating to login");
-                router.replace("/(auth)/login");
+                navService.replace(ROUTES.AUTH.LOGIN);
               },
             },
           ],
@@ -239,10 +246,7 @@ const ForgotPassword1 = () => {
         return;
       }
 
-      router.push({
-        pathname: "/(auth)/forgetpassword/forgotPassword2",
-        params: { email },
-      });
+      navService.push(ROUTES.AUTH.FORGOT_PASSWORD.STEP_2, { email });
     } catch (error) {
       logger.error("Unexpected error in handleNextPress", error);
 
@@ -295,7 +299,7 @@ const ForgotPassword1 = () => {
       </View>
 
       <View className="w-full">
-        <TouchableOpacity
+        <DebouncedTouchableOpacity
           onPress={handleNextPress}
           className={`w-full p-6 rounded-[12px] mt-2 flex items-center ${
             isNextButtonEnabled ? "bg-primary" : "bg-[#919191]"
@@ -305,8 +309,15 @@ const ForgotPassword1 = () => {
           <Text className="text-white text-xl font-bold">
             {loading ? "Loading..." : "Next"}
           </Text>
-        </TouchableOpacity>
+        </DebouncedTouchableOpacity>
       </View>
+
+      <InfoModal
+        isVisible={infoModalVisible}
+        title={infoModalTitle}
+        message={infoModalMessage}
+        onConfirm={() => setInfoModalVisible(false)}
+      />
     </View>
   );
 };

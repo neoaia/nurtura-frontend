@@ -17,7 +17,7 @@ export interface HighlightDTO {
   buttonText: string;
 }
 
-export interface ActivityDTO {
+export interface DashboardActivityDTO {
   id: string;
   type: "water" | "light";
   action: string;
@@ -30,21 +30,7 @@ export interface DashboardResponseDTO {
   user: UserDTO;
   summary: SummaryCardDTO[];
   highlight: HighlightDTO;
-  recentActivity: ActivityDTO[];
-}
-
-export interface NotificationDTO {
-  id: string;
-  type: "info" | "warning" | "success" | "error";
-  title: string;
-  message: string;
-  timestamp: string;
-  read: boolean;
-}
-
-export interface NotificationsResponseDTO {
-  notifications: NotificationDTO[];
-  unreadCount: number;
+  recentActivity: DashboardActivityDTO[];
 }
 
 export interface BackendNotificationDTO {
@@ -74,28 +60,6 @@ export interface BackendNotificationsResponseDTO {
   data: BackendNotificationDTO[];
   meta: BackendNotificationsMetaDTO;
   unreadCount: number;
-}
-
-export interface NotificationItemDTO {
-  id: string;
-  type:
-    | "water"
-    | "light"
-    | "harvest"
-    | "sensor"
-    | "environment"
-    | "info"
-    | "alert";
-  title?: string;
-  message?: string;
-  status?: "UNREAD" | "READ";
-  plantName?: string;
-  location?: string;
-  value?: string;
-  time: string;
-  rackName?: string;
-  metric?: "temperature" | "moisture";
-  component?: string;
 }
 
 export interface AddRackRequestDTO {

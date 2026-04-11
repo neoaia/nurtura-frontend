@@ -1,19 +1,21 @@
 import { typography } from "@/assets/fonts/Text";
+import { InfoModal } from "@/components/modals/infoModal";
 import { PrimaryButton } from "@/components/shared/primaryButton";
 import { TextInputField } from "@/components/shared/textInputField";
 import { useAuth } from "@/contexts/AuthContext";
 import { auth } from "@/firebase";
 import useFetch from "@/hooks/useFetch";
 import { authService } from "@/services/authService";
+import { NavigationService, ROUTES } from "@/utils/navigationUtils";
 import {
-    cleanAlphaInput,
-    cleanAlphanumericInput,
-    cleanNameInput,
+  cleanAlphaInput,
+  cleanAlphanumericInput,
+  cleanNameInput,
 } from "@/utils/validation";
 import { useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { useEffect, useState } from "react";
-import { Alert, Text, View } from "react-native";
+import { Text, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 
 const USER_INFO_STORAGE_KEY = "temp_user_info";
@@ -49,9 +51,26 @@ const CreateUserInfo = () => {
   const [firebaseToken, setFirebaseToken] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalTitle, setModalTitle] = useState("");
+  const [modalMessage, setModalMessage] = useState("");
+  const [onModalConfirm, setOnModalConfirm] = useState<() => void>(() => {});
+
+  const showModal = (
+    title: string,
+    message: string,
+    onConfirm: () => void = () => setModalVisible(false),
+  ) => {
+    setModalTitle(title);
+    setModalMessage(message);
+    setOnModalConfirm(() => onConfirm);
+    setModalVisible(true);
+  };
+
   const { signUp } = useAuth();
 
   const router = useRouter();
+  const navService = new NavigationService(router);
 
   const checkIfFirstNameHasValue = firstName.trim().length > 0;
   const checkIfLastNameHasValue = lastName.trim().length > 0;
@@ -97,7 +116,7 @@ const CreateUserInfo = () => {
         );
 
         if (!verifiedEmail || !verifiedPassword) {
-          Alert.alert("Error", "Missing credentials");
+          showModal("Error", "Missing credentials");
           setLoading(false);
           return;
         }
@@ -107,7 +126,7 @@ const CreateUserInfo = () => {
       } else {
         const currentUser = auth.currentUser;
         if (!currentUser) {
-          Alert.alert("Error", "Not signed in with Google.");
+          showModal("Error", "Not signed in with Google.");
           setLoading(false);
           return;
         }
@@ -147,17 +166,17 @@ const CreateUserInfo = () => {
 
       if (!response.success) {
         console.error("Error creating account:", response.message);
-        Alert.alert("Error", "Failed to create account.");
+        showModal("Error", "Failed to create account.");
         setLoading(false);
         return;
       }
 
       console.log("User info submitted successfully.");
       await clearAllSecureStore();
-      router.replace("/(tabs)/(home)");
+      navService.replace(ROUTES.TABS.HOME.ROOT);
     } catch (error) {
       console.error("Error submitting user info:", error);
-      Alert.alert("Error", "Failed to submit user info.");
+      showModal("Error", "Failed to submit user info.");
     } finally {
       setLoading(false);
     }
@@ -291,12 +310,14 @@ const CreateUserInfo = () => {
             label="First Name"
             value={firstName}
             onChangeText={handleFirstNameChange}
+            editable={true}
           />
 
           <TextInputField
             label="Middle Name (optional)"
             value={middleName}
             onChangeText={handleMiddleNameChange}
+            editable={true}
           />
 
           <View className="flex-row gap-3">
@@ -305,6 +326,7 @@ const CreateUserInfo = () => {
                 label="Last Name"
                 value={lastName}
                 onChangeText={handleLastNameChange}
+                editable={true}
               />
             </View>
             <View className="w-[100px]">
@@ -312,6 +334,7 @@ const CreateUserInfo = () => {
                 label="Suffix"
                 value={suffix}
                 onChangeText={handleSuffixChange}
+                editable={true}
               />
             </View>
           </View>
@@ -331,6 +354,7 @@ const CreateUserInfo = () => {
                 label="Block/No."
                 value={block}
                 onChangeText={handleBlockChange}
+                editable={true}
               />
             </View>
             <View className="flex-1">
@@ -338,6 +362,7 @@ const CreateUserInfo = () => {
                 label="Street"
                 value={street}
                 onChangeText={handleStreetChange}
+                editable={true}
               />
             </View>
           </View>
@@ -348,6 +373,7 @@ const CreateUserInfo = () => {
                 label="Barangay"
                 value={barangay}
                 onChangeText={handleBarangayChange}
+                editable={true}
               />
             </View>
             <View className="flex-1">
@@ -355,6 +381,7 @@ const CreateUserInfo = () => {
                 label="City"
                 value={city}
                 onChangeText={handleCityChange}
+                editable={true}
               />
             </View>
           </View>
@@ -369,6 +396,16 @@ const CreateUserInfo = () => {
           title="Finish"
         />
       </View>
+
+      <InfoModal
+        isVisible={modalVisible}
+        title={modalTitle}
+        message={modalMessage}
+        onConfirm={() => {
+          onModalConfirm();
+          setModalVisible(false);
+        }}
+      />
     </View>
   );
 };

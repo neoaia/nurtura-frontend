@@ -1,18 +1,13 @@
 import { typography } from "@/assets/fonts/Text";
+import { DebouncedTouchableOpacity } from "@/components/shared/debouncedTouchable";
 import React, { useState } from "react";
-import {
-  Image,
-  ImageSourcePropType,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { Image, ImageSourcePropType, Text, View } from "react-native";
 
 interface PlantCardProps {
   plantName: string;
   category: string;
   image?: ImageSourcePropType;
-  onPress: () => void | Promise<void>; 
+  onPress: () => void | Promise<void>;
   isSelected?: boolean;
 }
 
@@ -32,13 +27,12 @@ const PlantCard = ({
     try {
       await onPress();
     } finally {
-      
       setTimeout(() => setIsLoading(false), 500);
     }
   };
 
   return (
-    <TouchableOpacity
+    <DebouncedTouchableOpacity
       onPress={handlePress}
       disabled={isLoading}
       activeOpacity={0.7}
@@ -69,7 +63,7 @@ const PlantCard = ({
       <Text style={typography["subheader"]} className="text-gray-600">
         {category}
       </Text>
-    </TouchableOpacity>
+    </DebouncedTouchableOpacity>
   );
 };
 

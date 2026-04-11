@@ -167,6 +167,7 @@ export interface GetPlantHistoryForRackResponseDTO {
 
 export interface AssignPlantToRackRequestDTO {
   plantId: string;
+  rackId: string;
   quantity: number;
   plantedAt: string;
 }

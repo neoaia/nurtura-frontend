@@ -1,11 +1,16 @@
+import { DebouncedTouchableOpacity } from "@/components/shared/debouncedTouchable";
 import React, { useState } from "react";
-import { Image, TouchableOpacity } from "react-native";
+import { Image } from "react-native";
 
-type ButtonStatus = "defaultLight" | "defaultWater" | "clickedLight" | "clickedWater";
+type ButtonStatus =
+  | "defaultLight"
+  | "defaultWater"
+  | "clickedLight"
+  | "clickedWater";
 
 interface ActivityButtonProps {
   status: ButtonStatus;
-  onPress?: () => void | Promise<void>; 
+  onPress?: () => void | Promise<void>;
 }
 
 const BUTTON_CONFIG = {
@@ -31,8 +36,11 @@ const BUTTON_CONFIG = {
   },
 };
 
-export const ActivityButton: React.FC<ActivityButtonProps> = ({ status, onPress }) => {
-  const [isLoading, setIsLoading] = useState(false); 
+export const ActivityButton: React.FC<ActivityButtonProps> = ({
+  status,
+  onPress,
+}) => {
+  const [isLoading, setIsLoading] = useState(false);
   const config = BUTTON_CONFIG[status];
 
   const handlePress = async () => {
@@ -42,22 +50,24 @@ export const ActivityButton: React.FC<ActivityButtonProps> = ({ status, onPress 
     try {
       await onPress();
     } finally {
-      
       setTimeout(() => setIsLoading(false), 500);
     }
   };
 
   return (
-    <TouchableOpacity 
+    <DebouncedTouchableOpacity
       className={`w-[160px] h-[35px] rounded-[8px] border-[2.5px] justify-center items-center m-2 ${
         isLoading ? "opacity-50" : ""
       }`}
-      style={{ backgroundColor: config.bgColor, borderColor: config.borderColor }}
+      style={{
+        backgroundColor: config.bgColor,
+        borderColor: config.borderColor,
+      }}
       onPress={handlePress}
       disabled={isLoading}
       activeOpacity={0.7}
     >
       <Image source={config.icon} className="w-4 h-4" resizeMode="contain" />
-    </TouchableOpacity>
+    </DebouncedTouchableOpacity>
   );
 };

@@ -1,12 +1,13 @@
 import { typography } from "@/assets/fonts/Text";
+import { DebouncedTouchableOpacity } from "@/components/shared/debouncedTouchable";
 import { Ionicons } from "@expo/vector-icons";
 import {
-  BottomSheetBackdrop,
-  BottomSheetModal,
-  BottomSheetView,
+    BottomSheetBackdrop,
+    BottomSheetModal,
+    BottomSheetView,
 } from "@gorhom/bottom-sheet";
 import React, { useCallback, useRef } from "react";
-import { Text, TouchableOpacity, View } from "react-native";
+import { Text, View } from "react-native";
 
 export interface DropdownOption {
   id: string;
@@ -58,7 +59,7 @@ const Dropdown: React.FC<DropdownProps> = ({
   return (
     <>
       <View>
-        <TouchableOpacity
+        <DebouncedTouchableOpacity
           onPress={handlePresentModalPress}
           activeOpacity={0.7}
           className="flex-row items-center justify-between border-[2px] border-grayText rounded-xl py-3 px-4 bg-white"
@@ -78,7 +79,7 @@ const Dropdown: React.FC<DropdownProps> = ({
             </Text>
           </View>
           <Ionicons name="chevron-down" size={20} color="#666" />
-        </TouchableOpacity>
+        </DebouncedTouchableOpacity>
       </View>
 
       <BottomSheetModal
@@ -98,7 +99,7 @@ const Dropdown: React.FC<DropdownProps> = ({
 
           <View>
             {options.map((item) => (
-              <TouchableOpacity
+              <DebouncedTouchableOpacity
                 key={item.id}
                 onPress={() => handleOptionPress(item)}
                 className={`py-4 border-b border-gray-100 flex-row justify-between items-center ${
@@ -117,7 +118,7 @@ const Dropdown: React.FC<DropdownProps> = ({
                 >
                   {item.label}
                 </Text>
-              </TouchableOpacity>
+              </DebouncedTouchableOpacity>
             ))}
           </View>
         </BottomSheetView>

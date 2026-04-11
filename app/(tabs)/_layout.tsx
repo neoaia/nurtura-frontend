@@ -1,7 +1,8 @@
 import { AddNewModal } from "@/components/modals/addNewModal";
+import { DebouncedTouchableOpacity } from "@/components/shared/debouncedTouchable";
 import { Tabs, useSegments } from "expo-router"; // Added useSegments
 import { useState } from "react";
-import { Image, TouchableOpacity } from "react-native";
+import { Image } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import "../globals.css";
 
@@ -67,7 +68,7 @@ const Layout = () => {
             title: "Add New",
             tabBarStyle: { display: "none" },
             tabBarButton: () => (
-              <TouchableOpacity
+              <DebouncedTouchableOpacity
                 onPress={() => {
                   setModalVisible(true);
                 }}
@@ -85,7 +86,7 @@ const Layout = () => {
                   style={{ width: 56, height: 56 }}
                   resizeMode="contain"
                 />
-              </TouchableOpacity>
+              </DebouncedTouchableOpacity>
             ),
           }}
         />

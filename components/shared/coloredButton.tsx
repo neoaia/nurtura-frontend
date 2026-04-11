@@ -1,5 +1,6 @@
 import { typography } from "@/assets/fonts/Text";
-import { ActivityIndicator, Text, TouchableOpacity } from "react-native";
+import { ActivityIndicator, Text } from "react-native";
+import { DebouncedTouchableOpacity } from "./debouncedTouchable";
 
 interface ColoredButtonProps {
   onPress: () => void;
@@ -17,7 +18,7 @@ export const ColoredButton = ({
   const isDisabled = loading || disabled;
 
   return (
-    <TouchableOpacity
+    <DebouncedTouchableOpacity
       className="w-full p-6 rounded-xl mt-2 flex items-center bg-primary border-[2px] border-white"
       onPress={onPress}
       disabled={isDisabled}
@@ -29,6 +30,6 @@ export const ColoredButton = ({
           {title}
         </Text>
       )}
-    </TouchableOpacity>
+    </DebouncedTouchableOpacity>
   );
 };

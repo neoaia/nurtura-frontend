@@ -83,6 +83,10 @@ const AddNewPlant2 = () => {
     loadPlants();
   }, []);
 
+  function toProperCase(str: string): string {
+    return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+  }
+
   const handleNextPress = () => {
     if (!selectedPlant) return;
     router.push({
@@ -106,7 +110,7 @@ const AddNewPlant2 = () => {
       plantName: selectedPlant.name,
       plantCategory: formatCategory(selectedPlant.category),
       plantType: selectedPlant.category,
-      recommendedSoil: selectedPlant.recommendedSoil,
+      recommendedSoil: toProperCase(selectedPlant.recommendedSoil),
     });
   };
 

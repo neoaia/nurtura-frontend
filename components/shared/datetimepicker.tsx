@@ -1,8 +1,9 @@
 import { typography } from "@/assets/fonts/Text";
+import { DebouncedTouchableOpacity } from "@/components/shared/debouncedTouchable";
 import { Ionicons } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import React, { useState } from "react";
-import { Platform, Text, TouchableOpacity, View } from "react-native";
+import { Platform, Text, View } from "react-native";
 
 interface DateRange {
   start: Date | null;
@@ -44,7 +45,7 @@ export const DateRangePicker = ({ value, onChange }: Props) => {
 
   return (
     <View>
-      <TouchableOpacity
+      <DebouncedTouchableOpacity
         onPress={handleOpenPicker} // Use the guarded function
         disabled={mode !== null} // Disable button while picker is active
         className={`flex-row items-center justify-between border-[2px] border-grayText rounded-xl py-3 px-4 bg-white ${
@@ -58,7 +59,7 @@ export const DateRangePicker = ({ value, onChange }: Props) => {
           </Text>
         </View>
         <Ionicons name="chevron-down" size={20} color="#666" />
-      </TouchableOpacity>
+      </DebouncedTouchableOpacity>
 
       {mode === "start" && (
         <DateTimePicker

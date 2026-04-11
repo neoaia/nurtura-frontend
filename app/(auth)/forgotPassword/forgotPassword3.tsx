@@ -1,23 +1,18 @@
+import { InfoModal } from "@/components/modals/infoModal";
+import { DebouncedTouchableOpacity } from "@/components/shared/debouncedTouchable";
 import { useAuth } from "@/contexts/AuthContext";
 import useFetch from "@/hooks/useFetch";
 import { authService } from "@/services/authService";
+import { NavigationService, ROUTES } from "@/utils/navigationUtils";
 import {
-    cleanInput,
-    isStrongPassword,
-    validatePassword,
+  cleanInput,
+  isStrongPassword,
+  validatePassword,
 } from "@/utils/validation";
 import { router, useLocalSearchParams } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import React, { useEffect, useState } from "react";
-import {
-    Alert,
-    Image,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    TouchableWithoutFeedback,
-    View,
-} from "react-native";
+import { Image, Text, TextInput, View } from "react-native";
 
 const ForgotPassword3 = () => {
   const [password, setPassword] = useState("");
@@ -25,8 +20,25 @@ const ForgotPassword3 = () => {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalTitle, setModalTitle] = useState("");
+  const [modalMessage, setModalMessage] = useState("");
+  const [onModalConfirm, setOnModalConfirm] = useState<() => void>(() => {});
+
+  const showModal = (
+    title: string,
+    message: string,
+    onConfirm: () => void = () => setModalVisible(false),
+  ) => {
+    setModalTitle(title);
+    setModalMessage(message);
+    setOnModalConfirm(() => onConfirm);
+    setModalVisible(true);
+  };
+
   const { email } = useLocalSearchParams();
   const { logout } = useAuth();
+  const navService = new NavigationService(router);
 
   const isNextButtonEnabled =
     password.length > 0 &&
@@ -47,7 +59,7 @@ const ForgotPassword3 = () => {
 
   const handleNextPress = async () => {
     if (!email) {
-      Alert.alert(
+      showModal(
         "Error",
         "Email is missing. Please restart the password reset process.",
       );
@@ -56,7 +68,11 @@ const ForgotPassword3 = () => {
 
     setLoading(true);
 
-    if (!passwordsMatch) return Alert.alert("Error", "Passwords do not match.");
+    if (!passwordsMatch) {
+      showModal("Error", "Passwords do not match.");
+      setLoading(false);
+      return;
+    }
 
     try {
       const resetResponse = await authService.resetPassword(
@@ -65,7 +81,7 @@ const ForgotPassword3 = () => {
       );
 
       if (!resetResponse.success) {
-        Alert.alert(
+        showModal(
           "Error",
           resetResponse.message ||
             "Failed to reset password. Please try again.",
@@ -77,14 +93,11 @@ const ForgotPassword3 = () => {
       await SecureStore.deleteItemAsync("forgotPasswordInProgress");
       await logout();
 
-      Alert.alert("Success", "Your password has been reset successfully.", [
-        {
-          text: "OK",
-          onPress: () => router.replace("/(auth)/login"),
-        },
-      ]);
+      showModal("Success", "Your password has been reset successfully.", () =>
+        navService.replace(ROUTES.AUTH.LOGIN),
+      );
     } catch (error) {
-      Alert.alert("Error", "Failed to reset password. Please try again.");
+      showModal("Error", "Failed to reset password. Please try again.");
       setLoading(false);
       return;
     } finally {
@@ -167,19 +180,21 @@ const ForgotPassword3 = () => {
             </Text>
           )}
 
-          <TouchableWithoutFeedback onPress={togglePasswordVisibility}>
-            <View className="absolute right-5 top-[50%] -translate-y-1/2 pr-2">
-              <Image
-                source={
-                  isPasswordVisible
-                    ? require("@/assets/images/eyeopen.png")
-                    : require("@/assets/images/eyeclosed.png")
-                }
-                className="w-5 h-5"
-                resizeMode="contain"
-              />
-            </View>
-          </TouchableWithoutFeedback>
+          <DebouncedTouchableOpacity
+            onPress={togglePasswordVisibility}
+            className="absolute right-5 top-[50%] -translate-y-1/2 pr-2"
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <Image
+              source={
+                isPasswordVisible
+                  ? require("@/assets/images/eyeopen.png")
+                  : require("@/assets/images/eyeclosed.png")
+              }
+              className="w-5 h-5"
+              resizeMode="contain"
+            />
+          </DebouncedTouchableOpacity>
         </View>
 
         <View className="relative w-full mb-[20px]">
@@ -224,24 +239,26 @@ const ForgotPassword3 = () => {
               </Text>
             )}
 
-          <TouchableWithoutFeedback onPress={togglePasswordVisibility}>
-            <View className="absolute right-5 top-[50%] -translate-y-1/2 pr-2">
-              <Image
-                source={
-                  isPasswordVisible
-                    ? require("@/assets/images/eyeopen.png")
-                    : require("@/assets/images/eyeclosed.png")
-                }
-                className="w-5 h-5"
-                resizeMode="contain"
-              />
-            </View>
-          </TouchableWithoutFeedback>
+          <DebouncedTouchableOpacity
+            onPress={togglePasswordVisibility}
+            className="absolute right-5 top-[50%] -translate-y-1/2 pr-2"
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <Image
+              source={
+                isPasswordVisible
+                  ? require("@/assets/images/eyeopen.png")
+                  : require("@/assets/images/eyeclosed.png")
+              }
+              className="w-5 h-5"
+              resizeMode="contain"
+            />
+          </DebouncedTouchableOpacity>
         </View>
       </View>
 
       <View className="w-full">
-        <TouchableOpacity
+        <DebouncedTouchableOpacity
           onPress={handleNextPress}
           className={`w-full p-6 rounded-[12px] mt-2 flex items-center ${
             isNextButtonEnabled ? "bg-primary" : "bg-[#919191]"
@@ -251,8 +268,18 @@ const ForgotPassword3 = () => {
           <Text className="text-white text-[16px] font-bold">
             {loading ? "Loading..." : "Finish"}
           </Text>
-        </TouchableOpacity>
+        </DebouncedTouchableOpacity>
       </View>
+
+      <InfoModal
+        isVisible={modalVisible}
+        title={modalTitle}
+        message={modalMessage}
+        onConfirm={() => {
+          onModalConfirm();
+          setModalVisible(false);
+        }}
+      />
     </View>
   );
 };

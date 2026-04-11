@@ -1,19 +1,20 @@
 /* eslint-disable react/no-unescaped-entities */
+import { InfoModal } from "@/components/modals/infoModal";
+import { DebouncedTouchableOpacity } from "@/components/shared/debouncedTouchable";
 import { useAuth } from "@/contexts/AuthContext";
 import useFetch from "@/hooks/useFetch";
 import { authService } from "@/services/authService";
 import { createLogger } from "@/utils/logger";
+import { NavigationService, ROUTES } from "@/utils/navigationUtils";
 import { router, useLocalSearchParams } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
-    Alert,
-    NativeSyntheticEvent,
-    Text,
-    TextInput,
-    TextInputKeyPressEventData,
-    TouchableOpacity,
-    View,
+  NativeSyntheticEvent,
+  Text,
+  TextInput,
+  TextInputKeyPressEventData,
+  View,
 } from "react-native";
 
 const logger = createLogger("ForgotPassword2");
@@ -25,6 +26,17 @@ const ForgotPassword2 = () => {
   const [loading, setLoading] = useState(false);
   const [isOtpInvalid, setIsOtpInvalid] = useState(false);
   const [timer, setTimer] = useState(60);
+  const [infoModalVisible, setInfoModalVisible] = useState(false);
+  const [infoModalTitle, setInfoModalTitle] = useState("");
+  const [infoModalMessage, setInfoModalMessage] = useState("");
+
+  const showInfoModal = (title: string, message: string) => {
+    setInfoModalTitle(title);
+    setInfoModalMessage(message);
+    setInfoModalVisible(true);
+  };
+
+  const navService = new NavigationService(router);
 
   const inputs = useRef<(TextInput | null)[]>([]);
 
@@ -53,7 +65,7 @@ const ForgotPassword2 = () => {
         const response = await authService.sendOtp(sendOtp, email as string);
 
         if (!response.success) {
-          Alert.alert(
+          showInfoModal(
             "Error",
             response.message || "Failed to send OTP. Please try again.",
           );
@@ -62,11 +74,11 @@ const ForgotPassword2 = () => {
         }
 
         if (isResend) {
-          Alert.alert("Success", "OTP has been resent to your email.");
+          showInfoModal("Success", "OTP has been resent to your email.");
           setTimer(60);
         }
       } catch (err: any) {
-        Alert.alert("Error", err.message || "An unexpected error occurred.");
+        showInfoModal("Error", err.message || "An unexpected error occurred.");
       } finally {
         setLoading(false);
       }
@@ -134,7 +146,7 @@ const ForgotPassword2 = () => {
 
       if (!response.success) {
         setIsOtpInvalid(true);
-        Alert.alert("Error", "Invalid OTP. Please try again.");
+        showInfoModal("Error", "Invalid OTP. Please try again.");
         setLoading(false);
         return;
       }
@@ -150,18 +162,15 @@ const ForgotPassword2 = () => {
         await SecureStore.setItemAsync("forgotPasswordInProgress", "true");
         await signInWithTemporaryToken(token);
       } else {
-        Alert.alert("Error", "Something went wrong. Please try again.");
+        showInfoModal("Error", "Something went wrong. Please try again.");
         setLoading(false);
         return;
       }
 
-      router.push({
-        pathname: "/(auth)/forgetpassword/forgotPassword3",
-        params: { email },
-      });
+      navService.push(ROUTES.AUTH.FORGOT_PASSWORD.STEP_3, { email });
     } catch (error) {
       logger.error("Error verifying OTP:", error);
-      Alert.alert("Error", "Failed to verify OTP. Please try again.");
+      showInfoModal("Error", "Failed to verify OTP. Please try again.");
       setLoading(false);
     }
   };
@@ -236,7 +245,7 @@ const ForgotPassword2 = () => {
           <Text className="text-base text-gray-700 leading-normal">
             Didn't receive the code?{" "}
           </Text>
-          <TouchableOpacity
+          <DebouncedTouchableOpacity
             onPress={handleResendPress}
             disabled={timer > 0 || loading}
           >
@@ -247,7 +256,7 @@ const ForgotPassword2 = () => {
             >
               {loading && timer === 0 ? "Sending..." : "Resend code"}
             </Text>
-          </TouchableOpacity>
+          </DebouncedTouchableOpacity>
 
           {timer > 0 && (
             <Text className="ml-2 text-base text-gray-500">({timer}s)</Text>
@@ -256,7 +265,7 @@ const ForgotPassword2 = () => {
       </View>
 
       <View className="w-full">
-        <TouchableOpacity
+        <DebouncedTouchableOpacity
           onPress={handleNextPress}
           className={`w-full p-6 rounded-[12px] mt-2 flex items-center ${
             allFilled && !loading ? "bg-primary" : "bg-[#919191]"
@@ -266,8 +275,15 @@ const ForgotPassword2 = () => {
           <Text className="text-white text-xl font-bold">
             {loading ? "Loading..." : "Next"}
           </Text>
-        </TouchableOpacity>
+        </DebouncedTouchableOpacity>
       </View>
+
+      <InfoModal
+        isVisible={infoModalVisible}
+        title={infoModalTitle}
+        message={infoModalMessage}
+        onConfirm={() => setInfoModalVisible(false)}
+      />
     </View>
   );
 };

@@ -1,7 +1,8 @@
 import { typography } from "@/assets/fonts/Text";
+import { DebouncedTouchableOpacity } from "@/components/shared/debouncedTouchable";
 import { PlantedItemDTO } from "@/types/activity.dto";
 import React, { useState } from "react";
-import { Image, Text, TouchableOpacity, View } from "react-native";
+import { Image, Text, View } from "react-native";
 
 // In-extend natin para tanggapin ang eventType AT oldPlantName
 interface PlantItemProps {
@@ -94,7 +95,7 @@ export const PlantItem: React.FC<PlantItemProps> = ({ plants }) => {
   };
 
   return (
-    <TouchableOpacity
+    <DebouncedTouchableOpacity
       onPress={handlePress}
       disabled={isLoading}
       activeOpacity={0.7}
@@ -111,7 +112,7 @@ export const PlantItem: React.FC<PlantItemProps> = ({ plants }) => {
       </View>
 
       <View className="flex-1">{renderSentence()}</View>
-    </TouchableOpacity>
+    </DebouncedTouchableOpacity>
   );
 };
 

@@ -4,7 +4,8 @@ import RackItemSkeleton from "@/components/racks/skeleton/rackItemSkeleton";
 import useFetch from "@/hooks/useFetch";
 import { rackService } from "@/services/rackService";
 import { GetRackInfoDTO } from "@/types/rack.dto";
-import { router, useFocusEffect } from "expo-router";
+import { NavigationService, ROUTES } from "@/utils/navigationUtils";
+import { useFocusEffect, useRouter } from "expo-router";
 
 import React, { useCallback, useState } from "react";
 import { FlatList, Text, View } from "react-native";
@@ -19,6 +20,9 @@ type InactiveRackType = GetRackInfoDTO & {
 const PreviouslyOwned = () => {
   const [racks, setRacks] = useState<InactiveRackType[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const router = useRouter();
+  const navService = new NavigationService(router);
 
   const { refetch: getAllRacks } = useFetch("/racks", {
     method: "GET",
@@ -77,9 +81,12 @@ const PreviouslyOwned = () => {
     }, [fetchRacks]),
   );
 
-  const handleCardPress = useCallback((rackId: string) => {
-    router.push(`/(tabs)/(racks)/${rackId}` as any);
-  }, []);
+  const handleCardPress = useCallback(
+    (rackId: string) => {
+      navService.push(ROUTES.TABS.RACKS.DETAIL(rackId));
+    },
+    [navService],
+  );
 
   const renderRackItem = useCallback(
     ({ item }: { item: InactiveRackType }) => (

@@ -1,5 +1,6 @@
+import { DebouncedTouchableOpacity } from "@/components/shared/debouncedTouchable";
 import { useRef } from "react";
-import { Modal, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { Modal, ScrollView, Text, View } from "react-native";
 
 interface ConsentModalProps {
   visible: boolean;
@@ -279,16 +280,16 @@ export const ConsentModal = ({
           </ScrollView>
 
           <View className="flex-row justify-between mt-2">
-            <TouchableOpacity
+            <DebouncedTouchableOpacity
               className="flex-1 bg-gray-200 py-3 rounded-xl mr-2"
               onPress={onClose}
             >
               <Text className="text-center text-black font-semibold">
                 Decline
               </Text>
-            </TouchableOpacity>
+            </DebouncedTouchableOpacity>
 
-            <TouchableOpacity
+            <DebouncedTouchableOpacity
               className={`flex-1 py-3 rounded-xl ml-2 ${
                 hasScrolledToEnd ? "bg-primary" : "bg-gray-400"
               }`}
@@ -298,7 +299,7 @@ export const ConsentModal = ({
               <Text className="text-center text-white font-semibold">
                 Accept
               </Text>
-            </TouchableOpacity>
+            </DebouncedTouchableOpacity>
           </View>
         </View>
       </View>

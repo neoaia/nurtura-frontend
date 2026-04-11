@@ -4,16 +4,19 @@ import { typography } from "@/assets/fonts/Text";
 import { EmailInput } from "@/components/auth/emailInput";
 import { GoogleSignInButton } from "@/components/auth/googleSignInButton";
 import { PasswordInput } from "@/components/auth/passwordInput";
+import { InfoModal } from "@/components/modals/infoModal";
+import { DebouncedTouchableOpacity } from "@/components/shared/debouncedTouchable";
 import { Divider } from "@/components/shared/divider";
 import { PrimaryButton } from "@/components/shared/primaryButton";
 import { useAuth } from "@/contexts/AuthContext";
 import useFetch from "@/hooks/useFetch";
 import { authService } from "@/services/authService";
+import { NavigationService, ROUTES } from "@/utils/navigationUtils";
 import { cleanInput, validateEmail } from "@/utils/validation";
-import { router, useNavigation } from "expo-router";
+import { useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { useState } from "react";
-import { Alert, Image, Text, TouchableOpacity, View } from "react-native";
+import { Image, Text, View } from "react-native";
 import "../globals.css";
 
 export default function LoginScreen() {
@@ -24,8 +27,25 @@ export default function LoginScreen() {
   const [isLoginInvalid, setIsLoginInvalid] = useState(false);
   const [emailError, setEmailError] = useState<string>("");
 
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalTitle, setModalTitle] = useState("");
+  const [modalMessage, setModalMessage] = useState("");
+  const [onModalConfirm, setOnModalConfirm] = useState<() => void>(() => {});
+
+  const showModal = (
+    title: string,
+    message: string,
+    onConfirm: () => void = () => setModalVisible(false),
+  ) => {
+    setModalTitle(title);
+    setModalMessage(message);
+    setOnModalConfirm(() => onConfirm);
+    setModalVisible(true);
+  };
+
+  const router = useRouter();
+  const navService = new NavigationService(router);
   const { signIn, googleSignInAndVerify } = useAuth();
-  const navigation = useNavigation();
 
   const { refetch: checkNeedsOnboarding } = useFetch(
     "/auth/onboarding-status",
@@ -71,7 +91,7 @@ export default function LoginScreen() {
     const trimmedEmail = email.trim();
 
     if (!trimmedEmail || !password) {
-      Alert.alert("Error", "Please fill in all fields");
+      showModal("Error", "Please fill in all fields");
       return;
     }
 
@@ -82,13 +102,11 @@ export default function LoginScreen() {
       await signIn(trimmedEmail, password);
       await SecureStore.setItemAsync("user_email", trimmedEmail);
       await SecureStore.setItemAsync("auth_provider", "password");
-      router.replace("/(tabs)/(home)");
+      // Use replace to prevent back navigation to login
+      navService.replace(ROUTES.TABS.HOME.ROOT);
     } catch (error) {
       setIsLoginInvalid(true);
-      Alert.alert(
-        "Login Failed",
-        "Invalid email or password. Please try again.",
-      );
+      showModal("Login Failed", "Invalid email or password. Please try again.");
       console.log("Login error:", error);
     } finally {
       setLoading(false);
@@ -103,7 +121,7 @@ export default function LoginScreen() {
       const { userData } = await googleSignInAndVerify();
 
       if (!userData?.email) {
-        Alert.alert(
+        showModal(
           "Google Sign-In Failed",
           "Unable to retrieve your email from Google.",
         );
@@ -122,7 +140,10 @@ export default function LoginScreen() {
       const needsOnboarding = onboardingResponse.needsOnboarding;
 
       if (!onboardingResponse.success) {
-        Alert.alert("Unable to proceed with Google Sign-In. Please try again.");
+        showModal(
+          "Error",
+          "Unable to proceed with Google Sign-In. Please try again.",
+        );
         console.log(onboardingResponse.message);
         return;
       }
@@ -144,15 +165,14 @@ export default function LoginScreen() {
 
         await SecureStore.setItemAsync("fromGoogle", "true");
 
-        router.push({
-          pathname: "/(auth)/signup/createUserInfo",
-          params: { email },
-        });
+        // Use push to allow back navigation within signup flow
+        navService.push(ROUTES.AUTH.SIGNUP.CREATE_USER_INFO, { email });
       } else {
-        router.replace("/(tabs)/(home)");
+        // Use replace to prevent back to login after successful auth
+        navService.replace(ROUTES.TABS.HOME.ROOT);
       }
     } catch (error) {
-      Alert.alert(
+      showModal(
         "Google Sign-In Failed",
         "Unable to sign in with Google. Please try again.",
       );
@@ -163,7 +183,7 @@ export default function LoginScreen() {
   };
 
   const handleForgotPassword = () => {
-    router.push("/(auth)/forgetpassword/forgotPassword1");
+    navService.push(ROUTES.AUTH.FORGOT_PASSWORD.STEP_1);
   };
 
   return (
@@ -200,19 +220,22 @@ export default function LoginScreen() {
           </Text>
         )}
 
-        <Text
-          style={typography["subheader"]}
-          className="ml-2 mt-2 text-grayText"
-        >
-          Forgot password?{" "}
-          <Text
-            style={typography["subheader-bold"]}
-            className="text-primary underline"
-            onPress={handleForgotPassword}
-          >
-            Reset here.
+        <View className="ml-2 mt-2 flex-row flex-wrap items-center">
+          <Text style={typography["subheader"]} className="text-grayText">
+            Forgot password?{" "}
           </Text>
-        </Text>
+          <DebouncedTouchableOpacity
+            onPress={handleForgotPassword}
+            disabled={loading}
+          >
+            <Text
+              style={typography["subheader-bold"]}
+              className="text-primary underline"
+            >
+              Reset here.
+            </Text>
+          </DebouncedTouchableOpacity>
+        </View>
 
         <Divider />
 
@@ -220,8 +243,8 @@ export default function LoginScreen() {
       </View>
 
       <View className="absolute bottom-10 w-full">
-        <TouchableOpacity
-          onPress={() => navigation.navigate("signup" as never)}
+        <DebouncedTouchableOpacity
+          onPress={() => navService.push(ROUTES.AUTH.SIGNUP.ROOT)}
           className="mt-4 mb-5"
           disabled={loading}
         >
@@ -237,7 +260,7 @@ export default function LoginScreen() {
               Create one here.
             </Text>
           </Text>
-        </TouchableOpacity>
+        </DebouncedTouchableOpacity>
 
         <PrimaryButton
           onPress={handleLogin}
@@ -246,6 +269,16 @@ export default function LoginScreen() {
           title="Login"
         />
       </View>
+
+      <InfoModal
+        isVisible={modalVisible}
+        title={modalTitle}
+        message={modalMessage}
+        onConfirm={() => {
+          onModalConfirm();
+          setModalVisible(false);
+        }}
+      />
     </View>
   );
 }

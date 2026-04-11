@@ -1,18 +1,21 @@
+import { DebouncedTouchableOpacity } from "@/components/shared/debouncedTouchable";
 import React, {
     useCallback,
     useEffect,
     useLayoutEffect,
     useState,
 } from "react";
-import { Alert, ScrollView, TouchableOpacity, View } from "react-native";
+import { ScrollView, View } from "react-native";
 
 import CancelIcon from "@/assets/buttons/cancel.svg";
 import SaveIcon from "@/assets/buttons/save.svg";
 import EditIcon from "@/assets/images/icons/editIcon.svg";
+import { InfoModal } from "@/components/modals/infoModal";
 import { TextInputFieldSkeleton } from "@/components/shared/skeleton/textInputFieldSkeleton";
 import { TextInputField } from "@/components/shared/textInputField";
 import useFetch from "@/hooks/useFetch";
 import { rackService } from "@/services/rackService";
+import { cleanNameInput } from "@/utils/validation";
 import { useLocalSearchParams, useNavigation } from "expo-router";
 
 export default function EditRackName() {
@@ -25,6 +28,22 @@ export default function EditRackName() {
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalTitle, setModalTitle] = useState("");
+  const [modalMessage, setModalMessage] = useState("");
+  const [onModalConfirm, setOnModalConfirm] = useState<() => void>(() => {});
+
+  const showModal = (
+    title: string,
+    message: string,
+    onConfirm: () => void = () => setModalVisible(false),
+  ) => {
+    setModalTitle(title);
+    setModalMessage(message);
+    setOnModalConfirm(() => onConfirm);
+    setModalVisible(true);
+  };
 
   const { refetch: getRackInfo } = useFetch(`/racks/${rackId}`, {
     method: "GET",
@@ -53,7 +72,7 @@ export default function EditRackName() {
           setLoading(false);
         }
       } catch (error) {
-        Alert.alert("Error", "Failed to load rack information");
+        showModal("Error", "Failed to load rack information");
       }
     };
 
@@ -73,27 +92,36 @@ export default function EditRackName() {
 
   const handleSave = useCallback(async () => {
     if (!rackName.trim()) {
-      Alert.alert("Error", "Rack name cannot be empty");
+      showModal("Error", "Rack name cannot be empty");
       return;
     }
 
     setSaving(true);
     try {
-      const response = await rackService.updateRackbyId(updateRack, {
+      const updateData = {
         name: rackName.trim(),
         mqttTopic: rackData?.mqttTopic || "",
         description: rackData?.description || "",
-      });
+      };
+
+      console.log("Sending update data:", updateData);
+
+      const response = await rackService.updateRackbyId(updateRack, updateData);
 
       if (response) {
         setSavedRackName(rackName.trim());
         setIsEditing(false);
-        Alert.alert("Success", "Rack name updated successfully");
+        showModal("Success", "Rack name updated successfully", () => {
+          setIsEditing(false);
+          setModalVisible(false);
+        });
       }
     } catch (error) {
-      Alert.alert("Error", "Failed to update rack name");
+      console.error("Update error:", error);
+      showModal("Error", "Failed to update rack name");
     } finally {
       setSaving(false);
+      console.log("Updated rack name:", rackName.trim());
     }
   }, [rackName, rackData, updateRack]);
 
@@ -107,17 +135,17 @@ export default function EditRackName() {
       navigation.setOptions({
         headerRight: () => (
           <View className="flex-row items-center gap-4 pr-2">
-            <TouchableOpacity onPress={handleCancel} hitSlop={8}>
+            <DebouncedTouchableOpacity onPress={handleCancel} hitSlop={8}>
               <CancelIcon width={22} height={22} />
-            </TouchableOpacity>
+            </DebouncedTouchableOpacity>
             {hasChanges && (
-              <TouchableOpacity
+              <DebouncedTouchableOpacity
                 onPress={handleSave}
                 disabled={saving}
                 hitSlop={8}
               >
                 <SaveIcon width={22} height={22} />
-              </TouchableOpacity>
+              </DebouncedTouchableOpacity>
             )}
           </View>
         ),
@@ -125,17 +153,17 @@ export default function EditRackName() {
     } else {
       navigation.setOptions({
         headerRight: () => (
-          <TouchableOpacity
+          <DebouncedTouchableOpacity
             onPress={() => setIsEditing(true)}
             className="pr-2"
             hitSlop={8}
           >
             <EditIcon width={22} height={22} />
-          </TouchableOpacity>
+          </DebouncedTouchableOpacity>
         ),
       });
     }
-  }, [isEditing, loading, hasChanges, saving]);
+  }, [isEditing, loading, hasChanges, saving, handleCancel, handleSave]);
 
   return (
     <View className="flex-1 bg-white">
@@ -150,12 +178,22 @@ export default function EditRackName() {
           <TextInputField
             label="Rack Name"
             value={rackName}
-            onChangeText={setRackName}
+            onChangeText={(text) => setRackName(cleanNameInput(text))}
             editable={isEditing}
             placeholder="Enter rack name"
           />
         )}
       </ScrollView>
+
+      <InfoModal
+        isVisible={modalVisible}
+        title={modalTitle}
+        message={modalMessage}
+        onConfirm={() => {
+          onModalConfirm();
+          setModalVisible(false);
+        }}
+      />
     </View>
   );
 }

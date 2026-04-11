@@ -1,16 +1,14 @@
-import { router } from "expo-router";
+import { DebouncedTouchableOpacity } from "@/components/shared/debouncedTouchable";
+import { NavigationService, ROUTES } from "@/utils/navigationUtils";
+import { useRouter } from "expo-router";
 import React from "react";
-import { Image, Text, TouchableOpacity, View } from "react-native";
+import { Image, Text, View } from "react-native";
 import { typography } from "../../assets/fonts/Text";
 import { HighlightDTO } from "../../types/home.dto";
 
 interface HighlightProps extends HighlightDTO {
   onButtonPress?: () => void;
 }
-
-const onAddRackPress = () => {
-  router.push("/(tabs)/(add_pages)/(addNewRack)");
-};
 
 const OVERFLOW_AMOUNT = 20; // how many px the head pokes above the card
 
@@ -20,6 +18,11 @@ export const Highlight: React.FC<HighlightProps> = ({
   buttonText,
   onButtonPress,
 }) => {
+  const router = useRouter();
+  const navService = new NavigationService(router);
+  const handleButtonPress =
+    onButtonPress ?? (() => navService.push(ROUTES.TABS.ADD.RACK.STEP_1));
+
   return (
     <View className="mb-8 ">
       {/* Outer wrapper: gives room above for the image to bleed into */}
@@ -37,8 +40,8 @@ export const Highlight: React.FC<HighlightProps> = ({
               >
                 {description}
               </Text>
-              <TouchableOpacity
-                onPress={onAddRackPress}
+              <DebouncedTouchableOpacity
+                onPress={handleButtonPress}
                 className="bg-white rounded-lg py-3 px-6 self-start"
                 activeOpacity={0.8}
               >
@@ -48,7 +51,7 @@ export const Highlight: React.FC<HighlightProps> = ({
                 >
                   {buttonText}
                 </Text>
-              </TouchableOpacity>
+              </DebouncedTouchableOpacity>
             </View>
 
             {/* Character image — head bleeds into paddingTop zone */}

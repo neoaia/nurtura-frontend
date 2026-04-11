@@ -1,7 +1,8 @@
 import { typography } from "@/assets/fonts/Text";
 import UserIcon from "@/assets/images/icons/user.svg";
+import { DebouncedTouchableOpacity } from "@/components/shared/debouncedTouchable";
 import React from "react";
-import { Text, TouchableOpacity, View } from "react-native";
+import { Text, View } from "react-native";
 
 interface ProfileCardProps {
   name: string;
@@ -15,7 +16,7 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
   onPress,
 }) => {
   return (
-    <TouchableOpacity onPress={onPress} activeOpacity={0.7}>
+    <DebouncedTouchableOpacity onPress={onPress} activeOpacity={0.7}>
       <View className="w-full bg-white rounded-2xl py-5 px-6 flex-row items-center shadow-md elevation-3">
         <View className="w-14 h-14 bg-[#E9F2D9] rounded-2xl justify-center items-center">
           <UserIcon width={20} height={20} color="#86975A" />
@@ -30,6 +31,6 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
           </Text>
         </View>
       </View>
-    </TouchableOpacity>
+    </DebouncedTouchableOpacity>
   );
 };

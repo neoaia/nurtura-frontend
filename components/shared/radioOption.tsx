@@ -1,7 +1,8 @@
 import { typography } from "@/assets/fonts/Text";
 import PlantAddIcon from "@/assets/images/icons/plant(Add).svg";
+import { DebouncedTouchableOpacity } from "@/components/shared/debouncedTouchable";
 import React from "react";
-import { Text, TouchableOpacity, View } from "react-native";
+import { Text, View } from "react-native";
 
 interface RadioOptionProps {
   title: string;
@@ -17,7 +18,7 @@ export const RadioOption: React.FC<RadioOptionProps> = ({
   onPress,
 }) => {
   return (
-    <TouchableOpacity
+    <DebouncedTouchableOpacity
       onPress={onPress}
       className={`w-full flex justify-center items-start py-5 px-4 gap-1 border-[2px] rounded-2xl bg-white ${
         isSelected ? "border-primary" : "border-gray-200"
@@ -41,6 +42,6 @@ export const RadioOption: React.FC<RadioOptionProps> = ({
       >
         {description}
       </Text>
-    </TouchableOpacity>
+    </DebouncedTouchableOpacity>
   );
 };

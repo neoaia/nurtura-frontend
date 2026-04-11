@@ -1,20 +1,20 @@
 import { typography } from "@/assets/fonts/Text";
 import { BottomButton } from "@/components/shared/bottomButton";
+import { DebouncedTouchableOpacity } from "@/components/shared/debouncedTouchable";
 import { useBackWarning } from "@/hooks/shared/useBackWarning";
 import { bleManager } from "@/utils/bluetooth/bleManager";
 import * as IntentLauncher from "expo-intent-launcher";
 import { router, useFocusEffect } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
-  ActivityIndicator,
-  Alert,
-  FlatList,
-  Linking,
-  PermissionsAndroid,
-  Platform,
-  Text,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Alert,
+    FlatList,
+    Linking,
+    PermissionsAndroid,
+    Platform,
+    Text,
+    View,
 } from "react-native";
 import { State } from "react-native-ble-plx";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -33,7 +33,7 @@ export default function AddNewRack1() {
       return () => {
         try {
           bleManager.stopDeviceScan();
-        } catch (_) { }
+        } catch (_) {}
         setIsScanning(false);
       };
     }, []),
@@ -41,7 +41,7 @@ export default function AddNewRack1() {
 
   useEffect(() => {
     return () => {
-      bleManager.stopDeviceScan().catch(() => { });
+      bleManager.stopDeviceScan().catch(() => {});
     };
   }, []);
 
@@ -88,16 +88,16 @@ export default function AddNewRack1() {
 
     const allGranted =
       result["android.permission.BLUETOOTH_CONNECT"] ===
-      PermissionsAndroid.RESULTS.GRANTED &&
+        PermissionsAndroid.RESULTS.GRANTED &&
       result["android.permission.BLUETOOTH_SCAN"] ===
-      PermissionsAndroid.RESULTS.GRANTED;
+        PermissionsAndroid.RESULTS.GRANTED;
 
     if (!allGranted) {
       const permanentlyDenied =
         result["android.permission.BLUETOOTH_CONNECT"] ===
-        PermissionsAndroid.RESULTS.NEVER_ASK_AGAIN ||
+          PermissionsAndroid.RESULTS.NEVER_ASK_AGAIN ||
         result["android.permission.BLUETOOTH_SCAN"] ===
-        PermissionsAndroid.RESULTS.NEVER_ASK_AGAIN;
+          PermissionsAndroid.RESULTS.NEVER_ASK_AGAIN;
 
       if (permanentlyDenied) {
         Alert.alert(
@@ -263,21 +263,28 @@ export default function AddNewRack1() {
             ) : null
           }
           renderItem={({ item }) => (
-            <TouchableOpacity
+            <DebouncedTouchableOpacity
               onPress={() => connectToDevice(item)}
-              className="p-5 bg-gray-50 mb-3 rounded-2xl border border-gray-100 border-[2px] flex-row justify-between items-center"
+              className="p-5 bg-gray-50 mb-3 rounded-2xl border-gray-100 border-[2px] flex-row justify-between items-center"
             >
               <View className="flex-1 mr-2">
-                <Text className="text-black mb-1" style={typography["button-bold"]}>
+                <Text
+                  className="text-black mb-1"
+                  style={typography["button-bold"]}
+                >
                   {item.name || "Nurtura Rack"}
                 </Text>
-                <Text className="text-grayText" style={typography["subheader"]}>{item.id}</Text>
+                <Text className="text-grayText" style={typography["subheader"]}>
+                  {item.id}
+                </Text>
               </View>
 
               <View className="bg-primary w-[120px] py-3 rounded-xl items-center justify-center">
-                <Text style={typography["button-bold"]} className="text-white">Connect</Text>
+                <Text style={typography["button-bold"]} className="text-white">
+                  Connect
+                </Text>
               </View>
-            </TouchableOpacity>
+            </DebouncedTouchableOpacity>
           )}
         />
       </View>

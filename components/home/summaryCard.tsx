@@ -1,5 +1,6 @@
+import { DebouncedTouchableOpacity } from "@/components/shared/debouncedTouchable";
 import React from "react";
-import { Platform, Text, TouchableOpacity, View } from "react-native";
+import { Platform, Text, View } from "react-native";
 import { SvgProps } from "react-native-svg";
 
 import { typography } from "../../assets/fonts/Text";
@@ -52,7 +53,7 @@ export const SummaryCard: React.FC<SummaryCardProps> = ({
         const marginClass = index === 0 ? "mr-2" : "ml-2";
 
         return (
-          <TouchableOpacity
+          <DebouncedTouchableOpacity
             key={card.id}
             onPress={() => onCardPress(card.type)}
             className={`flex-1 bg-primary border border-primary rounded-2xl py-5 px-4 my-1 ${marginClass}`}
@@ -93,7 +94,7 @@ export const SummaryCard: React.FC<SummaryCardProps> = ({
             >
               {config.subtitle}
             </Text>
-          </TouchableOpacity>
+          </DebouncedTouchableOpacity>
         );
       })}
     </View>

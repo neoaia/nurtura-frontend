@@ -1,6 +1,7 @@
 import { typography } from "@/assets/fonts/Text";
+import { DebouncedTouchableOpacity } from "@/components/shared/debouncedTouchable";
 import React, { useState } from "react";
-import { ActivityIndicator, Text, TouchableOpacity } from "react-native";
+import { ActivityIndicator, Text } from "react-native";
 
 interface HollowButtonProps {
   onPress: () => void | Promise<void>;
@@ -18,7 +19,7 @@ const PlantFilterBtn = ({
   isActive = false,
 }: HollowButtonProps) => {
   const [isDebouncing, setIsDebouncing] = useState(false);
-  
+
   const isDisabled = loading || disabled || isDebouncing;
 
   const handlePress = async () => {
@@ -28,13 +29,12 @@ const PlantFilterBtn = ({
     try {
       await onPress();
     } finally {
-      
       setTimeout(() => setIsDebouncing(false), 400);
     }
   };
 
   return (
-    <TouchableOpacity
+    <DebouncedTouchableOpacity
       className={`px-4 py-3 rounded-xl border-[2px] ${
         isActive ? "bg-primary border-primary" : "bg-white border-primary"
       } ${isDisabled ? "opacity-60" : ""}`}
@@ -52,7 +52,7 @@ const PlantFilterBtn = ({
           {title}
         </Text>
       )}
-    </TouchableOpacity>
+    </DebouncedTouchableOpacity>
   );
 };
 

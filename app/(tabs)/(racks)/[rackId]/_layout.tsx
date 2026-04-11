@@ -1,13 +1,13 @@
 import { typography } from "@/assets/fonts/Text";
+import { DebouncedTouchableOpacity } from "@/components/shared/debouncedTouchable";
 import useFetch from "@/hooks/useFetch";
 import { rackService } from "@/services/rackService";
 import { Stack, router, useLocalSearchParams } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
-import { Image, TextStyle, TouchableOpacity, View } from "react-native";
+import { Image, TextStyle, View } from "react-native";
 
 export default function RackIDLayout() {
   const { rackId } = useLocalSearchParams<{ rackId: string }>();
-  const [isLoading, setIsLoading] = useState(false);
   const [rackName, setRackName] = useState("Loading..."); // Default text habang nagfe-fetch
 
   const { refetch: getRackInfo } = useFetch(`/racks/${rackId}`, {
@@ -39,22 +39,16 @@ export default function RackIDLayout() {
     return () => {
       isActive = false;
     };
-  }, [rackId]);
+  }, [rackId, getRackInfo]);
 
   const handleNavigation = useCallback(
     (pathname: string) => {
-      if (isLoading || !rackId) return;
-
-      setIsLoading(true);
-
       router.push({
         pathname: pathname as any,
         params: { rackId },
       });
-
-      setTimeout(() => setIsLoading(false), 500);
     },
-    [isLoading, rackId],
+    [rackId],
   );
 
   return (
@@ -79,25 +73,23 @@ export default function RackIDLayout() {
           headerTitleAlign: "left",
           headerRight: () => (
             <View className="flex-row items-center pr-2 gap-1">
-              <TouchableOpacity
+              <DebouncedTouchableOpacity
                 onPress={() =>
                   handleNavigation(`/(tabs)/(racks)/${rackId}/edit`)
                 }
-                disabled={isLoading}
                 activeOpacity={0.7}
-                className={`p-2 rounded-lg ${isLoading ? "opacity-50" : ""}`}
+                className="p-2 rounded-lg"
               >
                 <Image
                   source={require("@/assets/images/racks/edit.png")}
-                  className="w-5 h-5"
+                  className="w-6 h-6"
                   resizeMode="contain"
                 />
-              </TouchableOpacity>
+              </DebouncedTouchableOpacity>
             </View>
           ),
         }}
       />
-
       <Stack.Screen
         name="care"
         options={{ title: "Plant Care Activity", headerTitleAlign: "left" }}
