@@ -27,6 +27,7 @@ export interface HarvestSummaryDTO {
 export interface ActivityDTO {
   id: string;
   type: "water" | "light";
+  eventType: "WATERING_START" | "WATERING_STOP" | "LIGHT_ON" | "LIGHT_OFF";
   plantName: string;
   rackName: string;
   time: string;

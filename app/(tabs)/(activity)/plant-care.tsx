@@ -48,7 +48,6 @@ const isWithinDateRange = (
   return true;
 };
 
-/** Maps a raw AutomationActivity (from socket) to the local ActivityDTO shape. */
 const mapAutomationActivityToDTO = (
   activity: AutomationActivity,
 ): ActivityDTO => {
@@ -60,6 +59,7 @@ const mapAutomationActivityToDTO = (
   return {
     id: activity.id,
     type: isWater ? "water" : "light",
+    eventType: activity.eventType as ActivityDTO["eventType"], // ← add this
     plantName: activity.metadata?.ruleName || "Plants",
     rackName: activity.metadata?.rackName || "Unknown Rack",
     time: dateObj.toLocaleTimeString("en-US", {
@@ -67,9 +67,7 @@ const mapAutomationActivityToDTO = (
       minute: "2-digit",
     }),
     date: dateObj,
-    // waterUsedMl is present on WATERING_STOP; undefined for START events
     amount: activity.metadata?.waterUsedMl,
-    // durationSeconds is present on LIGHT_OFF; undefined otherwise
     duration: activity.metadata?.durationSeconds
       ? `${Math.round(activity.metadata.durationSeconds / 60)} mins`
       : undefined,
@@ -239,6 +237,7 @@ export default function PlantCareScreen() {
               <ActivityItem
                 id="tutorial-id"
                 type="water"
+                eventType="WATERING_STOP"
                 plantName="Basil - High Moisture Stop"
                 rackName="Kitchen Herb Rack"
                 time="5:04 PM"
@@ -333,6 +332,7 @@ export default function PlantCareScreen() {
       if (response?.data) {
         // FIX: Moved mappedData declaration outside .map() so console.log works correctly
         const mappedData: ActivityDTO[] = response.data.map((item: any) => {
+          console.log("item.metadata:", JSON.stringify(item.metadata));
           const dateObj = new Date(item.timestamp);
           const isWater =
             item.eventType?.includes("WATERING") ||
@@ -341,6 +341,7 @@ export default function PlantCareScreen() {
           return {
             id: item.id,
             type: (isWater ? "water" : "light") as "water" | "light",
+            eventType: item.eventType as ActivityDTO["eventType"], // ← add this
             plantName: item.metadata?.ruleName || "Plants",
             rackName:
               item.metadata?.rackName || item.rack?.name || "Unknown Rack",
@@ -349,10 +350,12 @@ export default function PlantCareScreen() {
               minute: "2-digit",
             }),
             date: dateObj,
-            amount: item.metadata?.amount,
-            duration: item.metadata?.duration
-              ? `${Math.round(item.metadata.duration / 60000)} mins`
-              : undefined,
+            amount: item.metadata?.waterUsedMl ?? item.metadata?.amount,
+            duration: item.metadata?.durationSeconds
+              ? `${Math.round(item.metadata.durationSeconds / 60)} mins`
+              : item.metadata?.duration
+                ? `${Math.round(item.metadata.duration / 60000)} mins`
+                : undefined,
           };
         });
         console.log("Fetched activities:", mappedData);
@@ -398,6 +401,7 @@ export default function PlantCareScreen() {
     const handleAutomationEvent = (data: any) => {
       // FIX: Handle both payload shapes — { event, activity } or the raw activity object directly
       const activity: AutomationActivity = data?.event.activity ?? data;
+      console.log("activity.metadata:", JSON.stringify(activity.metadata));
 
       // FIX: Guard against malformed/undefined payloads before accessing .timestamp
       if (!activity || !activity.timestamp) {

@@ -3,13 +3,65 @@ import { ActivityItem } from "@/components/activity/activityItem";
 import { ActivityButton } from "@/components/activity/sensorToggle";
 import { DateRangePicker } from "@/components/shared/datetimepicker";
 import useFetch from "@/hooks/useFetch";
+import { useSocket } from "@/hooks/useSocket";
 import { plantService } from "@/services/plantService";
 import { ActivityDTO } from "@/types/activity.dto";
+import { AutomationActivity } from "@/types/socket.interface";
 import { useLocalSearchParams } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
 import { RefreshControl, SectionList, Text, View } from "react-native";
 
 type ActivityWithDate = ActivityDTO & { date: Date };
+
+// ─── Helpers ────────────────────────────────────────────────────────────────
+
+/**
+ * Returns true when `date` falls within the [start, end] range.
+ * Null boundaries are treated as open-ended.
+ */
+const isWithinDateRange = (
+  date: Date,
+  range: { start: Date | null; end: Date | null },
+): boolean => {
+  if (
+    range.start &&
+    date < new Date(new Date(range.start).setHours(0, 0, 0, 0))
+  )
+    return false;
+  if (
+    range.end &&
+    date > new Date(new Date(range.end).setHours(23, 59, 59, 999))
+  )
+    return false;
+  return true;
+};
+
+/** Maps a raw AutomationActivity (from socket) to the local ActivityWithDate shape. */
+const mapAutomationActivityToDTO = (
+  activity: AutomationActivity,
+  rackName: string,
+): ActivityWithDate => {
+  const dateObj = new Date(activity.timestamp);
+  const isWater =
+    activity.eventType === "WATERING_START" ||
+    activity.eventType === "WATERING_STOP";
+
+  return {
+    id: activity.id,
+    type: isWater ? "water" : "light",
+    plantName: activity.metadata?.ruleName || "Plants",
+    rackName: activity.metadata?.rackName || rackName || "Unknown Rack",
+    time: dateObj.toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+    }),
+    date: dateObj,
+    amount: activity.metadata?.waterUsedMl,
+    duration: activity.metadata?.durationSeconds
+      ? `${Math.round(activity.metadata.durationSeconds / 60)} mins`
+      : undefined,
+  };
+};
 
 const groupActivitiesByDate = (data: ActivityWithDate[]) => {
   const groups: { [key: string]: ActivityWithDate[] } = {};
@@ -47,6 +99,8 @@ const groupActivitiesByDate = (data: ActivityWithDate[]) => {
   }));
 };
 
+// ─── Care ────────────────────────────────────────────────────────────────────
+
 const Care = () => {
   const { rackId, rackName } = useLocalSearchParams<{
     rackId: string;
@@ -57,20 +111,22 @@ const Care = () => {
   const [dateRange, setDateRange] = useState<{
     start: Date | null;
     end: Date | null;
-  }>({
-    start: null,
-    end: null,
-  });
+  }>({ start: null, end: null });
   const [activities, setActivities] = useState<ActivityWithDate[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
+  // ── Socket ────────────────────────────────────────────────────────────────
+  const { isConnected, socketService } = useSocket();
+
+  // ── HTTP fetcher ──────────────────────────────────────────────────────────
   const { refetch: getPlantCare } = useFetch("/racks/activities/plant-care", {
     method: "GET",
     autoFetch: false,
     withAuth: true,
   });
 
+  // ── HTTP: initial activity load ───────────────────────────────────────────
   const fetchActivities = useCallback(async () => {
     try {
       setLoading(true);
@@ -92,12 +148,9 @@ const Care = () => {
       });
 
       if (response?.data) {
-        // Tinanggal na ang .filter(...) para masama lahat ng activities
         const mappedData: ActivityWithDate[] = response.data.map(
           (item: any) => {
             const dateObj = new Date(item.timestamp);
-
-            // Mas flexible na checker para sa water events
             const isWater =
               item.eventType?.includes("WATERING") ||
               item.eventType?.includes("WATER");
@@ -132,17 +185,65 @@ const Care = () => {
     fetchActivities();
   }, [fetchActivities]);
 
+  // ── WebSocket: subscribe to this rack ─────────────────────────────────────
+  useEffect(() => {
+    if (!isConnected || !rackId) return;
+
+    socketService.subscribeToRack(rackId);
+
+    return () => {
+      socketService.unsubscribeFromRack(rackId);
+    };
+  }, [isConnected, rackId, socketService]);
+
+  // ── WebSocket: listen for new automation events ───────────────────────────
+  useEffect(() => {
+    const handleAutomationEvent = (data: any) => {
+      const activity: AutomationActivity = data?.event?.activity ?? data;
+
+      if (!activity || !activity.timestamp) {
+        console.warn("Received malformed automation event:", data);
+        return;
+      }
+
+      // Drop if the event belongs to a different rack
+      if (activity.rackId !== rackId) return;
+
+      const eventDate = new Date(activity.timestamp);
+
+      // Drop the event if it falls outside the current date filter
+      if (!isWithinDateRange(eventDate, dateRange)) return;
+
+      const newActivity = mapAutomationActivityToDTO(
+        activity,
+        rackName ?? "Unknown Rack",
+      );
+
+      setActivities((prev) => {
+        // Guard against duplicate events (e.g. after a reconnect)
+        if (prev.some((a) => a.id === newActivity.id)) return prev;
+        return [newActivity, ...prev];
+      });
+    };
+
+    socketService.on("automationEvent", handleAutomationEvent);
+    return () => socketService.off("automationEvent", handleAutomationEvent);
+  }, [dateRange, rackId, rackName, socketService]);
+
+  // ── Pull-to-refresh ───────────────────────────────────────────────────────
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await fetchActivities();
     setRefreshing(false);
   }, [fetchActivities]);
 
+  // ── Derived data ──────────────────────────────────────────────────────────
   const filteredActivities = activities.filter(
     (item) => item.type === activeTab,
   );
   const sections = groupActivitiesByDate(filteredActivities);
 
+  // ── Render ────────────────────────────────────────────────────────────────
   return (
     <SectionList
       sections={sections}

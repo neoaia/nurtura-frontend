@@ -37,9 +37,7 @@ export interface AutomationActivity {
     source: string;
     ruleId: string;
     ruleName: string;
-    /** Present on WATERING_STOP events */
     waterUsedMl?: number;
-    /** Present on LIGHT_OFF events */
     durationSeconds?: number;
   };
   timestamp: Date | string;

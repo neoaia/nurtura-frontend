@@ -8,6 +8,7 @@ import { PlantStatusIndicatorsSkeleton } from "@/components/racks/skeleton/plant
 import { BottomButton } from "@/components/shared/bottomButton";
 import { DebouncedTouchableOpacity } from "@/components/shared/debouncedTouchable";
 import { MenuCard } from "@/components/shared/menubtn";
+import { MenuCardSkeleton } from "@/components/shared/skeleton/menuCardSkeleton";
 import { SmallDescriptionSkeleton } from "@/components/shared/skeleton/smallDescriptionSkeleton";
 import SmallDescription from "@/components/shared/smallDescription";
 import useFetch from "@/hooks/useFetch";
@@ -292,7 +293,6 @@ const RackInfo = () => {
               resizeMode="cover"
             />
           </View>
-
           {/* Plant name + seed count */}
           {loading ? (
             <View className="w-full flex-row justify-between items-start mb-6 px-2 gap-4">
@@ -327,7 +327,6 @@ const RackInfo = () => {
               </View>
             </View>
           )}
-
           {/* Sensor readings — independent sa loading, hintay lang ng reading */}
           <View className="flex-row gap-3 mb-6">
             {reading === null ? (
@@ -353,7 +352,6 @@ const RackInfo = () => {
               </>
             )}
           </View>
-
           {/* Date planted + recommended soil */}
           <View className="flex-col gap-8 mt-6 mb-8 pl-2">
             {loading ? (
@@ -384,36 +382,43 @@ const RackInfo = () => {
               </>
             )}
           </View>
-
           {/* Menu cards */}
-          <View className="flex-col gap-3 mb-8">
-            <MenuCard
-              title="Plant Care Activity"
-              description="Logs based on watering and grow light activity."
-              icon={PlantCareIcon}
-              iconSize={25}
-              onPress={() =>
-                router.push({
-                  pathname: `/(tabs)/(racks)/${rackId}/care` as any,
-                  params: { rackName },
-                })
-              }
-            />
-            <MenuCard
-              title="Harvest Activity"
-              description="Records of your past harvests for this plant."
-              icon={PlantIcon}
-              onPress={() =>
-                router.push({
-                  pathname: `/(tabs)/(racks)/${rackId}/harvest-history` as any,
-                  params: {
-                    rackName,
-                    plantId: activePlant?.plant?.id ?? "",
-                  },
-                })
-              }
-            />
-          </View>
+          {loading ? (
+            <View className="flex-col gap-3 mb-8">
+              <MenuCardSkeleton />
+              <MenuCardSkeleton />
+            </View>
+          ) : (
+            <View className="flex-col gap-3 mb-8">
+              <MenuCard
+                title="Plant Care Activity"
+                description="Logs based on watering and grow light activity."
+                icon={PlantCareIcon}
+                iconSize={25}
+                onPress={() =>
+                  router.push({
+                    pathname: `/(tabs)/(racks)/${rackId}/care` as any,
+                    params: { rackName },
+                  })
+                }
+              />
+              <MenuCard
+                title="Harvest Activity"
+                description="Records of your past harvests for this plant."
+                icon={PlantIcon}
+                onPress={() =>
+                  router.push({
+                    pathname:
+                      `/(tabs)/(racks)/${rackId}/harvest-history` as any,
+                    params: {
+                      rackName,
+                      plantId: activePlant?.plant?.id ?? "",
+                    },
+                  })
+                }
+              />
+            </View>
+          )}
         </ScrollView>
 
         <BottomButton
