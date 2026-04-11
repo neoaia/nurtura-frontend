@@ -1,4 +1,5 @@
 import { typography } from "@/assets/fonts/Text";
+import NuriWaving from "@/assets/nuri/Nuri_waving.svg";
 import { RecentActivityBarSkeleton } from "@/components/home/skeleton/recentActivityBarSkeleton";
 import { SummaryCardSkeleton } from "@/components/home/skeleton/summaryCardSkeleton";
 import { OnboardingTutorialModal } from "@/components/onboarding/tutorialModal";
@@ -27,6 +28,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import ActiveNotificationIcon from "../../../assets/images/icons/home/active_notification.svg";
 import InactiveNotificationIcon from "../../../assets/images/icons/home/inactive_notification.svg";
+
 import { Highlight } from "../../../components/home/highlight";
 import { RecentActivityBar } from "../../../components/home/recentActivityBar";
 import { SummaryCard } from "../../../components/home/summaryCard";
@@ -80,6 +82,9 @@ export default function HomeScreen() {
 
   // ── Tutorial Logic ─────────────────────────────────────────────────────────
   const { shouldShow, tutorialStep, handleNextStep } = useOnboarding("home", 5);
+  const handleSkip = () => {
+    handleNextStep();
+  };
 
   const getTutorialContent = (step: number) => {
     switch (step) {
@@ -87,7 +92,7 @@ export default function HomeScreen() {
         return {
           title: `Hi ${displayName}, Let's Start Growing!`,
           desc: "I'm so excited for you to begin your smart garden journey. Let's grow together!",
-          image: require("@/assets/nuri/waving.png"),
+          image: NuriWaving,
           position: { bottom: 0, right: -70 },
           offset: 300,
         };
@@ -384,6 +389,7 @@ export default function HomeScreen() {
         <OnboardingTutorialModal
           visible={shouldShow}
           onClose={handleNextStep}
+          onSkip={handleSkip}
           title={currentTutorial.title}
           subtitle={currentTutorial.desc}
           topOffset={currentTutorial.offset}

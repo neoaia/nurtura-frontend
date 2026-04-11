@@ -68,6 +68,9 @@ export default function AccountScreen() {
     "account",
     2,
   );
+  const handleSkip = () => {
+    handleNextStep();
+  };
 
   const getTutorialContent = (step: number) => {
     switch (step) {
@@ -75,7 +78,7 @@ export default function AccountScreen() {
         return {
           title: "User Profile",
           desc: "Access your personal account details, preferences, and security settings.",
-          image: require("@/assets/nuri/pointing-down.png"),
+          image: "",
           position: { bottom: 290, right: -50 },
           offset: screenHeight - 300,
           component: (
@@ -207,6 +210,7 @@ export default function AccountScreen() {
         <OnboardingTutorialModal
           visible={shouldShow}
           onClose={handleNextStep}
+          onSkip={handleSkip}
           title={currentTutorial.title}
           subtitle={currentTutorial.desc}
           topOffset={currentTutorial.offset}

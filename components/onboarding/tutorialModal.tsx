@@ -6,6 +6,7 @@ import { Image, Modal, Text, View } from "react-native";
 interface OnboardingModalProps {
   visible: boolean;
   onClose: () => void;
+  onSkip: () => void;
   title?: string;
   subtitle?: string;
   footerText?: string;
@@ -23,6 +24,7 @@ interface OnboardingModalProps {
 export const OnboardingTutorialModal = ({
   visible,
   onClose,
+  onSkip,
   title,
   subtitle,
   footerText = "Tap to continue",
@@ -31,14 +33,37 @@ export const OnboardingTutorialModal = ({
   characterImage,
   characterPosition = { bottom: 0, right: 0 },
 }: OnboardingModalProps) => {
+  const isSvg = typeof characterImage === "function";
+
   return (
     <Modal visible={visible} transparent={true} animationType="fade">
-      <DebouncedTouchableOpacity
-        className="absolute inset-0 bg-black/60 flex-1"
-        onPress={onClose}
-      >
-        <View className="flex-1 justify-start px-5">
-          <View style={{ marginTop: topOffset }} className="shadow-lg">
+      <View className="flex-1 bg-black/60">
+        
+        <DebouncedTouchableOpacity
+          className="absolute inset-0"
+          onPress={onClose}
+          activeOpacity={1}
+        />
+
+        <View className="absolute top-12 right-6 z-50">
+          <DebouncedTouchableOpacity onPress={onSkip} className="p-2">
+            <View className="bg-white rounded-[16px] p-4 shadow-xl">
+              <Text
+                style={typography["button-bold"]}
+                className="text-[#2D2D2D] text-lg"
+              >
+                Skip this one
+              </Text>
+            </View>
+          </DebouncedTouchableOpacity>
+        </View>
+
+        <View className="flex-1 justify-start px-5" pointerEvents="box-none">
+          <View 
+            style={{ marginTop: topOffset }} 
+            className="shadow-lg"
+            pointerEvents="none" 
+          >
             <View className="bg-white rounded-[24px] overflow-hidden">
               {children}
             </View>
@@ -71,13 +96,22 @@ export const OnboardingTutorialModal = ({
           style={characterPosition}
           pointerEvents="none"
         >
-          <Image
-            source={characterImage || require("@/assets/nuri/waving.png")}
-            className="w-[345px] h-[345px]"
-            resizeMode="contain"
-          />
+          {isSvg ? (
+            <View style={{ width: 345, height: 345 }}>
+              {React.createElement(characterImage, {
+                width: "100%",
+                height: "100%",
+              })}
+            </View>
+          ) : (
+            <Image
+              source={characterImage || require("@/assets/nuri/waving.png")}
+              className="w-[345px] h-[345px]"
+              resizeMode="contain"
+            />
+          )}
         </View>
-      </DebouncedTouchableOpacity>
+      </View>
     </Modal>
   );
 };
