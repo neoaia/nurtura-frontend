@@ -190,7 +190,7 @@ export default function PlantingScreen() {
               <PlantChart
                 title="Planting"
                 data={chartDataForTutorial}
-                yLabels={["15", "10", "5", "0"]}
+                yLabels={[]}
                 tooltipLabel="seeds"
                 chartWidth={screenWidth - 48}
                 chartColor="#86975A"

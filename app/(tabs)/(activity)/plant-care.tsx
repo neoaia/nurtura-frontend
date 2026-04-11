@@ -97,7 +97,7 @@ const ListHeader: React.FC<ListHeaderProps> = ({
           <PlantChart
             title="Watering"
             data={waterChartData}
-            yLabels={["200ml", "150ml", "100ml", "50ml", "0ml"]}
+            yLabels={[]}
             tooltipLabel="mL"
             chartWidth={screenWidth - 48}
             chartColor="#5EA3B4"
@@ -106,7 +106,7 @@ const ListHeader: React.FC<ListHeaderProps> = ({
           <PlantChart
             title="Grow Light"
             data={lightChartData}
-            yLabels={["15min", "10min", "5min", "1min", "0min"]}
+            yLabels={[]}
             tooltipLabel="min"
             chartWidth={screenWidth - 48}
             chartColor="#EAE793"

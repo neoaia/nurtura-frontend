@@ -30,6 +30,29 @@ export const PlantChart = ({
 
   const xLabels = getXAxisDates();
 
+  // dynamic y-labels
+  const getDynamicYLabels = () => {
+    const maxValue = data.length > 0 ? Math.max(...data.map((d) => d.value)) : 10;
+    const ceilMax = Math.ceil(maxValue / 5) * 5;
+
+    const steps = [
+      ceilMax,
+      Math.round(ceilMax * 0.66),
+      Math.round(ceilMax * 0.33),
+      0,
+    ];
+
+    return steps.map((val) => {
+      if (tooltipLabel === "mL") return `${val}ml`;
+      if (tooltipLabel === "min") return `${val}m`;
+      if (tooltipLabel === "seeds") return `${val}`; 
+      return val.toString(); 
+    });
+  };
+
+  const labelsToDisplay =
+    yLabels && yLabels.length > 0 ? yLabels : getDynamicYLabels();
+
   return (
     <View className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 mb-4 w-full">
       <Text
@@ -42,7 +65,7 @@ export const PlantChart = ({
       <View className="flex-row">
         {/* Y-Axis */}
         <View className="justify-between pr-3 pb-12 pt-2">
-          {yLabels.map((label, index) => (
+          {labelsToDisplay.map((label, index) => (
             <Text
               key={index}
               style={typography["label"]}
