@@ -60,7 +60,7 @@ const mapAutomationActivityToDTO = (
     id: activity.id,
     type: isWater ? "water" : "light",
     eventType: activity.eventType as ActivityDTO["eventType"], // ← add this
-    plantName: activity.metadata?.ruleName || "Plants",
+    plantName: activity.metadata?.plantName || "Plants",
     rackName: activity.metadata?.rackName || "Unknown Rack",
     time: dateObj.toLocaleTimeString("en-US", {
       hour: "2-digit",
@@ -491,9 +491,12 @@ export default function PlantCareScreen() {
           />
         }
         ListEmptyComponent={() => (
-          <View className="items-center mt-10">
-            <Text style={typography["label"]} className="text-gray-400">
-              {loading ? "Loading..." : `No ${activeTab} activities found.`}
+          <View className="items-center mt-10 px-6">
+            <Text
+              style={typography["subheader"]}
+              className="text-grayText text-center"
+            >
+              {loading ? "Loading harvests..." : "No harvests found."}
             </Text>
           </View>
         )}

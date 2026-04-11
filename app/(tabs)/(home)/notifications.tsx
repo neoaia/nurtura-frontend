@@ -182,7 +182,10 @@ export default function NotificationScreen() {
   if (!loading && notifications.length === 0) {
     return (
       <View className="flex-1 bg-white items-center justify-center px-6">
-        <Text className="text-grayText text-center">
+        <Text
+          style={typography["subheader"]}
+          className="text-grayText text-center"
+        >
           You have no notifications yet.
         </Text>
       </View>

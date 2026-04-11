@@ -1,6 +1,8 @@
 import { handleRequest } from "@/utils/request";
 import {
+  CheckUnreadNotificationsResponseDTO,
   MarkReadAllNotificationsResponseDTO,
+  MarkReadNotificationResponseDTO,
   NotificationsResponseDTO,
 } from "../types/notification.dto";
 
@@ -17,6 +19,25 @@ export const notificationService = {
   ): Promise<MarkReadAllNotificationsResponseDTO> {
     return handleRequest<MarkReadAllNotificationsResponseDTO>(
       "Marking all notifications as read",
+      () => refetch(),
+    );
+  },
+
+  async markReadNotification(
+    refetch: any,
+    notificationId: string,
+  ): Promise<MarkReadNotificationResponseDTO> {
+    return handleRequest<MarkReadNotificationResponseDTO>(
+      "Marking notification as read",
+      () => refetch({ url: `/notifications/${notificationId}/read` }),
+    );
+  },
+
+  async checkForUnreadNotifications(
+    refetch: any,
+  ): Promise<CheckUnreadNotificationsResponseDTO> {
+    return handleRequest<CheckUnreadNotificationsResponseDTO>(
+      "Checking for unread notifications",
       () => refetch(),
     );
   },

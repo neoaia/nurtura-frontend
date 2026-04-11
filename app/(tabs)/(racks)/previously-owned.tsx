@@ -102,9 +102,12 @@ const PreviouslyOwned = () => {
 
   const renderEmpty = useCallback(
     () => (
-      <View className="flex-1 justify-center items-center py-20">
-        <Text style={typography["button-bold"]} className="text-grayText mb-2">
-          No previously owned racks
+      <View className="flex-1 bg-white items-center justify-center px-6">
+        <Text
+          style={typography["subheader"]}
+          className="text-grayText text-center"
+        >
+          You have no notifications yet.
         </Text>
       </View>
     ),

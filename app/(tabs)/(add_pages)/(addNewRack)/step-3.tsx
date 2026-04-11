@@ -386,7 +386,10 @@ export default function AddNewRack3() {
         </View>
 
         {loading && (
-          <Text className="text-gray-500 text-center mt-4">
+          <Text
+            style={typography["label"]}
+            className="text-grayText text-center mt-4"
+          >
             Testing connection... This may take up to 30 seconds.
           </Text>
         )}

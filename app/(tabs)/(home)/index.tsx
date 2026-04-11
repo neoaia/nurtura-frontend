@@ -3,19 +3,23 @@ import { RecentActivityBarSkeleton } from "@/components/home/skeleton/recentActi
 import { SummaryCardSkeleton } from "@/components/home/skeleton/summaryCardSkeleton";
 import { OnboardingTutorialModal } from "@/components/onboarding/tutorialModal";
 import { DebouncedTouchableOpacity } from "@/components/shared/debouncedTouchable";
+import type { DropdownOption } from "@/components/shared/dropdown";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAsyncState } from "@/hooks/useAsyncState";
 import useFetch from "@/hooks/useFetch";
 import { useOnboarding } from "@/hooks/useOnboarding";
+import { useSocket } from "@/hooks/useSocket";
+import { notificationService } from "@/services/notificationService";
 import { plantService } from "@/services/plantService";
 import { rackService } from "@/services/rackService";
 import { userService } from "@/services/userService";
+import { ActivityDTO } from "@/types/activity.dto";
 import { UserDetails } from "@/types/interface";
-import { Notification } from "@/types/socket.interface";
+import { AutomationActivity, Notification } from "@/types/socket.interface";
 import { NavigationService, ROUTES } from "@/utils/navigationUtils";
 import { socketService } from "@/utils/websocket/socket";
 import { useFocusEffect, useRouter } from "expo-router";
-import React, { useCallback, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   Dimensions,
   Image,
@@ -42,6 +46,36 @@ const mockApiResponse = {
   },
 };
 
+// ─── Helper ───────────────────────────────────────────────────────────────────
+
+const mapAutomationActivityToDTO = (
+  activity: AutomationActivity,
+): ActivityDTO => {
+  const dateObj = new Date(activity.timestamp);
+  const isWater =
+    activity.eventType === "WATERING_START" ||
+    activity.eventType === "WATERING_STOP";
+
+  return {
+    id: activity.id,
+    type: isWater ? "water" : "light",
+    eventType: activity.eventType as ActivityDTO["eventType"],
+    plantName: activity.metadata?.ruleName || "Plants",
+    rackName: activity.metadata?.rackName || "Unknown Rack",
+    time: dateObj.toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+    }),
+    date: dateObj,
+    amount: activity.metadata?.waterUsedMl,
+    duration: activity.metadata?.durationSeconds
+      ? `${Math.round(activity.metadata.durationSeconds / 60)} mins`
+      : undefined,
+  };
+};
+
+// ─── HomeScreen ───────────────────────────────────────────────────────────────
+
 export default function HomeScreen() {
   const { user } = useAuth();
   const router = useRouter();
@@ -50,11 +84,14 @@ export default function HomeScreen() {
   const [highlight] = useState(mockApiResponse.highlight);
   const [hasUnread, setHasUnread] = useState(false);
   const displayName = userInfo.firstName || "User";
+  const subscribedRackIdsRef = useRef<string[]>([]);
+
+  // ── Socket ─────────────────────────────────────────────────────────────────
+  const { isConnected, socketService: hookSocketService } = useSocket();
 
   // ── Socket Handler ─────────────────────────────────────────────────────────
   const onUserNotification = useRef(
     (data: { notification: Notification; timestamp: string }) => {
-      // Kung may bagong notification at unread ito, mag-a-update ang bell icon sa real-time
       if (!data.notification.isRead) {
         setHasUnread(true);
       }
@@ -68,7 +105,6 @@ export default function HomeScreen() {
     try {
       await socketService.connect(user.token);
 
-      // Idempotent registration
       socketService.off("userNotification", onUserNotification);
       socketService.on("userNotification", onUserNotification);
 
@@ -207,7 +243,10 @@ export default function HomeScreen() {
     loading: isActivityLoading,
     setData: setRecentActivity,
     setLoading: setActivityLoading,
-  } = useAsyncState<any[]>([]);
+  } = useAsyncState<ActivityDTO[]>([]);
+
+  const [rackOptions, setRackOptions] = useState<DropdownOption[]>([]);
+  const recentActivityRef = useRef<ActivityDTO[]>([]);
 
   // ── useFetch hooks ─────────────────────────────────────────────────────────
   const { refetch: getUserInfo } = useFetch("/users", {
@@ -236,6 +275,55 @@ export default function HomeScreen() {
     autoFetch: false,
     withAuth: true,
   });
+
+  const { refetch: fetchRacks } = useFetch("/racks", {
+    method: "GET",
+    autoFetch: false,
+    withAuth: true,
+  });
+
+  const { refetch: checkUnreadNotifications } = useFetch(
+    "/notifications/has-unread",
+    {
+      method: "GET",
+      autoFetch: false,
+      withAuth: true,
+    },
+  );
+
+  const fetchUnreadStatus = useCallback(async () => {
+    try {
+      const response = await notificationService.checkForUnreadNotifications(
+        checkUnreadNotifications,
+      );
+      setHasUnread(response?.hasUnread ?? false);
+    } catch {
+      // silently fail — websocket will keep it updated
+    }
+  }, [checkUnreadNotifications]);
+
+  // ── Load rack list ──────────────────────────────────────────────────────────
+  const loadRacks = useCallback(async () => {
+    try {
+      const response = await rackService.getAllUserRack(fetchRacks);
+      if (response?.data) {
+        const options: DropdownOption[] = response.data
+          .filter((rack: any) => rack.isActive)
+          .map((rack: any) => ({
+            id: rack.id,
+            label: rack.name,
+            value: rack.id,
+          }));
+        setRackOptions(options);
+      }
+    } catch (e) {
+      console.error("Failed to load racks:", e);
+    }
+  }, [fetchRacks]);
+
+  useEffect(() => {
+    loadRacks();
+  }, [loadRacks]);
 
   // ── Fetch logic ────────────────────────────────────────────────────────────
   const fetchUserInfo = useCallback(async () => {
@@ -269,7 +357,7 @@ export default function HomeScreen() {
           isActive: true,
         },
       ]);
-    } catch (err) {
+    } catch {
       setSummary([]);
     }
   }, [fetchRackCount, fetchPlantedQuantity, setSummaryLoading, setSummary]);
@@ -282,37 +370,108 @@ export default function HomeScreen() {
         { page: 1, limit: 3 },
       );
       if (careResponse?.data) {
-        const activities = careResponse.data.slice(0, 3).map((item: any) => ({
-          id: item.id,
-          type: item.eventType.includes("WATERING") ? "water" : "light",
-          plant: item.metadata?.ruleName || "Plants",
-          timestamp: new Date(item.timestamp).toLocaleTimeString([], {
-            hour: "2-digit",
-            minute: "2-digit",
-          }),
-        }));
-        setRecentActivity(activities);
+        const mapped: ActivityDTO[] = careResponse.data
+          .slice(0, 3)
+          .map((item: any) => {
+            const dateObj = new Date(item.timestamp);
+            const isWater = item.eventType?.includes("WATERING");
+            return {
+              id: item.id,
+              type: (isWater ? "water" : "light") as "water" | "light",
+              eventType: item.eventType as ActivityDTO["eventType"],
+              plantName: item.metadata?.ruleName ?? "Plants",
+              rackName: item.metadata?.rackName ?? "Unknown Rack",
+              time: dateObj.toLocaleTimeString("en-US", {
+                hour: "2-digit",
+                minute: "2-digit",
+              }),
+              date: dateObj,
+              amount: item.metadata?.waterUsedMl,
+              duration: item.metadata?.durationSeconds
+                ? `${Math.round(item.metadata.durationSeconds / 60)} mins`
+                : undefined,
+            };
+          });
+        setRecentActivity(mapped);
+        recentActivityRef.current = mapped;
       }
-    } catch (err) {
+    } catch {
       setRecentActivity([]);
     }
   }, [getPlantCare, setActivityLoading, setRecentActivity]);
+
+  // ── WebSocket: subscribe to all racks ─────────────────────────────────────
+  useEffect(() => {
+    if (!isConnected) return;
+
+    subscribedRackIdsRef.current.forEach((id) =>
+      hookSocketService.unsubscribeFromRack(id),
+    );
+
+    // No rack filter on home — subscribe to all racks
+    const idsToSubscribe = rackOptions.map((r) => r.value);
+
+    idsToSubscribe.forEach((id) => hookSocketService.subscribeToRack(id));
+    subscribedRackIdsRef.current = idsToSubscribe;
+
+    return () => {
+      subscribedRackIdsRef.current.forEach((id) =>
+        hookSocketService.unsubscribeFromRack(id),
+      );
+      subscribedRackIdsRef.current = [];
+    };
+  }, [isConnected, hookSocketService, rackOptions]);
+
+  // ── WebSocket: listen for new automation events ────────────────────────────
+  useEffect(() => {
+    const handleAutomationEvent = (data: any) => {
+      // FIX: Handle both payload shapes — { event, activity } or the raw activity object directly
+      const activity: AutomationActivity = data?.event.activity ?? data;
+      console.log("[HomeScreen] Received automation event:", {
+        payload: data,
+        extracted: activity,
+      });
+
+      // FIX: Guard against malformed/undefined payloads before accessing .timestamp
+      if (!activity || !activity.timestamp) {
+        console.warn("[HomeScreen] Received malformed automation event:", data);
+        return;
+      }
+
+      const newActivity = mapAutomationActivityToDTO(activity);
+
+      const prev = recentActivityRef.current;
+      if (prev.some((a: ActivityDTO) => a.id === newActivity.id)) {
+        console.log("[HomeScreen] Duplicated event, skipping");
+        return;
+      }
+      const updated = [newActivity, ...prev].slice(0, 3);
+      recentActivityRef.current = updated;
+      setRecentActivity(updated);
+      console.log("[HomeScreen] Added new activity, total:", updated.length);
+    };
+
+    hookSocketService.on("automationEvent", handleAutomationEvent);
+    return () =>
+      hookSocketService.off("automationEvent", handleAutomationEvent);
+  }, [hookSocketService, setRecentActivity]);
 
   // ── Focus Effect ───────────────────────────────────────────────────────────
   useFocusEffect(
     useCallback(() => {
       fetchUserInfo();
+      fetchUnreadStatus();
       fetchSummary();
       fetchActivity();
       setupSocket();
 
       return () => {
-        // Cleanup socket pag umalis sa screen
         socketService.off("userNotification", onUserNotification);
         socketService.unsubscribeFromUserNotifications();
       };
     }, [
       fetchUserInfo,
+      fetchUnreadStatus,
       fetchSummary,
       fetchActivity,
       setupSocket,
@@ -322,7 +481,6 @@ export default function HomeScreen() {
 
   // ── Handlers ───────────────────────────────────────────────────────────────
   const handleNotificationPress = () => {
-    // Tanggalin ang alert optimistically at mag-navigate
     setHasUnread(false);
     navService.push(ROUTES.TABS.HOME.NOTIFICATIONS);
   };

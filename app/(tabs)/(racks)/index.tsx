@@ -15,12 +15,12 @@ import { socketService } from "@/utils/websocket/socket";
 import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-    Dimensions,
-    FlatList,
-    Image,
-    RefreshControl,
-    Text,
-    View,
+  Dimensions,
+  FlatList,
+  Image,
+  RefreshControl,
+  Text,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import ArchiveButton from "../../../assets/buttons/archive.svg";
@@ -380,24 +380,16 @@ export default function RacksScreen() {
         renderItem={renderRackItem}
         keyExtractor={(item) => item.id}
         ListHeaderComponent={renderHeader}
-        ListFooterComponent={renderFooter}
+        ListFooterComponent={error ? null : renderFooter}
         ListEmptyComponent={
           error ? (
-            <View className="flex-1 justify-center items-center py-20 gap-4">
+            <View className="items-center my-10 px-6">
               <Text
-                style={typography["button-bold"]}
+                style={typography["subheader"]}
                 className="text-grayText text-center"
               >
-                Something went wrong
+                Something went wrong.
               </Text>
-              <DebouncedTouchableOpacity
-                onPress={handleRetry}
-                className="bg-primary px-6 py-3 rounded-xl"
-              >
-                <Text style={typography["button"]} className="text-white">
-                  Retry
-                </Text>
-              </DebouncedTouchableOpacity>
             </View>
           ) : null
         }

@@ -230,7 +230,7 @@ const RackInfo = () => {
   if (!loading && !activePlant?.plant) {
     return (
       <View className="flex-1 bg-white justify-center items-center px-8">
-        <Text style={typography["h2-bold"]} className="text-black mb-2">
+        <Text style={typography["subheader-bold"]} className="text-black mb-2">
           No plant yet!
         </Text>
         <Text

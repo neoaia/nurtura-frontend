@@ -1,6 +1,10 @@
 import { typography } from "@/assets/fonts/Text";
+import { InfoModal } from "@/components/modals/infoModal";
+import { DebouncedTouchableOpacity } from "@/components/shared/debouncedTouchable";
+import useFetch from "@/hooks/useFetch";
+import { notificationService } from "@/services/notificationService";
 import { NotificationItemDTO } from "@/types/notification.dto";
-import React from "react";
+import React, { useState } from "react";
 import { Text, View } from "react-native";
 
 import DisconnectedIcon from "../../assets/images/icons/disconnected.svg";
@@ -10,12 +14,22 @@ import WarningIcon from "../../assets/images/icons/warning(notif).svg";
 import WaterIcon from "../../assets/images/icons/watered(Activity).svg";
 
 export const NotificationItem: React.FC<NotificationItemDTO> = ({
+  id,
   type,
   title,
   message,
-  status,
+  status: initialStatus,
   createdAt,
 }) => {
+  const [modalVisible, setModalVisible] = useState(false);
+  const [status, setStatus] = useState(initialStatus);
+
+  const { refetch: markRead } = useFetch(`/notifications/${id}/read`, {
+    method: "PATCH",
+    autoFetch: false,
+    withAuth: true,
+  });
+
   const getIconByType = () => {
     switch (type) {
       case "ALERT":
@@ -61,40 +75,66 @@ export const NotificationItem: React.FC<NotificationItemDTO> = ({
     return `${days}d ago`;
   };
 
+  const handlePress = async () => {
+    setModalVisible(true);
+
+    // Only call the endpoint if still unread
+    if (status === "UNREAD") {
+      try {
+        await notificationService.markReadNotification(markRead, id);
+        setStatus("READ");
+      } catch (err) {
+        console.error("Failed to mark notification as read:", err);
+      }
+    }
+  };
+
   const Icon = getIconByType();
   const isUnread = status === "UNREAD";
 
   return (
-    <View
-      // Idinagdag ang 'px-4' class dito
-      className={`px-4 w-full flex-row items-center min-h-[84px] mb-4 ${
-        isUnread ? "bg-[#f0f5e7]" : "bg-white"
-      }`}
-    >
-      {/* ── Icon box ──────────────────────────────────────────────────────── */}
-      <View
-        style={getBoxStyle()}
-        className="w-12 h-12 mr-4 rounded-xl items-center justify-center"
+    <>
+      <DebouncedTouchableOpacity
+        onPress={handlePress}
+        activeOpacity={0.7}
+        className={`px-4 w-full flex-row items-center min-h-[84px] mb-4 ${
+          isUnread ? "bg-[#f0f5e7]" : "bg-white"
+        }`}
       >
-        {Icon && <Icon width={16} height={16} />}
-      </View>
-      {/* ── Content — sentence format ─────────────────────────────────────── */}
-      <View className="flex-1">
-        <Text
-          style={typography["subheader"]}
-          className="text-gray-700 leading-5"
+        {/* ── Icon box ──────────────────────────────────────────────────── */}
+        <View
+          style={getBoxStyle()}
+          className="w-12 h-12 mr-4 rounded-xl items-center justify-center"
         >
-          <Text style={typography["subheader-bold"]} className="text-black">
-            {title}
-          </Text>{" "}
-          {"- "}
-          {message}{" "}
-          <Text style={typography["subheader"]} className="text-grayText">
-            {getRelativeTime(createdAt)}
+          {Icon && <Icon width={16} height={16} />}
+        </View>
+
+        {/* ── Content ───────────────────────────────────────────────────── */}
+        <View className="flex-1">
+          <Text
+            style={typography["subheader"]}
+            className="text-gray-700 leading-5"
+          >
+            <Text style={typography["subheader-bold"]} className="text-black">
+              {title}
+            </Text>{" "}
+            {"- "}
+            {message}{" "}
+            <Text style={typography["subheader"]} className="text-grayText">
+              {getRelativeTime(createdAt)}
+            </Text>
           </Text>
-        </Text>
-      </View>
-    </View>
+        </View>
+      </DebouncedTouchableOpacity>
+
+      <InfoModal
+        isVisible={modalVisible}
+        title={title}
+        message={message}
+        confirmText="OK"
+        onConfirm={() => setModalVisible(false)}
+      />
+    </>
   );
 };
 

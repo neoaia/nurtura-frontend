@@ -35,6 +35,8 @@ export interface AutomationActivity {
     rackName: string;
     macAddress: string;
     source: string;
+    plantId: string;
+    plantName: string;
     ruleId: string;
     ruleName: string;
     waterUsedMl?: number;
