@@ -340,7 +340,7 @@ const CreateAccount = () => {
   return (
     <SafeAreaView className="flex-1 bg-white" edges={["bottom"]}>
       <View className="flex-1 p-6">
-        <Text style={typography["h1-bold"]} className="mt-4 mb-2 text-black">
+        <Text style={typography["h1-bold"]} className="mt-4 mb-4 text-black">
           Create your account
         </Text>
 

@@ -1,55 +1,24 @@
-/* eslint-disable react/no-unescaped-entities */
-
 import { typography } from "@/assets/fonts/Text";
-import { EmailInput } from "@/components/auth/emailInput";
-import { GoogleSignInButton } from "@/components/auth/googleSignInButton";
-import { ConsentModal } from "@/components/auth/modal/consentModal";
+import { PasswordInput } from "@/components/auth/passwordInput";
 import { InfoModal } from "@/components/modals/infoModal";
-import { Checkbox } from "@/components/shared/checkbox";
-import { Divider } from "@/components/shared/divider";
 import { PrimaryButton } from "@/components/shared/primaryButton";
-import { useAuth } from "@/contexts/AuthContext";
-import useFetch from "@/hooks/useFetch";
-import { authService } from "@/services/authService";
 import { createLogger } from "@/utils/logger";
 import { NavigationService, ROUTES } from "@/utils/navigationUtils";
-import { cleanInput, validateEmail } from "@/utils/validation";
-import { useFocusEffect } from "@react-navigation/native";
-import { router } from "expo-router";
+import { isStrongPassword, validatePassword } from "@/utils/validation";
+import { router, useLocalSearchParams } from "expo-router";
 import * as SecureStore from "expo-secure-store";
-import { useCallback, useEffect, useState } from "react";
-import { Alert, BackHandler, Text, View } from "react-native";
+import { useEffect, useState } from "react";
+import { Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import "../../globals.css";
 
-const logger = createLogger("CreateAccount");
+const logger = createLogger("CreatePassword");
 
-const USER_INFO_STORAGE_KEY = "temp_user_info";
-const SSO_INFO_STORAGE_KEY = "sso_temp_user_info";
-
-const STORAGE_KEYS = [
-  USER_INFO_STORAGE_KEY,
-  SSO_INFO_STORAGE_KEY,
-  "signup_email",
-  "verified_email",
-  "signup_password",
-  "signup_confirm_password",
-  "fromGoogle",
-  "firebaseToken",
-];
-
-const CreateAccount = () => {
-  const [email, setEmail] = useState("");
-  const [isCheckedTS, setIsCheckedTS] = useState(false);
-  const [isCheckedPP, setIsCheckedPP] = useState(false);
-  const [isEmailValid, setIsEmailValid] = useState(false);
+const CreatePassword = () => {
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [emailError, setEmailError] = useState("");
-  const [isFirstMount, setIsFirstMount] = useState(true);
-  const [showConsentModal, setShowConsentModal] = useState(false);
-  const [currentConsentType, setCurrentConsentType] = useState<
-    "TS" | "PP" | null
-  >(null);
   const [infoModalVisible, setInfoModalVisible] = useState(false);
   const [infoModalTitle, setInfoModalTitle] = useState("");
   const [infoModalMessage, setInfoModalMessage] = useState("");
@@ -61,361 +30,159 @@ const CreateAccount = () => {
   };
 
   const navService = new NavigationService(router);
-  const [hasScrolledToEnd, setHasScrolledToEnd] = useState(false);
 
-  const { googleSignInAndVerify } = useAuth();
+  const isPasswordValid = isStrongPassword(password);
+  const isConfirmPasswordValid = isStrongPassword(confirmPassword);
+  const passwordsMatch = password === confirmPassword;
 
-  const isNextButtonEnabled = email.length > 0 && isEmailValid;
-  const isGoogleButtonEnabled = isCheckedTS && isCheckedPP;
+  const { email } = useLocalSearchParams();
 
-  const { refetch: checkEmailExists } = useFetch("/users/exists", {
-    method: "GET",
-    autoFetch: false,
-    withAuth: false,
-  });
+  const isNextButtonEnabled =
+    password.length > 0 &&
+    confirmPassword.length > 0 &&
+    validatePassword(password) &&
+    validatePassword(confirmPassword) &&
+    password === confirmPassword;
 
-  const { refetch: checkNeedsOnboarding } = useFetch(
-    "/auth/onboarding-status",
-    {
-      method: "GET",
-      autoFetch: false,
-      withAuth: false,
-    },
-  );
-
-  const handleEmailChange = (value: string) => {
-    const cleanText = cleanInput(value);
-    setEmail(cleanText);
-
-    if (cleanText.trim() === "") {
-      setEmailError("");
-      setIsEmailValid(false);
-      return;
-    }
-
-    if (validateEmail(cleanText)) {
-      setEmailError("");
-      setIsEmailValid(true);
-    } else {
-      setEmailError("Email is invalid");
-      setIsEmailValid(false);
-    }
+  const togglePasswordVisibility = () => {
+    setIsPasswordVisible((prev) => !prev);
   };
 
-  const handleCheckboxToggleTS = () => {
-    if (!isCheckedTS) {
-      setCurrentConsentType("TS");
-      setShowConsentModal(true);
-    } else {
-      setIsCheckedTS(false);
-    }
+  const handlePasswordChange = (text: string) => {
+    setPassword(text.replace(/\s/g, ""));
   };
 
-  const handleCheckboxTogglePP = () => {
-    if (!isCheckedPP) {
-      setCurrentConsentType("PP");
-      setShowConsentModal(true);
-    } else {
-      setIsCheckedPP(false);
-    }
-  };
-
-  const handleConsentAccept = () => {
-    logger.log(`Consent accepted: ${currentConsentType}`);
-    if (currentConsentType === "TS") setIsCheckedTS(true);
-    if (currentConsentType === "PP") setIsCheckedPP(true);
-    setHasScrolledToEnd(false);
-    setShowConsentModal(false);
-  };
-
-  const handleConsentDecline = () => {
-    logger.log(`Consent declined: ${currentConsentType}`);
-    setHasScrolledToEnd(false);
-    setShowConsentModal(false);
+  const handleConfirmPasswordChange = (text: string) => {
+    setConfirmPassword(text.replace(/\s/g, ""));
   };
 
   const handleNextPress = async () => {
     logger.log("Next button pressed");
-
-    if (!isNextButtonEnabled) {
-      logger.warn("Next button disabled - invalid email");
-      setEmailError("Email is invalid");
-      return;
-    }
-
-    if (!isCheckedTS || !isCheckedPP) {
-      logger.warn("Terms not accepted", { isCheckedTS, isCheckedPP });
-      showInfoModal(
-        "Terms Required",
-        "Please agree to the Terms of Service and Privacy Policy to continue.",
-      );
-      return;
-    }
-
     setLoading(true);
 
-    try {
-      const savedEmail = await SecureStore.getItemAsync("signup_email");
-      const verifiedEmail = await SecureStore.getItemAsync("verified_email");
-      logger.debug("Storage check", { savedEmail, verifiedEmail });
-
-      if (savedEmail && savedEmail !== email) {
-        logger.log("Email changed, clearing related storage");
-        await Promise.all([
-          SecureStore.deleteItemAsync(USER_INFO_STORAGE_KEY),
-          SecureStore.deleteItemAsync("signup_password"),
-          SecureStore.deleteItemAsync("signup_confirm_password"),
-          SecureStore.deleteItemAsync("verified_email"),
-          SecureStore.deleteItemAsync("fromGoogle"),
-        ]);
-      }
-
-      await SecureStore.setItemAsync("signup_email", email);
-      await SecureStore.setItemAsync("fromGoogle", "false");
-
-      if (verifiedEmail === email) {
-        logger.log("Email already verified, navigating to createPassword");
-        navService.push(ROUTES.AUTH.SIGNUP.CREATE_PASSWORD);
-        return;
-      }
-
-      const emailResponse = await authService.emailAvailable(
-        checkEmailExists,
-        email,
-      );
-
-      if (!emailResponse.success) {
-        showInfoModal("Error", "Unable to verify email. Please try again.");
-        return;
-      }
-
-      if (!emailResponse.available) {
-        showInfoModal(
-          "Error",
-          "This email is already registered. Please use a different email.",
-        );
-        return;
-      }
-
-      logger.log("Navigating to emailOTP");
-      await SecureStore.setItemAsync("signup_email", email);
-      navService.push(ROUTES.AUTH.SIGNUP.EMAIL_OTP, { email });
-    } catch (error) {
-      logger.error("Unexpected error in handleNextPress", error);
-      showInfoModal("Error", "An unexpected error occurred. Please try again.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleGooglePress = async () => {
-    logger.log("Google Sign-In button pressed");
-
-    if (!isGoogleButtonEnabled || loading) {
-      logger.warn("Google button disabled", { isGoogleButtonEnabled, loading });
-      return;
-    }
-
-    setLoading(true);
-
-    try {
-      logger.log("Clearing previous SSO storage");
-      await Promise.all([
-        SecureStore.deleteItemAsync(USER_INFO_STORAGE_KEY),
-        SecureStore.deleteItemAsync(SSO_INFO_STORAGE_KEY),
-      ]);
-
-      logger.log("Starting Google Sign-In flow");
-      const { userData } = await googleSignInAndVerify();
-
-      if (!userData?.email) {
-        logger.warn("No email returned from Google");
-        showInfoModal(
-          "Error",
-          "Failed to retrieve email from Google. Please try again.",
-        );
-        return;
-      }
-
-      const email = userData.email.trim().toLowerCase();
-      logger.debug("Google user data", {
-        email,
-        firstName: userData.firstName,
-        lastName: userData.lastName,
-      });
-
-      const onboardingResponse = await authService.onboardingStatus(
-        checkNeedsOnboarding,
-        email,
-      );
-
-      if (!onboardingResponse.success) {
-        showInfoModal(
-          "Error",
-          "Unable to proceed with Google Sign-In. Please try again.",
-        );
-        return;
-      }
-
-      if (onboardingResponse.needsOnboarding) {
-        logger.log("User needs onboarding, saving SSO data");
-        const userInfoFromGoogle = {
-          email: userData.email ?? "",
-          firstName: userData.firstName ?? "",
-          lastName: userData.lastName ?? "",
-          token: userData.token ?? "",
-        };
-
-        await SecureStore.setItemAsync(
-          SSO_INFO_STORAGE_KEY,
-          JSON.stringify(userInfoFromGoogle),
-        );
-        await SecureStore.setItemAsync("fromGoogle", "true");
-
-        logger.log("Navigating to createUserInfo");
+    if (passwordsMatch && isPasswordValid && isConfirmPasswordValid) {
+      try {
+        logger.log("Password validation passed, navigating to createUserInfo");
         navService.push(ROUTES.AUTH.SIGNUP.CREATE_USER_INFO, { email });
-      } else {
-        logger.log("User already onboarded, navigating to home");
-        navService.replace(ROUTES.TABS.HOME.ROOT);
+      } catch (error: any) {
+        logger.error("Error during navigation", error);
+        showInfoModal("Error", "Unable to reset password. Please try again.");
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      logger.error("Error during Google Sign-In", error);
-      showInfoModal("Error", "An unexpected error occurred. Please try again.");
-    } finally {
+    } else {
+      logger.warn("Password validation failed", {
+        passwordsMatch,
+        isPasswordValid,
+        isConfirmPasswordValid,
+      });
+      showInfoModal("Invalid Password", "Please check your inputs again.");
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    const loadSavedEmail = async () => {
-      if (!isFirstMount) {
-        logger.debug("Loading saved email from storage");
-        const savedEmail = await SecureStore.getItemAsync("signup_email");
-        if (savedEmail) {
-          logger.log(`Loaded saved email: ${savedEmail}`);
-          setEmail(savedEmail);
-          const isValid = validateEmail(savedEmail);
-          setIsEmailValid(isValid);
-          if (!isValid) {
-            setEmailError("Email is invalid");
-          } else {
-            setEmailError("");
-          }
-        }
-      }
-    };
-    loadSavedEmail();
-  }, [isFirstMount]);
-
-  useFocusEffect(
-    useCallback(() => {
-      const backAction = () => {
-        logger.log("Back button pressed");
-        Alert.alert("Go back?", "Your progress will be deleted and cleared.", [
-          { text: "Cancel", style: "cancel" },
-          {
-            text: "Yes",
-            style: "destructive",
-            onPress: async () => {
-              logger.log("Clearing all storage and navigating back");
-              await Promise.all(
-                STORAGE_KEYS.map((key) => SecureStore.deleteItemAsync(key)),
-              );
-              navService.goBack();
-            },
-          },
-        ]);
-        return true;
-      };
-
-      const backHandler = BackHandler.addEventListener(
-        "hardwareBackPress",
-        backAction,
+    const loadPasswords = async () => {
+      logger.debug("Loading saved passwords from storage");
+      const savedPassword = await SecureStore.getItemAsync("signup_password");
+      const savedConfirm = await SecureStore.getItemAsync(
+        "signup_confirm_password",
       );
 
-      return () => backHandler.remove();
-    }, []),
-  );
+      if (savedPassword || savedConfirm) {
+        logger.log("Restored saved passwords from storage");
+        if (savedPassword) setPassword(savedPassword);
+        if (savedConfirm) setConfirmPassword(savedConfirm);
+      }
+    };
+    loadPasswords();
+  }, []);
+
+  useEffect(() => {
+    const savePasswords = async () => {
+      await SecureStore.setItemAsync("signup_password", password);
+      await SecureStore.setItemAsync(
+        "signup_confirm_password",
+        confirmPassword,
+      );
+    };
+    savePasswords();
+  }, [password, confirmPassword]);
 
   return (
     <SafeAreaView className="flex-1 bg-white" edges={["bottom"]}>
       <View className="flex-1 p-6">
-        <Text style={typography["h1-bold"]} className="text-black mt-4 mb-2">
-          Create your account
+        <Text style={typography["h1-bold"]} className="mt-4 mb-2">
+          Set your password
         </Text>
 
-        <EmailInput
-          value={email}
-          onChangeText={handleEmailChange}
-          error={emailError}
-        />
+        <Text
+          style={typography["subheader"]}
+          className="mb-6 text-black leading-normal"
+        >
+          Enter a secure password to protect your account.
+        </Text>
 
-        <Divider />
+        <View className="w-full mb-2">
+          <PasswordInput
+            value={password}
+            onChangeText={handlePasswordChange}
+            isVisible={isPasswordVisible}
+            onToggleVisibility={togglePasswordVisibility}
+            hasError={password.length > 0 && !isPasswordValid}
+            label="Set password"
+          />
 
-        <GoogleSignInButton
-          onPress={handleGooglePress}
-          disabled={!isGoogleButtonEnabled || loading}
-        />
+          {!isPasswordValid && password.length > 0 && (
+            <Text
+              style={typography["subheader"]}
+              className="text-[#E65656] mb-2"
+            >
+              Password must have 8+ chars, uppercase, number & symbol.
+            </Text>
+          )}
+        </View>
+
+        <View className="w-full mb-6">
+          <PasswordInput
+            value={confirmPassword}
+            onChangeText={handleConfirmPasswordChange}
+            isVisible={isPasswordVisible}
+            onToggleVisibility={togglePasswordVisibility}
+            hasError={
+              confirmPassword.length > 0 &&
+              (!passwordsMatch || !isConfirmPasswordValid)
+            }
+            label="Confirm password"
+          />
+
+          {!passwordsMatch && confirmPassword.length > 0 && (
+            <Text
+              style={typography["subheader"]}
+              className="text-[#E65656] mb-2"
+            >
+              Passwords do not match.
+            </Text>
+          )}
+
+          {!isConfirmPasswordValid &&
+            confirmPassword.length > 0 &&
+            passwordsMatch && (
+              <Text
+                style={typography["subheader"]}
+                className="text-[#E65656] mb-2"
+              >
+                Password must have 8+ chars, uppercase, number & symbol.
+              </Text>
+            )}
+        </View>
       </View>
 
       <View className="px-6 pb-9">
-        <Checkbox
-          checked={isCheckedTS}
-          onPress={handleCheckboxToggleTS}
-          label={
-            <Text
-              style={typography["label"]}
-              className="text-black text-justify"
-            >
-              I have read and agreed to all terms and conditions set with
-              Nurtura's{" "}
-              <Text
-                onPress={() => {
-                  setCurrentConsentType("TS");
-                  setShowConsentModal(true);
-                }}
-                style={typography["label-bold"]}
-                className="text-primary"
-              >
-                Terms of Service
-              </Text>
-              .
-            </Text>
-          }
-        />
-
-        <View className="mb-4 mt-3">
-          <Checkbox
-            checked={isCheckedPP}
-            onPress={handleCheckboxTogglePP}
-            label={
-              <>
-                <Text
-                  style={typography["label"]}
-                  className="text-black text-justify"
-                >
-                  I acknowledge and agree to Nurtura's{" "}
-                  <Text
-                    onPress={() => {
-                      setCurrentConsentType("PP");
-                      setShowConsentModal(true);
-                    }}
-                    style={typography["label-bold"]}
-                    className="text-primary"
-                  >
-                    Privacy Policy
-                  </Text>
-                  {""} regarding the collection and use of my personal data.
-                </Text>
-              </>
-            }
-          />
-        </View>
-
         <PrimaryButton
           onPress={handleNextPress}
           loading={loading}
-          disabled={!isNextButtonEnabled || loading}
+          disabled={!isNextButtonEnabled}
           title="Next"
         />
       </View>
@@ -426,17 +193,8 @@ const CreateAccount = () => {
         message={infoModalMessage}
         onConfirm={() => setInfoModalVisible(false)}
       />
-
-      <ConsentModal
-        visible={showConsentModal}
-        onClose={handleConsentDecline}
-        onAccept={handleConsentAccept}
-        type={currentConsentType}
-        hasScrolledToEnd={hasScrolledToEnd}
-        onScrollEnd={() => setHasScrolledToEnd(true)}
-      />
     </SafeAreaView>
   );
 };
 
-export default CreateAccount;
+export default CreatePassword;
