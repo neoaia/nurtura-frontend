@@ -15,6 +15,7 @@ import { useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import React, { useEffect, useState } from "react";
 import { ScrollView, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const logger = createLogger("ChangePassword2");
 
@@ -146,18 +147,14 @@ export default function ChangePassword2() {
   };
 
   return (
-    <View className="flex-1 bg-white">
-      <ScrollView
-        className="flex-1 px-4"
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingTop: 34 }}
-      >
-        <Text style={typography["h1-bold"]} className="text-black mb-3 pl-2">
+    <SafeAreaView className="flex-1 bg-white" edges={["bottom"]}>
+      <ScrollView className="flex-1 p-6" showsVerticalScrollIndicator={false}>
+        <Text style={typography["h1-bold"]} className="text-black mt-4 mb-2">
           Set new password
         </Text>
         <Text
           style={typography["subheader"]}
-          className="pl-2 mb-6 text-black leading-normal"
+          className="mb-6 text-black leading-normal"
         >
           Enter a secure password to protect your account.
         </Text>
@@ -171,7 +168,7 @@ export default function ChangePassword2() {
               borderColor={getPasswordStrengthColor(password)}
             />
             {!isPasswordValid && password.length > 0 && (
-              <Text className="text-[#E65656] text-[13px] mt-1 pl-2">
+              <Text className="text-[#E65656] text-[13px] mt-1">
                 Password must have 8+ chars, uppercase, number & symbol.
               </Text>
             )}
@@ -191,14 +188,14 @@ export default function ChangePassword2() {
               }
             />
             {!passwordsMatch && confirmPassword.length > 0 && (
-              <Text className="text-[#E65656] text-[13px] mt-1 pl-2">
+              <Text className="text-[#E65656] text-[13px] mt-1">
                 Passwords do not match.
               </Text>
             )}
             {passwordsMatch &&
               confirmPassword.length > 0 &&
               !isConfirmPasswordValid && (
-                <Text className="text-[#E65656] text-[13px] mt-1 pl-2">
+                <Text className="text-[#E65656] text-[13px] mt-1">
                   Password must have 8+ chars, uppercase, number & symbol.
                 </Text>
               )}
@@ -206,19 +203,20 @@ export default function ChangePassword2() {
         </View>
       </ScrollView>
 
-      <View className="px-4 pb-9">
+      <View className="px-6 pb-9">
         <PrimaryButton
           title={loading ? "Updating..." : "Finish"}
           onPress={handleNextPress}
           disabled={!isNextButtonEnabled || loading}
         />
       </View>
+
       <InfoModal
         isVisible={infoModalVisible}
         title={infoModalTitle}
         message={infoModalMessage}
         onConfirm={() => setInfoModalVisible(false)}
       />
-    </View>
+    </SafeAreaView>
   );
 }

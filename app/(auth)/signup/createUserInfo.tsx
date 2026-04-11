@@ -17,6 +17,7 @@ import * as SecureStore from "expo-secure-store";
 import { useEffect, useState } from "react";
 import { Text, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const USER_INFO_STORAGE_KEY = "temp_user_info";
 const SSO_INFO_STORAGE_KEY = "sso_temp_user_info";
@@ -148,17 +149,6 @@ const CreateUserInfo = () => {
 
       console.log("Creating account with details:", userDetails);
 
-      // const response = await createAccount({
-      //   body: { ...userDetails }
-      // });
-
-      // if (response.error) {
-      //   console.error("Error creating account:", response.error);
-      //   Alert.alert("Error", "Failed to create account.");
-      //   setLoading(false);
-      //   return;
-      // }
-
       const response = await authService.createAccount(
         createAccount,
         userDetails,
@@ -275,23 +265,22 @@ const CreateUserInfo = () => {
   }, [firstName, middleName, lastName, suffix, block, street, barangay, city]);
 
   return (
-    <View className="flex-1 bg-white">
+    <SafeAreaView className="flex-1 bg-white" edges={["bottom"]}>
       <KeyboardAwareScrollView
-        className="flex-1"
-        contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 34 }}
+        className="flex-1 p-6"
         showsVerticalScrollIndicator={false}
         extraScrollHeight={100}
         enableOnAndroid={true}
         extraHeight={135}
         keyboardShouldPersistTaps="handled"
       >
-        <Text style={typography["h1-bold"]} className="text-black mb-3 pl-2">
+        <Text style={typography["h1-bold"]} className="text-black mt-4 mb-2">
           Let us know you!
         </Text>
 
         <Text
           style={typography["subheader"]}
-          className=" text-black mb-6 pl-2 leading-normal"
+          className="mb-6 text-black leading-normal"
         >
           {fromGoogle === "true"
             ? "We've pre-filled your info from Google. Please complete the missing fields."
@@ -301,7 +290,7 @@ const CreateUserInfo = () => {
         <View className="mb-2">
           <Text
             style={typography["button-bold"]}
-            className="text-black tracking-wide mb-3 pl-2"
+            className="text-black tracking-wide mb-3"
           >
             Personal Information
           </Text>
@@ -343,7 +332,7 @@ const CreateUserInfo = () => {
         <View className="mb-6">
           <Text
             style={typography["button-bold"]}
-            className="text-black tracking-wide mb-3 pl-2"
+            className="text-black tracking-wide mb-3"
           >
             Address
           </Text>
@@ -388,7 +377,7 @@ const CreateUserInfo = () => {
         </View>
       </KeyboardAwareScrollView>
 
-      <View className="px-4 pb-8 pt-4 bg-white border-t border-gray-100">
+      <View className="px-6 pb-9 pt-4 bg-white border-t border-gray-100">
         <PrimaryButton
           onPress={handleSubmitUserInfo}
           loading={loading}
@@ -406,7 +395,7 @@ const CreateUserInfo = () => {
           setModalVisible(false);
         }}
       />
-    </View>
+    </SafeAreaView>
   );
 };
 

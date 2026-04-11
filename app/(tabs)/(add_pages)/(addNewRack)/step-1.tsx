@@ -7,14 +7,14 @@ import * as IntentLauncher from "expo-intent-launcher";
 import { router, useFocusEffect } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
-    ActivityIndicator,
-    Alert,
-    FlatList,
-    Linking,
-    PermissionsAndroid,
-    Platform,
-    Text,
-    View,
+  ActivityIndicator,
+  Alert,
+  FlatList,
+  Linking,
+  PermissionsAndroid,
+  Platform,
+  Text,
+  View,
 } from "react-native";
 import { State } from "react-native-ble-plx";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -228,7 +228,7 @@ export default function AddNewRack1() {
   return (
     <SafeAreaView className="flex-1 bg-white" edges={["bottom"]}>
       <View className="flex-1 p-6">
-        <Text style={typography["h1-bold"]} className="mt-10 mb-2">
+        <Text style={typography["h1-bold"]} className="text-black mt-4 mb-2">
           Find your Rack
         </Text>
         <Text style={typography["subheader"]} className="mb-6">

@@ -19,6 +19,7 @@ import { router } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { useCallback, useEffect, useState } from "react";
 import { Alert, BackHandler, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import "../../globals.css";
 
 const logger = createLogger("CreateAccount");
@@ -337,9 +338,9 @@ const CreateAccount = () => {
   );
 
   return (
-    <View className="flex-1 bg-white px-4 pb-8 w-screen justify-between h-screen">
-      <View className="mt-[34px] flex-1 items-start">
-        <Text style={typography["h1-bold"]} className="text-black mb-6 pl-2">
+    <SafeAreaView className="flex-1 bg-white" edges={["bottom"]}>
+      <View className="flex-1 p-6">
+        <Text style={typography["h1-bold"]} className="mt-4 mb-2 text-black">
           Create your account
         </Text>
 
@@ -357,7 +358,7 @@ const CreateAccount = () => {
         />
       </View>
 
-      <View className="w-full">
+      <View className="px-6 pb-9">
         <Checkbox
           checked={isCheckedTS}
           onPress={handleCheckboxToggleTS}
@@ -374,7 +375,7 @@ const CreateAccount = () => {
                   setShowConsentModal(true);
                 }}
                 style={typography["label-bold"]}
-                className=" text-primary"
+                className="text-primary"
               >
                 Terms of Service
               </Text>
@@ -391,7 +392,7 @@ const CreateAccount = () => {
               <>
                 <Text
                   style={typography["label"]}
-                  className=" text-black text-justify"
+                  className="text-black text-justify"
                 >
                   I acknowledge and agree to Nurtura's{" "}
                   <Text
@@ -400,7 +401,7 @@ const CreateAccount = () => {
                       setShowConsentModal(true);
                     }}
                     style={typography["label-bold"]}
-                    className=" text-primary"
+                    className="text-primary"
                   >
                     Privacy Policy
                   </Text>
@@ -434,7 +435,7 @@ const CreateAccount = () => {
         hasScrolledToEnd={hasScrolledToEnd}
         onScrollEnd={() => setHasScrolledToEnd(true)}
       />
-    </View>
+    </SafeAreaView>
   );
 };
 

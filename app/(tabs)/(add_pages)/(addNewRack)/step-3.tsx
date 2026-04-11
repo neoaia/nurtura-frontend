@@ -11,6 +11,7 @@ import { Buffer } from "buffer";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useCallback, useRef, useState } from "react";
 import { Alert, ScrollView, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const SERVICE_UUID = "4fafc201-1fb5-459e-8fcc-c5c9c331914b";
 const SSID_CHAR_UUID = "beb5483e-36e1-4688-b7f5-ea07361b26a8";
@@ -35,7 +36,6 @@ export default function AddNewRack3() {
     existingRackUpdatedAt: string;
   }>();
 
-  // Derived boolean — params are always strings in expo-router
   const isExistingRack = rackExistsParam === "true";
 
   const [ssid, setSsid] = useState("");
@@ -43,8 +43,6 @@ export default function AddNewRack3() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showBackConfirm, setShowBackConfirm] = useState(false);
-
-  // Show the modal immediately on mount if this is an existing rack
   const [rackExistsModalVisible, setRackExistsModalVisible] =
     useState(isExistingRack);
 
@@ -52,14 +50,12 @@ export default function AddNewRack3() {
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const subscriptionRef = useRef<any>(null);
 
-  // Only needed for the existing-rack path — register the rack after WiFi connects
   const { refetch: registerRack } = useFetch("/racks", {
     method: "POST",
     autoFetch: false,
     withAuth: true,
   });
 
-  // Format the date once for the modal
   const formattedDateRemoved = existingRackUpdatedAt
     ? new Date(existingRackUpdatedAt).toLocaleDateString("en-PH", {
         year: "numeric",
@@ -130,12 +126,9 @@ export default function AddNewRack3() {
     router.replace("/(tabs)/(add_pages)/(addNewRack)/step-1");
   };
 
-  // Called when WiFi connection succeeds and this rack already exists in the backend.
-  // Runs Step 4's register logic here so we can skip straight to the success screen.
   const handleExistingRackWifiSuccess = async () => {
     const nameToSend = existingRackName || "Nurtura";
 
-    // Best-effort: send the existing rack name to the ESP32
     try {
       const isConnected = await bleManager.isDeviceConnected(deviceId);
       if (isConnected) {
@@ -247,10 +240,8 @@ export default function AddNewRack3() {
                 console.log("[Step3] WiFi connected successfully!");
 
                 if (isExistingRack) {
-                  // Skip Step 4 — register and go straight to success
                   await handleExistingRackWifiSuccess();
                 } else {
-                  // Normal flow — proceed to Step 4
                   Alert.alert("Success!", "Rack connected to WiFi!", [
                     {
                       text: "Continue",
@@ -325,7 +316,7 @@ export default function AddNewRack3() {
   };
 
   return (
-    <View className="flex-1 bg-white">
+    <SafeAreaView className="flex-1 bg-white" edges={["bottom"]}>
       <ConfirmationModal
         isVisible={showBackConfirm}
         title="Cancel WiFi Setup?"
@@ -336,7 +327,6 @@ export default function AddNewRack3() {
         onCancel={() => setShowBackConfirm(false)}
       />
 
-      {/* Shown only when the rack already exists — dismissed by tapping confirm */}
       <RackExistsModal
         isVisible={rackExistsModalVisible}
         title="Rack Already Registered"
@@ -351,8 +341,11 @@ export default function AddNewRack3() {
         className="flex-1 px-6"
         contentContainerStyle={{ paddingTop: 40 }}
       >
-        <Text style={typography["h1-bold"]} className="text-black mb-6">
+        <Text style={typography["h1-bold"]} className="text-black mt-4 mb-2">
           Connect to WiFi
+        </Text>
+        <Text style={typography["subheader"]} className="mb-6">
+          Enter your WiFi credentials to connect your Nurtura Rack.
         </Text>
 
         <TextInputField
@@ -395,13 +388,11 @@ export default function AddNewRack3() {
         )}
       </ScrollView>
 
-      <View className="pb-6">
-        <BottomButton
-          title="Send Credentials"
-          onPress={handleConnect}
-          disabled={loading}
-        />
-      </View>
-    </View>
+      <BottomButton
+        title="Send Credentials"
+        onPress={handleConnect}
+        disabled={loading}
+      />
+    </SafeAreaView>
   );
 }

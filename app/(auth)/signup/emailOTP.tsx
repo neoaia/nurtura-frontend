@@ -16,6 +16,7 @@ import {
   TextInputKeyPressEventData,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { OTPInput } from "../../../components/auth/otpInput";
 import "../../globals.css";
 
@@ -194,18 +195,15 @@ const EmailOTP = () => {
   }, []);
 
   return (
-    <View className="flex-1 bg-white px-[16px] pb-[34px] w-screen justify-between h-screen">
-      <View className="mt-[34px] flex-1 items-start">
-        <Text
-          className="text-black pl-2 mb-[13px]"
-          style={typography["h1-bold"]}
-        >
+    <SafeAreaView className="flex-1 bg-white" edges={["bottom"]}>
+      <View className="flex-1 p-6">
+        <Text style={typography["h1-bold"]} className="text-black mt-4 mb-2">
           Enter one-time code
         </Text>
 
         <Text
           style={typography["subheader"]}
-          className="pl-2 mb-[20px] text-black leading-normal"
+          className="mb-6 text-black leading-normal"
         >
           Enter the 5 digit code that was sent to your email address:{" "}
           <Text className="text-primary" style={typography["subheader-bold"]}>
@@ -223,10 +221,7 @@ const EmailOTP = () => {
         />
 
         {isOtpInvalid && (
-          <Text
-            style={typography["subheader"]}
-            className="text-[#E65656] mb-[26px] pl-2"
-          >
+          <Text style={typography["subheader"]} className="text-[#E65656] mb-6">
             Invalid OTP. Please try again.
           </Text>
         )}
@@ -234,7 +229,7 @@ const EmailOTP = () => {
         <ResendCode onResend={handleResendPress} timer={timer} />
       </View>
 
-      <View className="w-full">
+      <View className="px-6 pb-9">
         <PrimaryButton
           onPress={handleNextPress}
           loading={loading}
@@ -252,7 +247,7 @@ const EmailOTP = () => {
           setModalVisible(false);
         }}
       />
-    </View>
+    </SafeAreaView>
   );
 };
 

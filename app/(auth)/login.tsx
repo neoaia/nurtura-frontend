@@ -17,6 +17,7 @@ import { useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { useState } from "react";
 import { Image, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import "../globals.css";
 
 export default function LoginScreen() {
@@ -102,7 +103,6 @@ export default function LoginScreen() {
       await signIn(trimmedEmail, password);
       await SecureStore.setItemAsync("user_email", trimmedEmail);
       await SecureStore.setItemAsync("auth_provider", "password");
-      // Use replace to prevent back navigation to login
       navService.replace(ROUTES.TABS.HOME.ROOT);
     } catch (error) {
       setIsLoginInvalid(true);
@@ -165,10 +165,8 @@ export default function LoginScreen() {
 
         await SecureStore.setItemAsync("fromGoogle", "true");
 
-        // Use push to allow back navigation within signup flow
         navService.push(ROUTES.AUTH.SIGNUP.CREATE_USER_INFO, { email });
       } else {
-        // Use replace to prevent back to login after successful auth
         navService.replace(ROUTES.TABS.HOME.ROOT);
       }
     } catch (error) {
@@ -187,87 +185,89 @@ export default function LoginScreen() {
   };
 
   return (
-    <View className="flex-1 bg-white px-[16px] pb-[34px] w-screen justify-between h-screen items-center">
-      <Image
-        source={require("@/assets/images/nurtura_logo.png")}
-        className="w-48 h-48 mt-20"
-        resizeMode="contain"
-      />
-
-      <View className="w-full mb-4 flex-1 justify-start gap-1">
-        <EmailInput
-          value={email}
-          onChangeText={handleEmailChange}
-          error={emailError}
-          hasError={isLoginInvalid}
+    <SafeAreaView className="flex-1 bg-white" edges={["top", "bottom"]}>
+      <View className="flex-1 px-4 justify-between items-center">
+        <Image
+          source={require("@/assets/images/nurtura_logo.png")}
+          className="w-48 h-48 mt-20"
+          resizeMode="contain"
         />
 
-        <PasswordInput
-          value={password}
-          onChangeText={handlePasswordChange}
-          isVisible={isPasswordVisible}
-          onToggleVisibility={togglePasswordVisibility}
-          hasError={isLoginInvalid}
-          type="login"
-        />
+        <View className="w-full flex-1 justify-start gap-1 mt-4">
+          <EmailInput
+            value={email}
+            onChangeText={handleEmailChange}
+            error={emailError}
+            hasError={isLoginInvalid}
+          />
 
-        {isLoginInvalid && (
-          <Text
-            style={typography["subheader"]}
-            className="text-[#E65656] mb-[10px] pl-2"
-          >
-            Invalid login. Please try again.
-          </Text>
-        )}
+          <PasswordInput
+            value={password}
+            onChangeText={handlePasswordChange}
+            isVisible={isPasswordVisible}
+            onToggleVisibility={togglePasswordVisibility}
+            hasError={isLoginInvalid}
+            type="login"
+          />
 
-        <View className="ml-2 mt-2 flex-row flex-wrap items-center">
-          <Text style={typography["subheader"]} className="text-grayText">
-            Forgot password?{" "}
-          </Text>
+          {isLoginInvalid && (
+            <Text
+              style={typography["subheader"]}
+              className="text-[#E65656] mb-[10px] pl-2"
+            >
+              Invalid login. Please try again.
+            </Text>
+          )}
+
+          <View className="ml-2 mt-2 flex-row flex-wrap items-center">
+            <Text style={typography["subheader"]} className="text-grayText">
+              Forgot password?{" "}
+            </Text>
+            <DebouncedTouchableOpacity
+              onPress={handleForgotPassword}
+              disabled={loading}
+            >
+              <Text
+                style={typography["subheader-bold"]}
+                className="text-primary underline"
+              >
+                Reset here.
+              </Text>
+            </DebouncedTouchableOpacity>
+          </View>
+
+          <Divider />
+
+          <GoogleSignInButton onPress={handleGoogleSignIn} disabled={loading} />
+        </View>
+
+        <View className="w-full pb-2">
           <DebouncedTouchableOpacity
-            onPress={handleForgotPassword}
+            onPress={() => navService.push(ROUTES.AUTH.SIGNUP.ROOT)}
+            className="mt-4 mb-5"
             disabled={loading}
           >
             <Text
-              style={typography["subheader-bold"]}
-              className="text-primary underline"
+              className="text-center text-grayText"
+              style={typography["subheader"]}
             >
-              Reset here.
+              Don't have an account?{" "}
+              <Text
+                style={typography["subheader-bold"]}
+                className="text-primary underline"
+              >
+                Create one here.
+              </Text>
             </Text>
           </DebouncedTouchableOpacity>
+
+          <PrimaryButton
+            onPress={handleLogin}
+            loading={loading}
+            disabled={loading}
+            title="Login"
+          />
         </View>
-
-        <Divider />
-
-        <GoogleSignInButton onPress={handleGoogleSignIn} disabled={loading} />
-      </View>
-
-      <View className="absolute bottom-10 w-full">
-        <DebouncedTouchableOpacity
-          onPress={() => navService.push(ROUTES.AUTH.SIGNUP.ROOT)}
-          className="mt-4 mb-5"
-          disabled={loading}
-        >
-          <Text
-            className="text-center text-grayText"
-            style={typography["subheader"]}
-          >
-            Don't have an account?{" "}
-            <Text
-              style={typography["subheader-bold"]}
-              className="text-primary underline"
-            >
-              Create one here.
-            </Text>
-          </Text>
-        </DebouncedTouchableOpacity>
-
-        <PrimaryButton
-          onPress={handleLogin}
-          loading={loading}
-          disabled={loading}
-          title="Login"
-        />
       </View>
 
       <InfoModal
@@ -279,6 +279,6 @@ export default function LoginScreen() {
           setModalVisible(false);
         }}
       />
-    </View>
+    </SafeAreaView>
   );
 }

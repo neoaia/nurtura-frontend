@@ -22,6 +22,7 @@ import {
   TextInputKeyPressEventData,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const logger = createLogger("ChangePassword1");
 
@@ -252,18 +253,14 @@ export default function ChangePassword1() {
   };
 
   return (
-    <View className="flex-1 bg-white">
-      <ScrollView
-        className="flex-1 px-4"
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingTop: 34 }}
-      >
-        <Text style={typography["h1-bold"]} className="text-black mb-3 pl-2">
+    <SafeAreaView className="flex-1 bg-white" edges={["bottom"]}>
+      <ScrollView className="flex-1 p-6" showsVerticalScrollIndicator={false}>
+        <Text style={typography["h1-bold"]} className="text-black mt-4 mb-2">
           Enter one-time code
         </Text>
         <Text
           style={typography["subheader"]}
-          className="pl-2 mb-6 text-black leading-normal"
+          className="mb-6 text-black leading-normal"
         >
           Enter the 5 digit code that was sent to your email address:{" "}
           <Text className="text-primary font-bold">{userEmail}</Text>
@@ -278,7 +275,7 @@ export default function ChangePassword1() {
           disabled={loading}
         />
         {isOtpInvalid && (
-          <Text className="text-[#E65656] text-base mb-6 pl-2">
+          <Text className="text-[#E65656] text-base mb-6">
             Invalid OTP. Please try again.
           </Text>
         )}
@@ -288,13 +285,15 @@ export default function ChangePassword1() {
           loading={loading}
         />
       </ScrollView>
-      <View className="px-4 pb-9">
+
+      <View className="px-6 pb-9">
         <PrimaryButton
           title={loading ? "Verifying..." : "Next"}
           onPress={handleNextPress}
           disabled={!allFilled || loading}
         />
       </View>
+
       <ConfirmationModal
         isVisible={showModal}
         title="Go Back?"
@@ -310,6 +309,6 @@ export default function ChangePassword1() {
         message={infoModalMessage}
         onConfirm={() => setInfoModalVisible(false)}
       />
-    </View>
+    </SafeAreaView>
   );
 }

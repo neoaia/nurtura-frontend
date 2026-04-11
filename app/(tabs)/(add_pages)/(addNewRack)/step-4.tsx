@@ -7,7 +7,8 @@ import { bleManager } from "@/utils/bluetooth/bleManager";
 import { Buffer } from "buffer";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { Alert, ScrollView, Text, View } from "react-native";
+import { Alert, ScrollView, Text } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const SERVICE_UUID = "4fafc201-1fb5-459e-8fcc-c5c9c331914b";
 const RACK_NAME_CHAR_UUID = "a1b2c3d4-e5f6-7890-abcd-ef1234567890";
@@ -25,8 +26,6 @@ export default function AddNewRack4() {
     withAuth: true,
   });
 
-  // BLE is already disconnected by onWiFiConnected in the app/firmware
-  // but we kept the cleanup just in case
   useEffect(() => {
     const cleanupBLE = async () => {
       if (!deviceId) return;
@@ -39,27 +38,18 @@ export default function AddNewRack4() {
           console.log("[Step4] Cleaned up stray BLE connection");
         }
       } catch (e) {
-        // Ignore cleanup errors
         console.log("[Step4] BLE cleanup (non-fatal):", e);
       }
     };
     cleanupBLE();
   }, [deviceId]);
 
-  // Handle back button - show confirmation
-  const handleBackPress = () => {
-    setShowBackConfirm(true);
-  };
-
-  // Confirmed back - attempt to reset ESP32 if still connected, then go to step-1
   const handleBackConfirmed = async () => {
     setShowBackConfirm(false);
     setLoading(true);
     console.log("[Step4] User confirmed back - attempting to reset ESP32");
 
     try {
-      // Try to reconnect and send reset command (best-effort)
-      // The BLE connection may already be dropped, which is fine
       try {
         const isConnected = await bleManager.isDeviceConnected(
           deviceId as string,
@@ -82,7 +72,6 @@ export default function AddNewRack4() {
             console.log("[Step4] Reset write failed, continuing anyway:", e);
           }
 
-          // Try final disconnect
           try {
             await bleManager.cancelDeviceConnection(deviceId as string);
             console.log("[Step4] BLE disconnected");
@@ -98,7 +87,6 @@ export default function AddNewRack4() {
     }
 
     setLoading(false);
-    // Always navigate back to step-1 regardless of reset success
     console.log("[Step4] Navigating back to step-1");
     router.replace("/(tabs)/(add_pages)/(addNewRack)/step-1");
   };
@@ -107,9 +95,10 @@ export default function AddNewRack4() {
     const nameToSend = rackName.trim() || "Nurtura";
     setLoading(true);
 
-    // Best-effort: send name to ESP32 if still connected
     try {
-      const isConnected = await bleManager.isDeviceConnected(deviceId as string);
+      const isConnected = await bleManager.isDeviceConnected(
+        deviceId as string,
+      );
       if (isConnected) {
         await bleManager.writeCharacteristicWithoutResponseForDevice(
           deviceId as string,
@@ -126,7 +115,7 @@ export default function AddNewRack4() {
     try {
       const { data, error } = await registerRack({
         body: {
-          macAddress: macAddress as string,  // ← use real ESP32 MAC, not BLE deviceId
+          macAddress: macAddress as string,
           name: nameToSend,
         },
       });
@@ -136,7 +125,6 @@ export default function AddNewRack4() {
           "Error",
           error?.message || "Failed to register rack. Please try again.",
         );
-
         return;
       }
 
@@ -160,18 +148,11 @@ export default function AddNewRack4() {
   };
 
   return (
-    <View className="flex-1 bg-white">
+    <SafeAreaView className="flex-1 bg-white" edges={["bottom"]}>
       <ConfirmationModal
         isVisible={showBackConfirm}
         title="Go Back?"
-        message="Going back will reset your rack to BLE provisioning mode:
-
-• WiFi connection will be cleared
-• MQTT will disconnect
-• Bluetooth will restart
-• The rack will be ready to pair again
-
-You'll need to run the setup process again."
+        message={`Going back will reset your rack to BLE provisioning mode:\n\n• WiFi connection will be cleared\n• MQTT will disconnect\n• Bluetooth will restart\n• The rack will be ready to pair again\n\nYou'll need to run the setup process again.`}
         confirmText="Yes, Reset & Go Back"
         cancelText="Continue"
         onConfirm={handleBackConfirmed}
@@ -179,15 +160,16 @@ You'll need to run the setup process again."
       />
 
       <ScrollView
-        className="flex-1 px-6 py-24"
-        contentContainerStyle={{ paddingTop: 34 }}
+        className="flex-1 px-6"
+        contentContainerStyle={{ paddingTop: 40 }}
       >
-        <Text style={typography["h1-bold"]} className="text-black mb-2">
+        <Text style={typography["h1-bold"]} className="text-black mt-4 mb-2">
           Customize your <Text className="text-primary">Nurtura Rack</Text>
         </Text>
         <Text style={typography["subheader"]} className="mb-6">
           Rename your rack based on your preference.
         </Text>
+
         <TextInputField
           label="Rack Name"
           onChangeText={setRackName}
@@ -196,13 +178,11 @@ You'll need to run the setup process again."
         />
       </ScrollView>
 
-      <View className="pb-6">
-        <BottomButton
-          title="Finish"
-          onPress={handleNextPress}
-          disabled={loading}
-        />
-      </View>
-    </View>
+      <BottomButton
+        title="Finish"
+        onPress={handleNextPress}
+        disabled={loading}
+      />
+    </SafeAreaView>
   );
 }

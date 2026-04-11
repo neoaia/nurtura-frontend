@@ -9,7 +9,8 @@ import { rackService } from "@/services/rackService";
 import { useFocusEffect } from "@react-navigation/native";
 import { router } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
-import { ActivityIndicator, ScrollView, Text, View } from "react-native";
+import { ActivityIndicator, ScrollView, Text } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import RackIcon from "../../../../assets/images/icons/rack(gray).svg";
 
 const AddNewPlant1 = () => {
@@ -44,7 +45,7 @@ const AddNewPlant1 = () => {
             id: rack.id,
             label: rack.name,
             value: rack.id,
-            hasPlant: !!rack.currentPlant, // ← idagdag ang field na ito
+            hasPlant: !!rack.currentPlant,
           }));
         setRackOptions(options);
       }
@@ -86,22 +87,15 @@ const AddNewPlant1 = () => {
   };
 
   return (
-    <View className="flex-1 bg-white">
-      <ScrollView
-        className="flex-1 px-4"
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingTop: 34 }}
-      >
-        <Text style={typography["h1-bold"]} className="text-black mb-3 pl-2">
+    <SafeAreaView className="flex-1 bg-white" edges={["bottom"]}>
+      <ScrollView className="flex-1 p-6" showsVerticalScrollIndicator={false}>
+        <Text style={typography["h1-bold"]} className="text-black mt-4 mb-2">
           Select a{" "}
           <Text style={typography["h1-bold"]} className="text-primary">
             Nurtura Rack
           </Text>
         </Text>
-        <Text
-          style={typography["subheader"]}
-          className="mb-5 text-gray-700 leading-normal pl-2"
-        >
+        <Text style={typography["subheader"]} className="mb-6">
           Choose which rack you want to add your plant to.
         </Text>
 
@@ -142,7 +136,7 @@ const AddNewPlant1 = () => {
         confirmText="Got it!"
         onConfirm={() => setShowOccupiedModal(false)}
       />
-    </View>
+    </SafeAreaView>
   );
 };
 

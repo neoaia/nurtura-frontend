@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { ScrollView, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 import { typography } from "@/assets/fonts/Text";
 import { EmailInput } from "@/components/auth/emailInput";
@@ -23,7 +24,6 @@ export default function UpdateEmailScreen1() {
   const [infoModalTitle, setInfoModalTitle] = useState("");
   const [infoModalMessage, setInfoModalMessage] = useState("");
 
-  // Only warn if the user has started typing — same pattern as ChangePassword1
   const hasStartedEmail = email.length > 0;
   const { showModal, handleConfirm, handleCancel } =
     useBackWarning(!hasStartedEmail);
@@ -110,13 +110,9 @@ export default function UpdateEmailScreen1() {
   };
 
   return (
-    <View className="flex-1 bg-white">
-      <ScrollView
-        className="flex-1 px-4"
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingTop: 34 }}
-      >
-        <Text style={typography["h1-bold"]} className="text-black mb-6 pl-2">
+    <SafeAreaView className="flex-1 bg-white" edges={["bottom"]}>
+      <ScrollView className="flex-1 p-6" showsVerticalScrollIndicator={false}>
+        <Text style={typography["h1-bold"]} className="text-black mt-4 mb-6">
           Enter your new email
         </Text>
         <EmailInput
@@ -126,7 +122,7 @@ export default function UpdateEmailScreen1() {
         />
       </ScrollView>
 
-      <View className="px-4 pb-9">
+      <View className="px-6 pb-9">
         <PrimaryButton
           title="Next"
           onPress={handleNextPress}
@@ -151,6 +147,6 @@ export default function UpdateEmailScreen1() {
         onConfirm={handleConfirm}
         onCancel={handleCancel}
       />
-    </View>
+    </SafeAreaView>
   );
 }

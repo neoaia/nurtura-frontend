@@ -3,7 +3,7 @@ import { ConfirmationModal } from "@/components/modals/confirmationModal";
 import { BottomButton } from "@/components/shared/bottomButton";
 import { DebouncedTouchableOpacity } from "@/components/shared/debouncedTouchable";
 import useFetch from "@/hooks/useFetch";
-import { rackService } from "@/services/rackService"; // adjust to your actual import path
+import { rackService } from "@/services/rackService";
 import { bleManager } from "@/utils/bluetooth/bleManager";
 import { Buffer } from "buffer";
 import { CameraView, useCameraPermissions } from "expo-camera";
@@ -13,11 +13,11 @@ import {
   ActivityIndicator,
   Alert,
   Image,
-  ScrollView,
   StyleSheet,
   Text,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const SERVICE_UUID = "4fafc201-1fb5-459e-8fcc-c5c9c331914b";
 const DEVICE_ID_CHAR_UUID = "abc12345-1234-5678-1234-56789abcdef0";
@@ -128,7 +128,6 @@ export default function AddNewRack2() {
           return;
         }
 
-        // ✅ MAC matched — check if rack already exists in the backend
         console.log("[Step2] MAC verified. Checking if rack exists...");
 
         try {
@@ -138,7 +137,6 @@ export default function AddNewRack2() {
 
           setVerifying(false);
 
-          // Pass everything to Step 3 — it will handle both flows
           router.push({
             pathname: "/(tabs)/(add_pages)/(addNewRack)/step-3",
             params: {
@@ -192,8 +190,29 @@ export default function AddNewRack2() {
 
   if (!permission) return <View className="flex-1 bg-white" />;
 
+  if (scanning) {
+    return (
+      <View className="flex-1">
+        <CameraView
+          style={StyleSheet.absoluteFillObject}
+          onBarcodeScanned={handleBarCodeScanned}
+          barcodeScannerSettings={{ barcodeTypes: ["qr"] }}
+        />
+        <DebouncedTouchableOpacity
+          onPress={() => {
+            hasScannedRef.current = false;
+            setScanning(false);
+          }}
+          className="absolute top-12 left-6 bg-black/50 p-3 rounded-full"
+        >
+          <Text className="text-white font-bold">Cancel</Text>
+        </DebouncedTouchableOpacity>
+      </View>
+    );
+  }
+
   return (
-    <View className="flex-1 bg-white">
+    <SafeAreaView className="flex-1 bg-white" edges={["bottom"]}>
       <ConfirmationModal
         isVisible={showBackConfirm}
         title="Go Back?"
@@ -216,51 +235,22 @@ export default function AddNewRack2() {
         </View>
       )}
 
-      {!scanning ? (
-        <>
-          <ScrollView
-            className="flex-1 px-4"
-            contentContainerStyle={{ paddingTop: 34 }}
-          >
-            <View className="mb-9 ml-4 items-start">
-              <Image
-                source={require("@/assets/images/add-new-rack/plant-rack.png")}
-                className="w-40 h-40"
-              />
-            </View>
-            <Text style={typography["h1-bold"]} className="text-black mb-3">
-              Verify Connection
-            </Text>
-            <Text
-              style={typography["subheader"]}
-              className="text-gray-500 mb-6"
-            >
-              Scan the QR code on your Nurtura Rack to verify its identity.
-            </Text>
-          </ScrollView>
-
-          <View className="pb-6">
-            <BottomButton title="Scan QR Code" onPress={handleScanPress} />
-          </View>
-        </>
-      ) : (
-        <View className="flex-1">
-          <CameraView
-            style={StyleSheet.absoluteFillObject}
-            onBarcodeScanned={handleBarCodeScanned}
-            barcodeScannerSettings={{ barcodeTypes: ["qr"] }}
+      <View className="flex-1 p-6">
+        <View className="mb-9 items-start">
+          <Image
+            source={require("@/assets/images/add-new-rack/plant-rack.png")}
+            className="w-40 h-40"
           />
-          <DebouncedTouchableOpacity
-            onPress={() => {
-              hasScannedRef.current = false;
-              setScanning(false);
-            }}
-            className="absolute top-12 left-6 bg-black/50 p-3 rounded-full"
-          >
-            <Text className="text-white font-bold">Cancel</Text>
-          </DebouncedTouchableOpacity>
         </View>
-      )}
-    </View>
+        <Text style={typography["h1-bold"]} className="text-black mt-4 mb-2">
+          Verify Connection
+        </Text>
+        <Text style={typography["subheader"]} className="mb-6">
+          Scan the QR code on your Nurtura Rack to verify its identity.
+        </Text>
+      </View>
+
+      <BottomButton title="Scan QR Code" onPress={handleScanPress} />
+    </SafeAreaView>
   );
 }
