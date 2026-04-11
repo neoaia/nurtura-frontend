@@ -2,10 +2,11 @@ import { typography } from "@/assets/fonts/Text";
 import { PasswordInput } from "@/components/auth/passwordInput";
 import { InfoModal } from "@/components/modals/infoModal";
 import { PrimaryButton } from "@/components/shared/primaryButton";
+import { useAuth } from "@/contexts/AuthContext";
 import useFetch from "@/hooks/useFetch";
 import { authService } from "@/services/authService";
 import { createLogger } from "@/utils/logger";
-import { NavigationService, ROUTES } from "@/utils/navigationUtils";
+import { NavigationService } from "@/utils/navigationUtils";
 import {
   cleanInput,
   isStrongPassword,
@@ -27,8 +28,10 @@ export default function ChangePassword2() {
   const [infoModalVisible, setInfoModalVisible] = useState(false);
   const [infoModalTitle, setInfoModalTitle] = useState("");
   const [infoModalMessage, setInfoModalMessage] = useState("");
+  const [successModalVisible, setSuccessModalVisible] = useState(false);
   const router = useRouter();
   const navService = new NavigationService(router);
+  const { logout } = useAuth();
 
   const { refetch: changePassword } = useFetch("/auth/update-password", {
     method: "POST",
@@ -128,12 +131,7 @@ export default function ChangePassword2() {
 
       await SecureStore.deleteItemAsync("change_password_verified_email");
 
-      navService.reset(ROUTES.TABS.ACCOUNT.SUCCESS, {
-        type: "other",
-        title: "Password updated!",
-        subtitle: "You can now proceed back to making your account safe.",
-        finishTitle: "Finish",
-      });
+      setSuccessModalVisible(true);
     } catch (error) {
       logger.error("Error changing password:", error);
       showInfoModal("Error", "Failed to change password. Please try again.");
@@ -216,6 +214,16 @@ export default function ChangePassword2() {
         title={infoModalTitle}
         message={infoModalMessage}
         onConfirm={() => setInfoModalVisible(false)}
+      />
+      <InfoModal
+        isVisible={successModalVisible}
+        title="Password Updated!"
+        message="Your password has been successfully updated. You will be logged out for security purposes."
+        confirmText="Logout"
+        onConfirm={async () => {
+          setSuccessModalVisible(false);
+          await logout();
+        }}
       />
     </SafeAreaView>
   );

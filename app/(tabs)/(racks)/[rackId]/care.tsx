@@ -10,6 +10,7 @@ import { AutomationActivity } from "@/types/socket.interface";
 import { useLocalSearchParams } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
 import { RefreshControl, SectionList, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 type ActivityWithDate = ActivityDTO & { date: Date };
 
@@ -49,6 +50,7 @@ const mapAutomationActivityToDTO = (
   return {
     id: activity.id,
     type: isWater ? "water" : "light",
+    eventType: activity.eventType as ActivityDTO["eventType"],
     plantName: activity.metadata?.ruleName || "Plants",
     rackName: activity.metadata?.rackName || rackName || "Unknown Rack",
     time: dateObj.toLocaleTimeString("en-US", {
@@ -158,6 +160,7 @@ const Care = () => {
             return {
               id: item.id,
               type: (isWater ? "water" : "light") as "water" | "light",
+              eventType: item.eventType as ActivityDTO["eventType"],
               plantName: item.metadata?.ruleName || "Plants",
               rackName: rackName ?? "Unknown Rack",
               time: dateObj.toLocaleTimeString("en-US", {
@@ -245,56 +248,58 @@ const Care = () => {
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
-    <SectionList
-      sections={sections}
-      keyExtractor={(item) => item.id}
-      renderItem={({ item }) => (
-        <View className="px-4">
-          <ActivityItem {...item} />
-        </View>
-      )}
-      renderSectionHeader={({ section: { title } }) => (
-        <View className="bg-white py-3 px-4">
-          <Text
-            style={typography["button-bold"]}
-            className="text-black text-lg"
-          >
-            {title}
-          </Text>
-        </View>
-      )}
-      ListHeaderComponent={
-        <View className="bg-white px-4 pt-4">
-          <View className="gap-3 mb-4">
-            <DateRangePicker value={dateRange} onChange={setDateRange} />
+    <SafeAreaView className="flex-1 bg-white" edges={["bottom"]}>
+      <SectionList
+        sections={sections}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => (
+          <View className="px-4">
+            <ActivityItem {...item} />
           </View>
-          <View className="flex-row justify-center mb-3">
-            <ActivityButton
-              status={activeTab === "water" ? "clickedWater" : "defaultWater"}
-              onPress={() => setActiveTab("water")}
-            />
-            <ActivityButton
-              status={activeTab === "light" ? "clickedLight" : "defaultLight"}
-              onPress={() => setActiveTab("light")}
-            />
+        )}
+        renderSectionHeader={({ section: { title } }) => (
+          <View className="bg-white py-3 px-4">
+            <Text
+              style={typography["button-bold"]}
+              className="text-black text-lg"
+            >
+              {title}
+            </Text>
           </View>
-        </View>
-      }
-      ListEmptyComponent={() => (
-        <View className="items-center mt-10">
-          <Text style={typography["label"]} className="text-gray-400">
-            {loading ? "Loading..." : `No ${activeTab} activities found.`}
-          </Text>
-        </View>
-      )}
-      contentContainerStyle={{ paddingBottom: 40 }}
-      className="bg-white flex-1"
-      stickySectionHeadersEnabled={false}
-      showsVerticalScrollIndicator={false}
-      refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-      }
-    />
+        )}
+        ListHeaderComponent={
+          <View className="bg-white px-4 pt-4">
+            <View className="gap-3 mb-4">
+              <DateRangePicker value={dateRange} onChange={setDateRange} />
+            </View>
+            <View className="flex-row justify-center mb-3">
+              <ActivityButton
+                status={activeTab === "water" ? "clickedWater" : "defaultWater"}
+                onPress={() => setActiveTab("water")}
+              />
+              <ActivityButton
+                status={activeTab === "light" ? "clickedLight" : "defaultLight"}
+                onPress={() => setActiveTab("light")}
+              />
+            </View>
+          </View>
+        }
+        ListEmptyComponent={() => (
+          <View className="items-center mt-10">
+            <Text style={typography["label"]} className="text-gray-400">
+              {loading ? "Loading..." : `No ${activeTab} activities found.`}
+            </Text>
+          </View>
+        )}
+        contentContainerStyle={{ paddingBottom: 40 }}
+        className="bg-white flex-1"
+        stickySectionHeadersEnabled={false}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+      />
+    </SafeAreaView>
   );
 };
 

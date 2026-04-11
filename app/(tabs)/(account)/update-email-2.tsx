@@ -1,11 +1,12 @@
 import { typography } from "@/assets/fonts/Text";
 import { InfoModal } from "@/components/modals/infoModal";
 import { PrimaryButton } from "@/components/shared/primaryButton";
+import { useAuth } from "@/contexts/AuthContext";
 import useFetch from "@/hooks/useFetch";
 import { authService } from "@/services/authService";
 import { userService } from "@/services/userService";
 import { logger } from "@/utils/logger";
-import { NavigationService, ROUTES } from "@/utils/navigationUtils";
+import { NavigationService } from "@/utils/navigationUtils";
 import { router, useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
@@ -29,7 +30,9 @@ export default function UpdateEmailScreen2() {
   const [infoModalVisible, setInfoModalVisible] = useState(false);
   const [infoModalTitle, setInfoModalTitle] = useState("");
   const [infoModalMessage, setInfoModalMessage] = useState("");
+  const [successModalVisible, setSuccessModalVisible] = useState(false);
 
+  const { logout } = useAuth();
   const showInfoModal = (title: string, message: string) => {
     setInfoModalTitle(title);
     setInfoModalMessage(message);
@@ -125,12 +128,7 @@ export default function UpdateEmailScreen2() {
       }
 
       logger.log("Email updated successfully");
-      navService.reset(ROUTES.TABS.ACCOUNT.SUCCESS, {
-        type: "other",
-        title: "E-mail updated!",
-        subtitle: "You can now proceed back to making your account safe.",
-        finishTitle: "Finish",
-      });
+      setSuccessModalVisible(true);
     } catch (error) {
       setIsOtpInvalid(true);
       showInfoModal("Error", "An unexpected error occurred. Please try again.");
@@ -265,6 +263,16 @@ export default function UpdateEmailScreen2() {
         title={infoModalTitle}
         message={infoModalMessage}
         onConfirm={() => setInfoModalVisible(false)}
+      />
+      <InfoModal
+        isVisible={successModalVisible}
+        title="Email Updated!"
+        message="Your email has been successfully updated. You will be logged out for security purposes."
+        confirmText="Logout"
+        onConfirm={async () => {
+          setSuccessModalVisible(false);
+          await logout();
+        }}
       />
     </SafeAreaView>
   );
