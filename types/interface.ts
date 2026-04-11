@@ -25,11 +25,20 @@ export interface UseFetchOptions {
   params?: Record<string, any>;
 }
 
+export interface NormalizedApiError {
+  message: string;
+  status?: number;
+  isCancelled: boolean;
+  isNetworkError: boolean;
+  isTimeout: boolean;
+  originalError: any;
+}
+
 export interface UseFetchResult<T> {
   data: T | null;
-  error: Error | null;
+  error: NormalizedApiError | null;
   loading: boolean;
   refetch: (
     overrideOptions?: UseFetchOptions,
-  ) => Promise<{ data: T | null; error: any }>;
+  ) => Promise<{ data: T | null; error: NormalizedApiError | null }>;
 }
