@@ -3,12 +3,12 @@ import { userService } from "@/services/userService";
 import { UserDetails } from "@/types/interface";
 import * as SecureStore from "expo-secure-store";
 import React, {
-    createContext,
-    useCallback,
-    useContext,
-    useEffect,
-    useRef,
-    useState,
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
 } from "react";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -42,7 +42,6 @@ interface OnboardingState {
   completedPages: OnboardingPageKey[];
   markPageComplete: (page: OnboardingPageKey) => Promise<void>;
   shouldShowTutorial: (page: OnboardingPageKey) => boolean;
-  skipOnboarding: () => Promise<void>;
 }
 
 // ─── Context ──────────────────────────────────────────────────────────────────
@@ -257,51 +256,12 @@ export function OnboardingProvider({
     [userId, hasCompletedOnboarding, completedPages, patchUser],
   );
 
-  const skipOnboarding = useCallback(async () => {
-    if (!userId) return;
-    if (hasCompletedOnboarding) return;
-    if (isPatchingRef.current) return;
-
-    isPatchingRef.current = true;
-
-    const updatedPages: OnboardingPageKey[] = [...ALL_ONBOARDING_PAGES];
-
-    setCompletedPages(updatedPages);
-    setHasCompletedOnboarding(true);
-
-    try {
-      await SecureStore.setItemAsync(COMPLETED_KEY(userId), "true");
-      await SecureStore.deleteItemAsync(storageKey(userId));
-
-      const body: UserDetails = {
-        completedPages: updatedPages,
-        hasCompletedOnboarding: true,
-      };
-
-      try {
-        hasSyncedToBackend.current = true;
-        await userService.updateUser(patchUser, body);
-      } catch (backendError) {
-        hasSyncedToBackend.current = false;
-        console.warn(
-          "[Onboarding] Failed to sync skipped onboarding to backend, keeping local completion:",
-          backendError,
-        );
-      }
-    } catch (err) {
-      console.error("[Onboarding] Failed to skip onboarding:", err);
-    } finally {
-      isPatchingRef.current = false;
-    }
-  }, [userId, hasCompletedOnboarding, patchUser]);
-
   const value: OnboardingState = {
     isLoading,
     hasCompletedOnboarding,
     completedPages,
     markPageComplete,
     shouldShowTutorial,
-    skipOnboarding,
   };
 
   return (

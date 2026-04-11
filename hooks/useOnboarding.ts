@@ -11,7 +11,7 @@ interface UseOnboardingReturn {
   tutorialStep: number;
   /** Call on every "Next / Close" press inside the tutorial */
   handleNextStep: () => void;
-  /** Skip the full onboarding flow from this screen */
+  /** Skip this page's tutorial and mark it complete */
   handleSkip: () => void;
 }
 
@@ -29,8 +29,7 @@ export function useOnboarding(
   pageKey: OnboardingPageKey,
   totalSteps: number,
 ): UseOnboardingReturn {
-  const { shouldShowTutorial, markPageComplete, skipOnboarding } =
-    useOnboardingContext();
+  const { shouldShowTutorial, markPageComplete } = useOnboardingContext();
   const shouldShow = shouldShowTutorial(pageKey);
   const [tutorialStep, setTutorialStep] = useState<number>(shouldShow ? 1 : 0);
 
@@ -47,8 +46,8 @@ export function useOnboarding(
 
   const handleSkip = useCallback(() => {
     setTutorialStep(0);
-    skipOnboarding();
-  }, [skipOnboarding]);
+    void markPageComplete(pageKey);
+  }, [pageKey, markPageComplete]);
 
   React.useEffect(() => {
     if (shouldShow && tutorialStep === 0) {
