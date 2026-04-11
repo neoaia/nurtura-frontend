@@ -120,7 +120,7 @@ const ListHeader: React.FC<ListHeaderProps> = ({
         <PlantChart
           title="Planting"
           data={plantingChartData}
-          yLabels={["15", "10", "5", "0"]}
+          yLabels={[]}
           tooltipLabel="seeds"
           chartWidth={screenWidth - 48}
           chartColor="#86975A"
