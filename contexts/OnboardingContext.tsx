@@ -79,8 +79,12 @@ export function OnboardingProvider({
   // ── Load from SecureStore / backend on mount ────────────────────────────────
 
   useEffect(() => {
+    let isCancelled = false;
+
     if (!userId) {
       setIsLoading(false);
+      setHasCompletedOnboarding(false);
+      setCompletedPages([]);
       return;
     }
 
@@ -90,6 +94,8 @@ export function OnboardingProvider({
         const completedFlag = await SecureStore.getItemAsync(
           COMPLETED_KEY(userId),
         );
+        if (isCancelled) return;
+
         if (completedFlag === "true") {
           setHasCompletedOnboarding(true);
           setCompletedPages([...ALL_ONBOARDING_PAGES]);
@@ -98,6 +104,8 @@ export function OnboardingProvider({
 
         // 2. Load partial progress locally
         const stored = await SecureStore.getItemAsync(storageKey(userId));
+        if (isCancelled) return;
+
         let valid: OnboardingPageKey[] = [];
         if (stored) {
           const parsed: OnboardingPageKey[] = JSON.parse(stored);
@@ -107,8 +115,31 @@ export function OnboardingProvider({
           setCompletedPages(valid);
         }
 
+        if (isCancelled) return;
+
         // 3. Try backend sync whenever local completion is not full
-        const response = await userService.getUser(getUser);
+        let response;
+        try {
+          response = await userService.getUser(getUser);
+        } catch (err) {
+          if (isCancelled) return;
+
+          const shouldIgnoreBackendError =
+            err instanceof Error &&
+            err.message?.toLowerCase().includes("user not found");
+
+          if (shouldIgnoreBackendError) {
+            console.warn(
+              "[Onboarding] Backend user not found yet, continuing with local progress",
+            );
+            return;
+          }
+
+          throw err;
+        }
+
+        if (isCancelled) return;
+
         const backendPages = response?.userInfo?.completedPages ?? [];
         const backendCompleted = response?.userInfo?.hasCompletedOnboarding;
 
@@ -140,14 +171,21 @@ export function OnboardingProvider({
           );
         }
       } catch (err) {
-        console.error("[Onboarding] Failed to load local progress:", err);
-        setCompletedPages([]);
+        if (isCancelled) return;
+        console.error("[Onboarding] Failed to load onboarding progress:", err);
+        // Keep any local progress already loaded so onboarding can continue.
       } finally {
-        setIsLoading(false);
+        if (!isCancelled) {
+          setIsLoading(false);
+        }
       }
     };
 
     loadLocal();
+
+    return () => {
+      isCancelled = true;
+    };
   }, [userId, getUser]);
 
   // ── Helpers ─────────────────────────────────────────────────────────────────
@@ -180,19 +218,26 @@ export function OnboardingProvider({
 
       try {
         if (allDone && !hasSyncedToBackend.current) {
-          // 2a. All pages done — sync to backend ONCE
-          hasSyncedToBackend.current = true;
+          // 2a. All pages done — persist locally first so completion survives logout
           setHasCompletedOnboarding(true);
+          await SecureStore.setItemAsync(COMPLETED_KEY(userId), "true");
+          await SecureStore.deleteItemAsync(storageKey(userId)); // cleanup partial
 
           const body: UserDetails = {
             completedPages: updatedPages,
             hasCompletedOnboarding: true,
           };
-          await userService.updateUser(patchUser, body);
 
-          // 3. Persist completion flag locally
-          await SecureStore.setItemAsync(COMPLETED_KEY(userId), "true");
-          await SecureStore.deleteItemAsync(storageKey(userId)); // cleanup partial
+          try {
+            hasSyncedToBackend.current = true;
+            await userService.updateUser(patchUser, body);
+          } catch (backendError) {
+            hasSyncedToBackend.current = false;
+            console.warn(
+              "[Onboarding] Failed to sync completed onboarding to backend, keeping local completion:",
+              backendError,
+            );
+          }
         } else {
           // 2b. Still in progress — only save locally, no backend call
           await SecureStore.setItemAsync(
@@ -203,14 +248,7 @@ export function OnboardingProvider({
       } catch (err) {
         console.error("[Onboarding] Failed to save progress:", err);
 
-        // Roll back optimistic update on backend failure only
-        if (allDone) {
-          hasSyncedToBackend.current = false;
-          setHasCompletedOnboarding(false);
-          setCompletedPages(completedPages);
-        }
-        // For local storage failure mid-flow, keep optimistic state
-        // (will retry next session from whatever was last saved)
+        // If local store failed, preserve optimistic UI state and retry later
       } finally {
         isPatchingRef.current = false;
       }

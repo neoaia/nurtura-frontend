@@ -10,6 +10,7 @@ interface TextInputFieldProps {
   editable: boolean;
   secureTextEntry?: boolean;
   autoCapitalize?: "none" | "sentences" | "words" | "characters";
+  maxLength?: number;
 }
 
 export const TextInputField = ({
@@ -21,6 +22,7 @@ export const TextInputField = ({
   editable = true,
   secureTextEntry = false,
   autoCapitalize = "sentences",
+  maxLength = 100,
 }: TextInputFieldProps) => {
   return (
     <View
@@ -38,6 +40,7 @@ export const TextInputField = ({
         editable={editable}
         secureTextEntry={secureTextEntry}
         autoCapitalize={autoCapitalize}
+        maxLength={maxLength}
       />
     </View>
   );

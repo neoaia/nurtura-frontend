@@ -10,6 +10,18 @@ interface ProfileCardProps {
   onPress?: () => void;
 }
 
+const truncateNamePart = (part: string, maxLength = 10) => {
+  if (!part) return part;
+  return part.length > maxLength ? `${part.slice(0, maxLength - 1)}…` : part;
+};
+
+const formatUsername = (value: string) =>
+  value
+    .split(" ")
+    .map((part) => truncateNamePart(part.trim()))
+    .filter(Boolean)
+    .join(" ");
+
 export const ProfileCard: React.FC<ProfileCardProps> = ({
   name,
   username,
@@ -22,12 +34,17 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
           <UserIcon width={20} height={20} color="#86975A" />
         </View>
 
-        <View className="ml-5">
+        <View className="ml-5 flex-1">
           <Text style={typography["subheader"]} className="text-grayText">
             {name}
           </Text>
-          <Text style={typography["button-bold"]} className="text-black mt-1">
-            {username}
+          <Text
+            style={typography["button-bold"]}
+            className="text-black mt-1"
+            numberOfLines={1}
+            ellipsizeMode="tail"
+          >
+            {formatUsername(username)}
           </Text>
         </View>
       </View>

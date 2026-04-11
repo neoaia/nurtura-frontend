@@ -156,6 +156,9 @@ const RackInfo = () => {
           const rack = rackResponse?.rack;
           if (rack) applyRackData(rack);
         } catch (err) {
+          if (err instanceof Error && err.message === "Request was cancelled") {
+            return;
+          }
           console.error("Failed to fetch rack data:", err);
         } finally {
           if (isActive) setLoading(false);

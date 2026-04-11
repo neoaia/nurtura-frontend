@@ -8,9 +8,9 @@ import useFetch from "@/hooks/useFetch";
 import { authService } from "@/services/authService";
 import { NavigationService, ROUTES } from "@/utils/navigationUtils";
 import {
-  cleanAlphaInput,
-  cleanAlphanumericInput,
-  cleanNameInput,
+    cleanAlphaInput,
+    cleanAlphanumericInput,
+    cleanNameInput,
 } from "@/utils/validation";
 import { useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
@@ -124,6 +124,8 @@ const CreateUserInfo = () => {
 
         const { token } = await signUp(verifiedEmail, verifiedPassword);
         tokenToUse = token;
+
+        await SecureStore.setItemAsync("auth_provider", "password");
       } else {
         const currentUser = auth.currentUser;
         if (!currentUser) {
@@ -132,6 +134,8 @@ const CreateUserInfo = () => {
           return;
         }
         tokenToUse = await currentUser.getIdToken(true);
+
+        await SecureStore.setItemAsync("auth_provider", "google");
       }
 
       setFirebaseToken(tokenToUse);
@@ -173,35 +177,35 @@ const CreateUserInfo = () => {
   };
 
   const handleFirstNameChange = (text: string) => {
-    setFirstName(cleanNameInput(text));
+    setFirstName(cleanNameInput(text).slice(0, 100));
   };
 
   const handleMiddleNameChange = (text: string) => {
-    setMiddleName(cleanNameInput(text));
+    setMiddleName(cleanNameInput(text).slice(0, 100));
   };
 
   const handleLastNameChange = (text: string) => {
-    setLastName(cleanNameInput(text).replace(/\./g, ""));
+    setLastName(cleanNameInput(text).replace(/\./g, "").slice(0, 100));
   };
 
   const handleSuffixChange = (text: string) => {
-    setSuffix(cleanAlphaInput(text));
+    setSuffix(cleanAlphaInput(text).slice(0, 5));
   };
 
   const handleBlockChange = (text: string) => {
-    setBlock(cleanAlphanumericInput(text));
+    setBlock(cleanAlphanumericInput(text).slice(0, 100));
   };
 
   const handleStreetChange = (text: string) => {
-    setStreet(cleanAlphanumericInput(text));
+    setStreet(cleanAlphanumericInput(text).slice(0, 100));
   };
 
   const handleBarangayChange = (text: string) => {
-    setBarangay(cleanAlphanumericInput(text));
+    setBarangay(cleanAlphanumericInput(text).slice(0, 100));
   };
 
   const handleCityChange = (text: string) => {
-    setCity(cleanAlphanumericInput(text));
+    setCity(cleanAlphanumericInput(text).slice(0, 100));
   };
 
   useEffect(() => {
@@ -324,6 +328,7 @@ const CreateUserInfo = () => {
                 value={suffix}
                 onChangeText={handleSuffixChange}
                 editable={true}
+                maxLength={5}
               />
             </View>
           </View>

@@ -1,4 +1,5 @@
 import { DebouncedTouchableOpacity } from "@/components/shared/debouncedTouchable";
+import { router } from "expo-router";
 import React, {
     useCallback,
     useEffect,
@@ -81,7 +82,7 @@ export default function EditRackName() {
     return () => {
       isActive = false;
     };
-  }, [rackId]);
+  }, [rackId, getRackInfo]);
 
   const hasChanges = savedRackName !== rackName && rackName.trim() !== "";
 
@@ -114,6 +115,10 @@ export default function EditRackName() {
         showModal("Success", "Rack name updated successfully", () => {
           setIsEditing(false);
           setModalVisible(false);
+          router.replace({
+            pathname: `/(tabs)/(racks)/${rackId}` as any,
+            params: { rackId, rackName: rackName.trim() },
+          });
         });
       }
     } catch (error) {

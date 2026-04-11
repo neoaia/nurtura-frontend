@@ -81,6 +81,7 @@ export default function HomeScreen() {
   const router = useRouter();
   const navService = new NavigationService(router);
   const [userInfo, setUserInfo] = useState<Partial<UserDetails>>({});
+  const [isUserInfoLoaded, setIsUserInfoLoaded] = useState(false);
   const [highlight] = useState(mockApiResponse.highlight);
   const [hasUnread, setHasUnread] = useState(false);
   const displayName = userInfo.firstName || "User";
@@ -332,6 +333,8 @@ export default function HomeScreen() {
       if (response?.userInfo) setUserInfo(response.userInfo);
     } catch (error) {
       console.error(error);
+    } finally {
+      setIsUserInfoLoaded(true);
     }
   }, [getUserInfo]);
 
@@ -538,9 +541,9 @@ export default function HomeScreen() {
         </View>
       </ScrollView>
 
-      {shouldShow && currentTutorial && (
+      {shouldShow && isUserInfoLoaded && currentTutorial && (
         <OnboardingTutorialModal
-          visible={shouldShow}
+          visible={shouldShow && isUserInfoLoaded}
           onClose={handleNextStep}
           title={currentTutorial.title}
           subtitle={currentTutorial.desc}

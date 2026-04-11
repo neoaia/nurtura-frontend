@@ -4,6 +4,7 @@ import { DebouncedTouchableOpacity } from "@/components/shared/debouncedTouchabl
 import useFetch from "@/hooks/useFetch";
 import { useRackSensor } from "@/hooks/useRackSensor";
 import { rackService } from "@/services/rackService";
+import { useFocusEffect } from "@react-navigation/native";
 import { Stack, router, useLocalSearchParams } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
 import { ActivityIndicator, Image, Text, TextStyle, View } from "react-native";
@@ -121,8 +122,11 @@ const ConnectionIndicator: React.FC<ConnectionIndicatorProps> = ({
 // ─── RackIDLayout ─────────────────────────────────────────────────────────────
 
 export default function RackIDLayout() {
-  const { rackId } = useLocalSearchParams<{ rackId: string }>();
-  const [rackName, setRackName] = useState("Loading...");
+  const { rackId, rackName: rackNameParam } = useLocalSearchParams<{
+    rackId: string;
+    rackName?: string;
+  }>();
+  const [rackName, setRackName] = useState(rackNameParam ?? "Loading...");
 
   const { refetch: getRackInfo } = useFetch(`/racks/${rackId}`, {
     method: "GET",
@@ -130,28 +134,42 @@ export default function RackIDLayout() {
     withAuth: true,
   });
 
-  useEffect(() => {
-    let isActive = true;
-
-    const fetchRackData = async () => {
-      try {
-        const rackResponse = await rackService.getRackbyId(getRackInfo);
-        if (isActive && rackResponse?.rack?.name) {
-          setRackName(rackResponse.rack.name);
-        } else if (isActive) {
-          setRackName(`Rack ${rackId}`);
-        }
-      } catch (err) {
-        console.error("Failed to fetch rack name:", err);
-        if (isActive) setRackName(`Rack ${rackId}`);
+  const fetchRackData = useCallback(async () => {
+    try {
+      const rackResponse = await rackService.getRackbyId(getRackInfo);
+      if (rackResponse?.rack?.name) {
+        setRackName(rackResponse.rack.name);
+      } else if (rackNameParam) {
+        setRackName(rackNameParam);
+      } else {
+        setRackName(`Rack ${rackId}`);
       }
-    };
+    } catch (err) {
+      if (err instanceof Error && err.message === "Request was cancelled") {
+        return;
+      }
+      console.error("Failed to fetch rack name:", err);
+      if (rackNameParam) {
+        setRackName(rackNameParam);
+      } else {
+        setRackName(`Rack ${rackId}`);
+      }
+    }
+  }, [rackId, getRackInfo, rackNameParam]);
 
-    if (rackId) fetchRackData();
-    return () => {
-      isActive = false;
-    };
-  }, [rackId, getRackInfo]);
+  useEffect(() => {
+    if (rackNameParam) {
+      setRackName(rackNameParam);
+    }
+  }, [rackNameParam]);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (rackId) {
+        fetchRackData();
+      }
+    }, [rackId, fetchRackData]),
+  );
 
   const handleNavigation = useCallback(
     (pathname: string) => {
@@ -177,7 +195,7 @@ export default function RackIDLayout() {
     >
       <Stack.Screen
         name="index"
-        options={{
+        options={() => ({
           title: rackName,
           headerTitleAlign: "left",
           headerRight: () => (
@@ -200,7 +218,7 @@ export default function RackIDLayout() {
               </DebouncedTouchableOpacity>
             </View>
           ),
-        }}
+        })}
       />
       <Stack.Screen
         name="care"

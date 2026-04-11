@@ -104,7 +104,8 @@ function useFetch<T = any>(
           if (isMountedRef.current) {
             safeSetLoading(false);
           }
-          return { data: null, error: null, status: 0 };
+          const normalizedCancelError = normalizeError(err);
+          return { data: null, error: normalizedCancelError, status: 0 };
         }
 
         // For real errors, normalize and set state

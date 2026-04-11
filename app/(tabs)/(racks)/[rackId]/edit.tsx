@@ -5,8 +5,9 @@ import { ConfirmationModal } from "@/components/modals/confirmationModal";
 import { MenuCard } from "@/components/shared/menubtn";
 import useFetch from "@/hooks/useFetch";
 import { rackService } from "@/services/rackService";
+import { useFocusEffect } from "@react-navigation/native";
 import { router, useLocalSearchParams } from "expo-router";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import { Alert, ScrollView, View } from "react-native";
 
 const EditRack = () => {
@@ -35,27 +36,32 @@ const EditRack = () => {
     withAuth: true,
   });
 
-  useEffect(() => {
-    let isActive = true;
+  useFocusEffect(
+    useCallback(() => {
+      let isActive = true;
 
-    const fetchRack = async () => {
-      try {
-        const res = await rackService.getRackbyId(getRackInfo);
-        if (isActive) {
-          setHasPlant(!!res?.rack?.currentPlant);
-          setCurrentPlantId(res?.rack?.currentPlantId ?? null);
+      const fetchRack = async () => {
+        try {
+          const res = await rackService.getRackbyId(getRackInfo);
+          if (isActive) {
+            setHasPlant(!!res?.rack?.currentPlant);
+            setCurrentPlantId(res?.rack?.currentPlantId ?? null);
+          }
+        } catch (err) {
+          if (err instanceof Error && err.message === "Request was cancelled") {
+            return;
+          }
+          console.error("Failed to fetch rack:", err);
         }
-      } catch (err) {
-        console.error("Failed to fetch rack:", err);
-      }
-    };
+      };
 
-    if (rackId) fetchRack();
+      if (rackId) fetchRack();
 
-    return () => {
-      isActive = false;
-    };
-  }, [rackId, getRackInfo]);
+      return () => {
+        isActive = false;
+      };
+    }, [rackId, getRackInfo]),
+  );
 
   const handleRemovePlantPress = useCallback(
     () => setRemovePlantModal(true),

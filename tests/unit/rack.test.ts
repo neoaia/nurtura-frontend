@@ -181,6 +181,18 @@ describe("rackService", () => {
       );
     });
 
+    it("should treat cancelled request as cancelled and not report no data", async () => {
+      mockRefetch.mockResolvedValue({
+        data: null,
+        error: { message: "Request was cancelled", isCancelled: true },
+        status: 0,
+      });
+
+      await expect(rackService.getRackbyId(mockRefetch)).rejects.toThrow(
+        "Request was cancelled",
+      );
+    });
+
     it("should throw error when no data received", async () => {
       mockRefetch.mockResolvedValue({
         data: null,
