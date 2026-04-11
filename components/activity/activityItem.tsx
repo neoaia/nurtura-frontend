@@ -1,7 +1,9 @@
 import { typography } from "@/assets/fonts/Text";
 import { ActivityDTO } from "@/types/activity.dto";
 import React, { useState } from "react";
-import { Image, Text, View } from "react-native";
+import { Text, View } from "react-native";
+import LightActivityIcon from "../../assets/images/icons/home/light_activity/activity_main.svg";
+import WaterActivityIcon from "../../assets/images/icons/home/water_activity/activity_main.svg";
 
 interface ActivityItemProps extends ActivityDTO {
   duration?: string;
@@ -15,10 +17,15 @@ const B: React.FC<{ children: React.ReactNode }> = ({ children }) => (
 
 const eventConfig: Record<
   ActivityDTO["eventType"],
-  { bgColor: string; renderText: (props: ActivityItemProps) => React.ReactNode }
+  {
+    bgColor: string;
+    Icon: React.FC<{ width: number; height: number }>;
+    renderText: (props: ActivityItemProps) => React.ReactNode;
+  }
 > = {
   WATERING_START: {
-    bgColor: "#e3f2fd",
+    bgColor: "#CFE6ED",
+    Icon: WaterActivityIcon,
     renderText: ({ plantName, rackName }) => (
       <>
         Started watering the <B>{plantName}</B> at <B>{rackName}</B>.
@@ -26,7 +33,8 @@ const eventConfig: Record<
     ),
   },
   WATERING_STOP: {
-    bgColor: "#e3f2fd",
+    bgColor: "#CFE6ED",
+    Icon: WaterActivityIcon,
     renderText: ({ plantName, rackName, amount }) => (
       <>
         Watered the <B>{plantName}</B> at <B>{rackName}</B>
@@ -43,7 +51,8 @@ const eventConfig: Record<
     ),
   },
   LIGHT_ON: {
-    bgColor: "#fffde7",
+    bgColor: "#F1EEA2",
+    Icon: LightActivityIcon,
     renderText: ({ plantName, rackName }) => (
       <>
         Started the light for <B>{plantName}</B> at <B>{rackName}</B>.
@@ -51,7 +60,8 @@ const eventConfig: Record<
     ),
   },
   LIGHT_OFF: {
-    bgColor: "#fffde7",
+    bgColor: "#F1EEA2",
+    Icon: LightActivityIcon,
     renderText: ({ plantName, rackName, duration }) => (
       <>
         Turned off the light for <B>{plantName}</B> at <B>{rackName}</B>
@@ -71,7 +81,7 @@ const eventConfig: Record<
 
 export const ActivityItem: React.FC<ActivityItemProps> = (props) => {
   const { eventType, time } = props;
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading] = useState(false);
   const config = eventConfig[eventType];
 
   return (
@@ -80,15 +90,13 @@ export const ActivityItem: React.FC<ActivityItemProps> = (props) => {
         isLoading ? "opacity-70" : ""
       }`}
     >
-      {/* Badge / Icon Container */}
       <View
         className="w-12 h-12 mr-4 rounded-xl items-center justify-center"
         style={{ backgroundColor: config.bgColor }}
       >
-        <Image className="w-7 h-7" resizeMode="contain" />
+        <config.Icon width={20} height={20} />
       </View>
 
-      {/* Content */}
       <View className="flex-1">
         <Text
           style={typography["subheader"]}

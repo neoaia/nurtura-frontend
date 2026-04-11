@@ -1,16 +1,15 @@
 import { typography } from "@/assets/fonts/Text";
+import SeedIcon from "@/assets/images/icons/seed.svg";
 import { PlantedItemDTO } from "@/types/activity.dto";
 import React, { useState } from "react";
-import { Image, Text, View } from "react-native";
+import { Text, View } from "react-native";
 
-// In-extend natin para tanggapin ang eventType AT oldPlantName
 interface PlantItemProps {
   plants: PlantedItemDTO & { eventType?: string; oldPlantName?: string };
 }
 
 export const PlantItem: React.FC<PlantItemProps> = ({ plants }) => {
-  const [isLoading, setIsLoading] = useState(false);
-
+  const [isLoading] = useState(false);
   const { plantName, rackName, time, quantity, eventType, oldPlantName } =
     plants;
 
@@ -80,16 +79,12 @@ export const PlantItem: React.FC<PlantItemProps> = ({ plants }) => {
 
   return (
     <View
-      className={` bg-white w-full flex-row items-center rounded-xl min-h-[84px] ${
+      className={`bg-white w-full flex-row items-center rounded-xl min-h-[84px] ${
         isLoading ? "opacity-70" : ""
       }`}
     >
       <View className="bg-[#E5EDCF] w-12 h-12 mr-4 rounded-xl items-center justify-center">
-        <Image
-          // source={plantImage}
-          className="w-7 h-7"
-          resizeMode="contain"
-        />
+        <SeedIcon width={20} height={20} />
       </View>
 
       <View className="flex-1">{renderSentence()}</View>
