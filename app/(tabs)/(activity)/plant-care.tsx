@@ -186,10 +186,8 @@ const ListHeader: React.FC<ListHeaderProps> = ({
 
 export default function PlantCareScreen() {
   // ── Tutorial Logic ──────────────────────────────────────────────────────────
-  const { shouldShow, tutorialStep, handleNextStep } = useOnboarding(
-    "plant-care",
-    3,
-  );
+  const { shouldShow, tutorialStep, handleNextStep, handleSkip } =
+    useOnboarding("plant-care", 3);
 
   const getTutorialContent = (step: number) => {
     switch (step) {
@@ -512,6 +510,7 @@ export default function PlantCareScreen() {
         <OnboardingTutorialModal
           visible={shouldShow}
           onClose={handleNextStep}
+          onSkip={handleSkip}
           title={currentTutorial.title}
           subtitle={currentTutorial.desc}
           topOffset={currentTutorial.offset}

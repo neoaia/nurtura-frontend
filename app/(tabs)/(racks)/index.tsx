@@ -150,10 +150,8 @@ export default function RacksScreen() {
   }, [unsubscribeAll]);
 
   // ── Tutorial Logic ────────────────────────────────────────────────────────
-  const { shouldShow, tutorialStep, handleNextStep } = useOnboarding(
-    "racks",
-    4,
-  );
+  const { shouldShow, tutorialStep, handleNextStep, handleSkip } =
+    useOnboarding("racks", 4);
 
   const getTutorialContent = (step: number) => {
     switch (step) {
@@ -411,6 +409,7 @@ export default function RacksScreen() {
         <OnboardingTutorialModal
           visible={shouldShow}
           onClose={handleNextStep}
+          onSkip={handleSkip}
           title={currentTutorial.title}
           subtitle={currentTutorial.desc}
           topOffset={currentTutorial.offset}

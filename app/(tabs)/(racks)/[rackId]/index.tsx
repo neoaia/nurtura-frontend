@@ -16,6 +16,7 @@ import { useRackSensor } from "@/hooks/useRackSensor";
 import { rackService } from "@/services/rackService";
 import { useFocusEffect } from "@react-navigation/native";
 import { router, useLocalSearchParams } from "expo-router"; // Added Stack
+import * as SecureStore from "expo-secure-store";
 import React, { useCallback, useState } from "react";
 import { Alert, Dimensions, Image, ScrollView, Text, View } from "react-native";
 import DateIcon from "../../../../assets/images/icons/date.svg";
@@ -23,6 +24,8 @@ import SoilIcon from "../../../../assets/images/icons/soil.svg";
 import { PLANT_IMAGES } from "../../../../utils/constants";
 
 const screenHeight = Dimensions.get("window").height;
+const tutorialKey = (rackId: string) =>
+  `rack_info_tutorial_completed_${rackId}`;
 
 const formatLabel = (value: string) =>
   value
@@ -46,12 +49,52 @@ const RackInfo = () => {
   const [harvesting, setHarvesting] = useState(false);
 
   // ── Tutorial Logic ────────────────────────────────────────────────────────
-  const [tutorialStep, setTutorialStep] = useState(1);
+  const [tutorialStep, setTutorialStep] = useState(0);
   const TOTAL_STEPS = 2;
 
-  const handleNextStep = () => {
-    setTutorialStep((prev) => (prev < TOTAL_STEPS ? prev + 1 : 0));
-  };
+  React.useEffect(() => {
+    let isCancelled = false;
+
+    const loadTutorialState = async () => {
+      if (!rackId) {
+        setTutorialStep(0);
+        return;
+      }
+
+      const completed = await SecureStore.getItemAsync(tutorialKey(rackId));
+      if (isCancelled) return;
+
+      setTutorialStep(completed === "true" ? 0 : 1);
+    };
+
+    void loadTutorialState();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [rackId]);
+
+  const handleNextStep = useCallback(async () => {
+    if (tutorialStep >= TOTAL_STEPS) {
+      setTutorialStep(0);
+
+      if (rackId) {
+        await SecureStore.setItemAsync(tutorialKey(rackId), "true");
+      }
+
+      return;
+    }
+
+    setTutorialStep((prev) => prev + 1);
+  }, [tutorialStep, rackId]);
+
+  const handleSkip = useCallback(async () => {
+    setTutorialStep(0);
+
+    if (rackId) {
+      await SecureStore.setItemAsync(tutorialKey(rackId), "true");
+    }
+  }, [rackId]);
 
   const getTutorialContent = (step: number) => {
     switch (step) {
@@ -269,6 +312,7 @@ const RackInfo = () => {
           <OnboardingTutorialModal
             visible={tutorialStep > 0}
             onClose={handleNextStep}
+            onSkip={handleSkip}
             title={currentTutorial.title}
             subtitle={currentTutorial.desc}
             topOffset={currentTutorial.offset}

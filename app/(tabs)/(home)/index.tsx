@@ -116,7 +116,8 @@ export default function HomeScreen() {
   }, [user?.token, onUserNotification]);
 
   // ── Tutorial Logic ─────────────────────────────────────────────────────────
-  const { shouldShow, tutorialStep, handleNextStep } = useOnboarding("home", 5);
+  const { shouldShow, tutorialStep, handleNextStep, handleSkip } =
+    useOnboarding("home", 5);
 
   const getTutorialContent = (step: number) => {
     switch (step) {
@@ -545,6 +546,7 @@ export default function HomeScreen() {
         <OnboardingTutorialModal
           visible={shouldShow && isUserInfoLoaded}
           onClose={handleNextStep}
+          onSkip={handleSkip}
           title={currentTutorial.title}
           subtitle={currentTutorial.desc}
           topOffset={currentTutorial.offset}

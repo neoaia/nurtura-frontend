@@ -133,10 +133,8 @@ const ListHeader: React.FC<ListHeaderProps> = ({
 
 export default function HarvestScreen() {
   // ── Tutorial Logic ─────────────────────────────────────────────────────────
-  const { shouldShow, tutorialStep, handleNextStep } = useOnboarding(
-    "harvest",
-    2,
-  );
+  const { shouldShow, tutorialStep, handleNextStep, handleSkip } =
+    useOnboarding("harvest", 2);
 
   const [dateRange, setDateRange] = useState<{
     start: Date | null;
@@ -341,6 +339,7 @@ export default function HarvestScreen() {
         <OnboardingTutorialModal
           visible={shouldShow}
           onClose={handleNextStep}
+          onSkip={handleSkip}
           title={currentTutorial.title}
           subtitle={currentTutorial.desc}
           topOffset={currentTutorial.offset}
