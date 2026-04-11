@@ -1,5 +1,4 @@
 import { typography } from "@/assets/fonts/Text";
-import { DebouncedTouchableOpacity } from "@/components/shared/debouncedTouchable";
 import { PlantedItemDTO } from "@/types/activity.dto";
 import React, { useState } from "react";
 import { Image, Text, View } from "react-native";
@@ -12,23 +11,8 @@ interface PlantItemProps {
 export const PlantItem: React.FC<PlantItemProps> = ({ plants }) => {
   const [isLoading, setIsLoading] = useState(false);
 
-  const {
-    plantName, // Ito ang magsisilbing "newPlant"
-    rackName,
-    time,
-    quantity,
-    eventType,
-    oldPlantName, // Idinagdag natin ito
-  } = plants;
-
-  const handlePress = async () => {
-    setIsLoading(true);
-    try {
-      // Your logic here
-    } finally {
-      setTimeout(() => setIsLoading(false), 500);
-    }
-  };
+  const { plantName, rackName, time, quantity, eventType, oldPlantName } =
+    plants;
 
   const renderSentence = () => {
     if (eventType === "PLANT_REMOVED") {
@@ -95,10 +79,7 @@ export const PlantItem: React.FC<PlantItemProps> = ({ plants }) => {
   };
 
   return (
-    <DebouncedTouchableOpacity
-      onPress={handlePress}
-      disabled={isLoading}
-      activeOpacity={0.7}
+    <View
       className={` bg-white w-full flex-row items-center rounded-xl min-h-[84px] ${
         isLoading ? "opacity-70" : ""
       }`}
@@ -112,7 +93,7 @@ export const PlantItem: React.FC<PlantItemProps> = ({ plants }) => {
       </View>
 
       <View className="flex-1">{renderSentence()}</View>
-    </DebouncedTouchableOpacity>
+    </View>
   );
 };
 

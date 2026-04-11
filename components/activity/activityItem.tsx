@@ -1,5 +1,4 @@
 import { typography } from "@/assets/fonts/Text";
-import { DebouncedTouchableOpacity } from "@/components/shared/debouncedTouchable";
 import { ActivityDTO } from "@/types/activity.dto";
 import React, { useState } from "react";
 import { Image, Text, View } from "react-native";
@@ -75,20 +74,8 @@ export const ActivityItem: React.FC<ActivityItemProps> = (props) => {
   const [isLoading, setIsLoading] = useState(false);
   const config = eventConfig[eventType];
 
-  const handlePress = async () => {
-    setIsLoading(true);
-    try {
-      // Your logic here
-    } finally {
-      setTimeout(() => setIsLoading(false), 500);
-    }
-  };
-
   return (
-    <DebouncedTouchableOpacity
-      onPress={handlePress}
-      disabled={isLoading}
-      activeOpacity={0.7}
+    <View
       className={`bg-white mb-1 py-4 w-full flex-row items-center rounded-xl min-h-[84px] ${
         isLoading ? "opacity-70" : ""
       }`}
@@ -113,7 +100,7 @@ export const ActivityItem: React.FC<ActivityItemProps> = (props) => {
           </Text>
         </Text>
       </View>
-    </DebouncedTouchableOpacity>
+    </View>
   );
 };
 
