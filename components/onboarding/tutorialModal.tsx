@@ -40,10 +40,10 @@ export const OnboardingTutorialModal = ({
         onPress={onClose}
       >
         {onSkip ? (
-          <View className="absolute top-4 right-4 z-20">
+          <View className="absolute top-12 right-6 z-20">
             <DebouncedTouchableOpacity
               onPress={onSkip}
-              className="bg-white rounded-md px-4 py-2"
+              className="bg-white rounded-md px-4 py-2 border-[2px] border-gray-200"
             >
               <Text style={typography["button-bold"]} className="text-black">
                 Skip

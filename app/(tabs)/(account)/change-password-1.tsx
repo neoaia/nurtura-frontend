@@ -263,7 +263,9 @@ export default function ChangePassword1() {
           className="mb-6 text-black leading-normal"
         >
           Enter the 5 digit code that was sent to your email address:{" "}
-          <Text className="text-primary font-bold">{userEmail}</Text>
+          <Text style={typography["subheader-bold"]} className="text-primary">
+            {userEmail}
+          </Text>
         </Text>
         <OTPInput
           otp={otp}
