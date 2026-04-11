@@ -1,5 +1,7 @@
+import { typography } from "@/assets/fonts/Text";
+import { PasswordInput } from "@/components/auth/passwordInput";
 import { InfoModal } from "@/components/modals/infoModal";
-import { DebouncedTouchableOpacity } from "@/components/shared/debouncedTouchable";
+import { PrimaryButton } from "@/components/shared/primaryButton";
 import { useAuth } from "@/contexts/AuthContext";
 import useFetch from "@/hooks/useFetch";
 import { authService } from "@/services/authService";
@@ -12,7 +14,8 @@ import {
 import { router, useLocalSearchParams } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import React, { useEffect, useState } from "react";
-import { Image, Text, TextInput, View } from "react-native";
+import { Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const ForgotPassword3 = () => {
   const [password, setPassword] = useState("");
@@ -56,6 +59,11 @@ const ForgotPassword3 = () => {
     autoFetch: false,
     withAuth: true,
   });
+
+  const getPasswordStrengthColor = (pwd: string) => {
+    if (pwd.length === 0) return "#919191";
+    return isStrongPassword(pwd) ? "#4CAF50" : "#E65656";
+  };
 
   const handleNextPress = async () => {
     if (!email) {
@@ -138,137 +146,81 @@ const ForgotPassword3 = () => {
   }, [password, confirmPassword]);
 
   return (
-    <View className="flex-1 bg-white px-[16px] pb-[34px] w-screen justify-between h-screen">
-      <View className="mt-[34px] flex-1 items-start">
-        <Text className="text-black font-bold text-[24px] pr-[110px] mb-[13px] pl-2">
+    <SafeAreaView className="flex-1 bg-white" edges={["bottom"]}>
+      <View className="flex-1 p-6">
+        <Text style={typography["h1-bold"]} className="text-black mt-4 mb-2">
           Set new password
         </Text>
 
-        <Text className="mb-[20px] text-[13px] text-gray-700 leading-normal pl-2">
+        <Text
+          style={typography["subheader"]}
+          className="mb-6 text-black leading-normal"
+        >
           Enter a secure password to protect your account.
         </Text>
 
-        <View className="relative w-full mb-[5px]">
-          <View
-            className={`w-[100%] pt-2 px-3 border-[2px] rounded-[12px] bg-white mb-[6px] ${
-              password.length === 0
-                ? "border-[#919191]"
-                : isPasswordValid
-                  ? "border-[#4CAF50]"
-                  : "border-[#E65656]"
-            }`}
-          >
-            <Text className="text-primary text-[13px] pt-[4px] pl-[4px]">
-              Set password
-            </Text>
-
-            <TextInput
-              className="text-black text-[16px] pr-10"
-              secureTextEntry={!isPasswordVisible}
-              keyboardType="default"
-              autoCapitalize="none"
-              value={password}
-              onChangeText={(text) => setPassword(cleanInput(text))}
-              contextMenuHidden={true}
-              selectTextOnFocus={false}
-            />
-          </View>
-
+        <View className="w-full mb-2">
+          <PasswordInput
+            label="Set password"
+            value={password}
+            onChangeText={(text) => setPassword(cleanInput(text))}
+            isVisible={isPasswordVisible}
+            onToggleVisibility={togglePasswordVisibility}
+            borderColor={getPasswordStrengthColor(password)}
+          />
           {!isPasswordValid && password.length > 0 && (
-            <Text className="text-[#E65656] text-[13px] mb-[10px] pl-2">
+            <Text
+              style={typography["subheader"]}
+              className="text-[#E65656] mb-2"
+            >
               Password must have 8+ chars, uppercase, number & symbol.
             </Text>
           )}
-
-          <DebouncedTouchableOpacity
-            onPress={togglePasswordVisibility}
-            className="absolute right-5 top-[50%] -translate-y-1/2 pr-2"
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-          >
-            <Image
-              source={
-                isPasswordVisible
-                  ? require("@/assets/images/eyeopen.png")
-                  : require("@/assets/images/eyeclosed.png")
-              }
-              className="w-5 h-5"
-              resizeMode="contain"
-            />
-          </DebouncedTouchableOpacity>
         </View>
 
-        <View className="relative w-full mb-[20px]">
-          <View
-            className={`w-[100%] pt-2 px-3 border-[2px] rounded-[12px] bg-white mb-[6px] ${
+        <View className="w-full mb-6">
+          <PasswordInput
+            label="Confirm password"
+            value={confirmPassword}
+            onChangeText={(text) => setConfirmPassword(cleanInput(text))}
+            isVisible={isPasswordVisible}
+            onToggleVisibility={togglePasswordVisibility}
+            borderColor={
               confirmPassword.length === 0
-                ? "border-[#919191]"
+                ? "#919191"
                 : !passwordsMatch
-                  ? "border-[#E65656]"
-                  : isConfirmPasswordValid
-                    ? "border-[#4CAF50]"
-                    : "border-[#E65656]"
-            }`}
-          >
-            <Text className="text-primary text-[13px] pt-[4px] pl-[4px]">
-              Confirm password
-            </Text>
-
-            <TextInput
-              className="text-black text-[16px] pr-10"
-              secureTextEntry={!isPasswordVisible}
-              keyboardType="default"
-              autoCapitalize="none"
-              value={confirmPassword}
-              onChangeText={(text) => setConfirmPassword(cleanInput(text))}
-              contextMenuHidden={true}
-              selectTextOnFocus={false}
-            />
-          </View>
-
+                  ? "#E65656"
+                  : getPasswordStrengthColor(confirmPassword)
+            }
+          />
           {!passwordsMatch && confirmPassword.length > 0 && (
-            <Text className="text-[#E65656] text-[13px] mb-[10px] pl-2">
+            <Text
+              style={typography["subheader"]}
+              className="text-[#E65656] mb-2"
+            >
               Passwords do not match.
             </Text>
           )}
-
           {!isConfirmPasswordValid &&
             confirmPassword.length > 0 &&
             passwordsMatch && (
-              <Text className="text-[#E65656] text-[13px] mb-[10px] pl-2">
+              <Text
+                style={typography["subheader"]}
+                className="text-[#E65656] mb-2"
+              >
                 Password must have 8+ chars, uppercase, number & symbol.
               </Text>
             )}
-
-          <DebouncedTouchableOpacity
-            onPress={togglePasswordVisibility}
-            className="absolute right-5 top-[50%] -translate-y-1/2 pr-2"
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-          >
-            <Image
-              source={
-                isPasswordVisible
-                  ? require("@/assets/images/eyeopen.png")
-                  : require("@/assets/images/eyeclosed.png")
-              }
-              className="w-5 h-5"
-              resizeMode="contain"
-            />
-          </DebouncedTouchableOpacity>
         </View>
       </View>
 
-      <View className="w-full">
-        <DebouncedTouchableOpacity
+      <View className="px-6 pb-9">
+        <PrimaryButton
+          title={loading ? "Loading..." : "Finish"}
           onPress={handleNextPress}
-          className={`w-full p-6 rounded-[12px] mt-2 flex items-center ${
-            isNextButtonEnabled ? "bg-primary" : "bg-[#919191]"
-          }`}
-          disabled={!isNextButtonEnabled}
-        >
-          <Text className="text-white text-[16px] font-bold">
-            {loading ? "Loading..." : "Finish"}
-          </Text>
-        </DebouncedTouchableOpacity>
+          disabled={!isNextButtonEnabled || loading}
+          loading={loading}
+        />
       </View>
 
       <InfoModal
@@ -280,7 +232,7 @@ const ForgotPassword3 = () => {
           setModalVisible(false);
         }}
       />
-    </View>
+    </SafeAreaView>
   );
 };
 

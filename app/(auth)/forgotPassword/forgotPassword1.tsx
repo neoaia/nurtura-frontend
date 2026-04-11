@@ -1,5 +1,7 @@
+import { typography } from "@/assets/fonts/Text";
+import { EmailInput } from "@/components/auth/emailInput";
 import { InfoModal } from "@/components/modals/infoModal";
-import { DebouncedTouchableOpacity } from "@/components/shared/debouncedTouchable";
+import { PrimaryButton } from "@/components/shared/primaryButton";
 import useFetch from "@/hooks/useFetch";
 import { authService } from "@/services/authService";
 import { createLogger } from "@/utils/logger";
@@ -9,7 +11,8 @@ import { useFocusEffect } from "@react-navigation/native";
 import { router } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import React, { useCallback, useEffect, useState } from "react";
-import { Alert, BackHandler, Text, TextInput, View } from "react-native";
+import { Alert, BackHandler, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const logger = createLogger("ForgotPassword1");
 
@@ -267,49 +270,26 @@ const ForgotPassword1 = () => {
   };
 
   return (
-    <View className="flex-1 bg-white px-[16px] pb-[34px] w-screen justify-between h-screen">
-      <View className="mt-[34px] flex-1 items-start">
-        <Text className="text-black font-bold text-3xl mb-[20px] pl-2">
+    <SafeAreaView className="flex-1 bg-white" edges={["bottom"]}>
+      <View className="flex-1 p-6">
+        <Text style={typography["h1-bold"]} className="text-black mt-4 mb-6">
           Find your account
         </Text>
 
-        <View
-          className={`w-[100%] pt-2 px-3 border-[2px] rounded-[12px] bg-white mb-[10px] ${
-            emailError ? "border-[#ef8d8d]" : "border-[#919191]"
-          }`}
-        >
-          <Text className="text-primary text-base pt-[4px] pl-[4px]">
-            Email
-          </Text>
-
-          <TextInput
-            className="text-black text-xl"
-            keyboardType="email-address"
-            autoCapitalize="none"
-            onChangeText={handleEmailChange}
-            value={email}
-          />
-        </View>
-
-        {emailError.length > 0 && (
-          <Text className="text-[#E65656] text-base mt-1 pl-2">
-            {emailError}
-          </Text>
-        )}
+        <EmailInput
+          value={email}
+          onChangeText={handleEmailChange}
+          error={emailError}
+        />
       </View>
 
-      <View className="w-full">
-        <DebouncedTouchableOpacity
+      <View className="px-6 pb-9">
+        <PrimaryButton
+          title={loading ? "Loading..." : "Next"}
           onPress={handleNextPress}
-          className={`w-full p-6 rounded-[12px] mt-2 flex items-center ${
-            isNextButtonEnabled ? "bg-primary" : "bg-[#919191]"
-          }`}
           disabled={!isNextButtonEnabled || loading}
-        >
-          <Text className="text-white text-xl font-bold">
-            {loading ? "Loading..." : "Next"}
-          </Text>
-        </DebouncedTouchableOpacity>
+          loading={loading}
+        />
       </View>
 
       <InfoModal
@@ -318,7 +298,7 @@ const ForgotPassword1 = () => {
         message={infoModalMessage}
         onConfirm={() => setInfoModalVisible(false)}
       />
-    </View>
+    </SafeAreaView>
   );
 };
 

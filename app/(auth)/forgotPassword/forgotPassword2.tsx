@@ -1,6 +1,8 @@
-/* eslint-disable react/no-unescaped-entities */
+import { typography } from "@/assets/fonts/Text";
+import { OTPInput } from "@/components/auth/otpInput";
+import { ResendCode } from "@/components/auth/resendCode";
 import { InfoModal } from "@/components/modals/infoModal";
-import { DebouncedTouchableOpacity } from "@/components/shared/debouncedTouchable";
+import { PrimaryButton } from "@/components/shared/primaryButton";
 import { useAuth } from "@/contexts/AuthContext";
 import useFetch from "@/hooks/useFetch";
 import { authService } from "@/services/authService";
@@ -16,6 +18,7 @@ import {
   TextInputKeyPressEventData,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const logger = createLogger("ForgotPassword2");
 
@@ -202,80 +205,52 @@ const ForgotPassword2 = () => {
   }, []);
 
   return (
-    <View className="flex-1 bg-white px-[16px] pb-[34px] w-screen justify-between h-screen">
-      <View className="mt-[34px] flex-1 items-start">
-        <Text className="text-black font-bold text-3xl pl-2 mb-[13px]">
+    <SafeAreaView className="flex-1 bg-white" edges={["bottom"]}>
+      <View className="flex-1 p-6">
+        <Text style={typography["h1-bold"]} className="text-black mt-4 mb-2">
           Enter one-time code
         </Text>
 
-        <Text className="pl-2 mb-[20px] text-base text-gray-700 leading-normal">
-          Enter the 5 digit code that was sent to your email address: {""}
-          <Text className="text-primary font-bold">{email}</Text>
+        <Text
+          style={typography["subheader"]}
+          className="mb-6 text-black leading-normal"
+        >
+          Enter the 5 digit code that was sent to your email address:{" "}
+          <Text style={typography["subheader-bold"]} className="text-primary">
+            {email as string}
+          </Text>
         </Text>
 
-        <View className="flex-row justify-between w-[100%] self-center mb-[10px]">
-          {otp.map((value, index) => (
-            <TextInput
-              key={index}
-              ref={(ref) => {
-                if (ref) inputs.current[index] = ref;
-              }}
-              value={value}
-              onChangeText={(text) => handleChange(text, index)}
-              onKeyPress={(e) => handleKeyPress(e, index)}
-              onFocus={() => handleFocus(index)}
-              keyboardType="number-pad"
-              maxLength={1}
-              editable={!loading}
-              className={`h-[60px] w-[60px] border-[2px] rounded-[12px] text-black text-center text-xl font-bold ${
-                isOtpInvalid ? "border-[#E65656]" : "border-grayText"
-              }`}
-              returnKeyType="next"
-            />
-          ))}
-        </View>
+        <OTPInput
+          otp={otp}
+          onChangeOtp={handleChange}
+          onKeyPress={handleKeyPress}
+          onFocus={handleFocus}
+          inputRefs={inputs}
+          isInvalid={isOtpInvalid}
+          disabled={loading}
+        />
 
         {isOtpInvalid && (
-          <Text className="text-[#E65656] text-base mb-[26px] pl-2">
+          <Text style={typography["subheader"]} className="text-[#E65656] mb-6">
             Invalid OTP. Please try again.
           </Text>
         )}
 
-        <View className="self-start pl-2 mb-[26px] flex-row items-center">
-          <Text className="text-base text-gray-700 leading-normal">
-            Didn't receive the code?{" "}
-          </Text>
-          <DebouncedTouchableOpacity
-            onPress={handleResendPress}
-            disabled={timer > 0 || loading}
-          >
-            <Text
-              className={`text-base font-semibold underline ${
-                timer > 0 || loading ? "text-gray-400" : "text-primary"
-              }`}
-            >
-              {loading && timer === 0 ? "Sending..." : "Resend code"}
-            </Text>
-          </DebouncedTouchableOpacity>
-
-          {timer > 0 && (
-            <Text className="ml-2 text-base text-gray-500">({timer}s)</Text>
-          )}
-        </View>
+        <ResendCode
+          onResend={handleResendPress}
+          timer={timer}
+          loading={loading}
+        />
       </View>
 
-      <View className="w-full">
-        <DebouncedTouchableOpacity
+      <View className="px-6 pb-9">
+        <PrimaryButton
+          title={loading ? "Loading..." : "Next"}
           onPress={handleNextPress}
-          className={`w-full p-6 rounded-[12px] mt-2 flex items-center ${
-            allFilled && !loading ? "bg-primary" : "bg-[#919191]"
-          }`}
           disabled={!allFilled || loading}
-        >
-          <Text className="text-white text-xl font-bold">
-            {loading ? "Loading..." : "Next"}
-          </Text>
-        </DebouncedTouchableOpacity>
+          loading={loading}
+        />
       </View>
 
       <InfoModal
@@ -284,7 +259,7 @@ const ForgotPassword2 = () => {
         message={infoModalMessage}
         onConfirm={() => setInfoModalVisible(false)}
       />
-    </View>
+    </SafeAreaView>
   );
 };
 
