@@ -1,20 +1,22 @@
 import { typography } from "@/assets/fonts/Text";
 import { ResendCode } from "@/components/auth/resendCode";
+import { InfoModal } from "@/components/modals/infoModal";
 import { PrimaryButton } from "@/components/shared/primaryButton";
 import useFetch from "@/hooks/useFetch";
 import { authService } from "@/services/authService";
 import { createLogger } from "@/utils/logger";
+import { NavigationService, ROUTES } from "@/utils/navigationUtils";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-    Alert,
-    NativeSyntheticEvent,
-    Text,
-    TextInput,
-    TextInputKeyPressEventData,
-    View,
+  NativeSyntheticEvent,
+  Text,
+  TextInput,
+  TextInputKeyPressEventData,
+  View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { OTPInput } from "../../../components/auth/otpInput";
 import "../../globals.css";
 
@@ -27,9 +29,26 @@ const EmailOTP = () => {
   const [loading, setLoading] = useState(false);
   const [timer, setTimer] = useState(0);
 
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalTitle, setModalTitle] = useState("");
+  const [modalMessage, setModalMessage] = useState("");
+  const [onModalConfirm, setOnModalConfirm] = useState<() => void>(() => {});
+
+  const showModal = (
+    title: string,
+    message: string,
+    onConfirm: () => void = () => setModalVisible(false),
+  ) => {
+    setModalTitle(title);
+    setModalMessage(message);
+    setOnModalConfirm(() => onConfirm);
+    setModalVisible(true);
+  };
+
   const allFilled = otp.every((digit) => digit !== "");
 
   const router = useRouter();
+  const navService = new NavigationService(router);
   const { email } = useLocalSearchParams();
 
   const { refetch: sendOtp } = useFetch("/auth/otp/registration", {
@@ -53,7 +72,7 @@ const EmailOTP = () => {
         const response = await authService.sendOtp(sendOtp, email as string);
 
         if (!response.success) {
-          Alert.alert(
+          showModal(
             "Error",
             response.message || "Failed to send OTP. Please try again.",
           );
@@ -62,11 +81,11 @@ const EmailOTP = () => {
         }
 
         if (isResend) {
-          Alert.alert("Success", "OTP has been resent to your email.");
+          showModal("Success", "OTP has been resent to your email.");
           setTimer(60);
         }
       } catch (err: any) {
-        Alert.alert("Error", err.message || "An unexpected error occurred.");
+        showModal("Error", err.message || "An unexpected error occurred.");
       } finally {
         setLoading(false);
       }
@@ -131,7 +150,7 @@ const EmailOTP = () => {
 
       if (!response.success) {
         setIsOtpInvalid(true);
-        Alert.alert(
+        showModal(
           "Error",
           response.message || "OTP verification failed. Please try again.",
         );
@@ -139,13 +158,10 @@ const EmailOTP = () => {
       }
 
       await SecureStore.setItemAsync("verified_email", email as string);
-      router.push({
-        pathname: "/(auth)/signup/createPassword",
-        params: { email },
-      });
+      navService.push(ROUTES.AUTH.SIGNUP.CREATE_PASSWORD, { email });
     } catch (error) {
       setIsOtpInvalid(true);
-      Alert.alert("Error", "An unexpected error occurred. Please try again.");
+      showModal("Error", "An unexpected error occurred. Please try again.");
       logger.log("OTP Verification Error:", error);
     } finally {
       setLoading(false);
@@ -179,18 +195,15 @@ const EmailOTP = () => {
   }, []);
 
   return (
-    <View className="flex-1 bg-white px-[16px] pb-[34px] w-screen justify-between h-screen">
-      <View className="mt-[34px] flex-1 items-start">
-        <Text
-          className="text-black pl-2 mb-[13px]"
-          style={typography["h1-bold"]}
-        >
+    <SafeAreaView className="flex-1 bg-white" edges={["bottom"]}>
+      <View className="flex-1 p-6">
+        <Text style={typography["h1-bold"]} className="text-black mt-4 mb-2">
           Enter one-time code
         </Text>
 
         <Text
           style={typography["subheader"]}
-          className="pl-2 mb-[20px] text-black leading-normal"
+          className="mb-6 text-black leading-normal"
         >
           Enter the 5 digit code that was sent to your email address:{" "}
           <Text className="text-primary" style={typography["subheader-bold"]}>
@@ -208,10 +221,7 @@ const EmailOTP = () => {
         />
 
         {isOtpInvalid && (
-          <Text
-            style={typography["subheader"]}
-            className="text-[#E65656] mb-[26px] pl-2"
-          >
+          <Text style={typography["subheader"]} className="text-[#E65656] mb-6">
             Invalid OTP. Please try again.
           </Text>
         )}
@@ -219,7 +229,7 @@ const EmailOTP = () => {
         <ResendCode onResend={handleResendPress} timer={timer} />
       </View>
 
-      <View className="w-full">
+      <View className="px-6 pb-9">
         <PrimaryButton
           onPress={handleNextPress}
           loading={loading}
@@ -227,7 +237,17 @@ const EmailOTP = () => {
           title="Next"
         />
       </View>
-    </View>
+
+      <InfoModal
+        isVisible={modalVisible}
+        title={modalTitle}
+        message={modalMessage}
+        onConfirm={() => {
+          onModalConfirm();
+          setModalVisible(false);
+        }}
+      />
+    </SafeAreaView>
   );
 };
 

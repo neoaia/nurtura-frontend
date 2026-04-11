@@ -1,5 +1,6 @@
 import { typography } from "@/assets/fonts/Text";
-import { ActivityIndicator, Text, TouchableOpacity } from "react-native";
+import { ActivityIndicator, Text } from "react-native";
+import { DebouncedTouchableOpacity } from "./debouncedTouchable";
 
 interface PrimaryButtonProps {
   onPress: () => void;
@@ -17,7 +18,7 @@ export const PrimaryButton = ({
   const isDisabled = loading || disabled;
 
   return (
-    <TouchableOpacity
+    <DebouncedTouchableOpacity
       className={`w-full p-6 rounded-xl mt-2 flex items-center ${
         isDisabled ? "bg-[#919191]" : "bg-primary"
       }`}
@@ -31,6 +32,6 @@ export const PrimaryButton = ({
           {title}
         </Text>
       )}
-    </TouchableOpacity>
+    </DebouncedTouchableOpacity>
   );
 };

@@ -31,3 +31,18 @@ export interface MarkReadAllNotificationsResponseDTO {
   message: string;
   updatedCount: number;
 }
+
+//
+
+export interface MarkReadNotificationResponseDTO {
+  message: string;
+  notification: {
+    id: string;
+    status: "READ";
+    readAt: string;
+  };
+}
+
+export interface CheckUnreadNotificationsResponseDTO {
+  hasUnread: boolean;
+}

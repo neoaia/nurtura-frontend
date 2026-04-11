@@ -7,10 +7,12 @@ import { DateRangePicker } from "@/components/shared/datetimepicker";
 import Dropdown, { DropdownOption } from "@/components/shared/dropdown";
 import useFetch from "@/hooks/useFetch";
 import { useOnboarding } from "@/hooks/useOnboarding";
+import { useSocket } from "@/hooks/useSocket";
 import { plantService } from "@/services/plantService";
 import { rackService } from "@/services/rackService";
 import { ActivityDTO } from "@/types/activity.dto";
-import React, { useCallback, useEffect, useState } from "react";
+import { AutomationActivity } from "@/types/socket.interface";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   Dimensions,
   RefreshControl,
@@ -23,6 +25,90 @@ import RackIcon from "../../../assets/images/icons/rack(gray).svg";
 const screenWidth = Dimensions.get("window").width;
 const CHART_SECTION_HEIGHT = 420;
 
+// ─── Helpers ────────────────────────────────────────────────────────────────
+
+/**
+ * Returns true when `date` falls within the [start, end] range.
+ * Null boundaries are treated as open-ended.
+ */
+const isWithinDateRange = (
+  date: Date,
+  range: { start: Date | null; end: Date | null },
+): boolean => {
+  if (
+    range.start &&
+    date < new Date(new Date(range.start).setHours(0, 0, 0, 0))
+  )
+    return false;
+  if (
+    range.end &&
+    date > new Date(new Date(range.end).setHours(23, 59, 59, 999))
+  )
+    return false;
+  return true;
+};
+
+const mapAutomationActivityToDTO = (
+  activity: AutomationActivity,
+): ActivityDTO => {
+  const dateObj = new Date(activity.timestamp);
+  const isWater =
+    activity.eventType === "WATERING_START" ||
+    activity.eventType === "WATERING_STOP";
+
+  return {
+    id: activity.id,
+    type: isWater ? "water" : "light",
+    eventType: activity.eventType as ActivityDTO["eventType"], // ← add this
+    plantName: activity.metadata?.plantName || "Plants",
+    rackName: activity.metadata?.rackName || "Unknown Rack",
+    time: dateObj.toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+    }),
+    date: dateObj,
+    amount: activity.metadata?.waterUsedMl,
+    duration: activity.metadata?.durationSeconds
+      ? `${Math.round(activity.metadata.durationSeconds / 60)} mins`
+      : undefined,
+  };
+};
+
+const groupActivitiesByDate = (data: ActivityDTO[]) => {
+  const groups: { [key: string]: ActivityDTO[] } = {};
+  const now = new Date();
+  const today = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate(),
+  ).getTime();
+  const yesterday = today - 86400000;
+
+  data.forEach((item) => {
+    const itemDate = new Date(item.date).setHours(0, 0, 0, 0);
+    let title = "";
+
+    if (itemDate === today) title = "Today";
+    else if (itemDate === yesterday) title = "Yesterday";
+    else
+      title = new Date(itemDate).toLocaleDateString("en-US", {
+        month: "long",
+        day: "numeric",
+        year: "numeric",
+      });
+
+    if (!groups[title]) groups[title] = [];
+    groups[title].push(item);
+  });
+
+  return Object.keys(groups).map((date) => ({
+    title: date,
+    data: groups[date],
+  }));
+};
+
+// ─── ListHeader ──────────────────────────────────────────────────────────────
+
 interface ListHeaderProps {
   dateRange: { start: Date | null; end: Date | null };
   setDateRange: (range: { start: Date | null; end: Date | null }) => void;
@@ -32,6 +118,7 @@ interface ListHeaderProps {
   lightChartData: { timestamp: number; value: number }[];
   selectedRack: DropdownOption | null;
   setSelectedRack: (rack: DropdownOption | null) => void;
+  rackOptions: DropdownOption[];
 }
 
 const ListHeader: React.FC<ListHeaderProps> = ({
@@ -43,41 +130,8 @@ const ListHeader: React.FC<ListHeaderProps> = ({
   lightChartData,
   selectedRack,
   setSelectedRack,
+  rackOptions,
 }) => {
-  const [rackOptions, setRackOptions] = useState<DropdownOption[]>([]);
-  const [loadingRacks, setLoadingRacks] = useState(false);
-
-  const { refetch: fetchRacks } = useFetch("/racks", {
-    method: "GET",
-    autoFetch: false,
-    withAuth: true,
-  });
-
-  const loadRacks = async () => {
-    setLoadingRacks(true);
-    try {
-      const response = await rackService.getAllUserRack(fetchRacks);
-      if (response?.data) {
-        const options = response.data
-          .filter((rack: any) => rack.isActive)
-          .map((rack: any) => ({
-            id: rack.id,
-            label: rack.name,
-            value: rack.id,
-          }));
-        setRackOptions(options);
-      }
-    } catch (e) {
-      console.error("Failed to load racks:", e);
-    } finally {
-      setLoadingRacks(false);
-    }
-  };
-
-  useEffect(() => {
-    loadRacks();
-  }, []);
-
   return (
     <View className="bg-white">
       <View className="mt-4 gap-3">
@@ -128,41 +182,10 @@ const ListHeader: React.FC<ListHeaderProps> = ({
   );
 };
 
-const groupActivitiesByDate = (data: ActivityDTO[]) => {
-  const groups: { [key: string]: ActivityDTO[] } = {};
-  const now = new Date();
-  const today = new Date(
-    now.getFullYear(),
-    now.getMonth(),
-    now.getDate(),
-  ).getTime();
-  const yesterday = today - 86400000;
-
-  data.forEach((item) => {
-    const itemDate = new Date(item.date).setHours(0, 0, 0, 0);
-    let title = "";
-
-    if (itemDate === today) title = "Today";
-    else if (itemDate === yesterday) title = "Yesterday";
-    else
-      title = new Date(itemDate).toLocaleDateString("en-US", {
-        month: "long",
-        day: "numeric",
-        year: "numeric",
-      });
-
-    if (!groups[title]) groups[title] = [];
-    groups[title].push(item);
-  });
-
-  return Object.keys(groups).map((date) => ({
-    title: date,
-    data: groups[date],
-  }));
-};
+// ─── PlantCareScreen ─────────────────────────────────────────────────────────
 
 export default function PlantCareScreen() {
-  // ── Tutorial Logic ─────────────────────────────────────────────────────────
+  // ── Tutorial Logic ──────────────────────────────────────────────────────────
   const { shouldShow, tutorialStep, handleNextStep } = useOnboarding(
     "plant-care",
     3,
@@ -214,6 +237,7 @@ export default function PlantCareScreen() {
               <ActivityItem
                 id="tutorial-id"
                 type="water"
+                eventType="WATERING_STOP"
                 plantName="Basil - High Moisture Stop"
                 rackName="Kitchen Herb Rack"
                 time="5:04 PM"
@@ -229,18 +253,31 @@ export default function PlantCareScreen() {
 
   const currentTutorial = getTutorialContent(tutorialStep);
 
+  // ── State ───────────────────────────────────────────────────────────────────
   const [activeTab, setActiveTab] = useState<"water" | "light">("water");
   const [dateRange, setDateRange] = useState<{
     start: Date | null;
     end: Date | null;
-  }>({
-    start: null,
-    end: null,
-  });
+  }>({ start: null, end: null });
   const [selectedRack, setSelectedRack] = useState<DropdownOption | null>(null);
+  const [rackOptions, setRackOptions] = useState<DropdownOption[]>([]);
   const [activities, setActivities] = useState<ActivityDTO[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+
+  // Tracks which rack IDs we're currently subscribed to via WebSocket,
+  // so we can cleanly unsubscribe before switching to a new set.
+  const subscribedRackIdsRef = useRef<string[]>([]);
+
+  // ── Socket ──────────────────────────────────────────────────────────────────
+  const { isConnected, socketService } = useSocket();
+
+  // ── HTTP fetchers ───────────────────────────────────────────────────────────
+  const { refetch: fetchRacks } = useFetch("/racks", {
+    method: "GET",
+    autoFetch: false,
+    withAuth: true,
+  });
 
   const { refetch: getPlantCare } = useFetch("/racks/activities/plant-care", {
     method: "GET",
@@ -248,12 +285,30 @@ export default function PlantCareScreen() {
     withAuth: true,
   });
 
-  useEffect(() => {
-    return () => {
-      setSelectedRack(null);
-    };
-  }, []);
+  // ── Load rack list ──────────────────────────────────────────────────────────
+  const loadRacks = useCallback(async () => {
+    try {
+      const response = await rackService.getAllUserRack(fetchRacks);
+      if (response?.data) {
+        const options: DropdownOption[] = response.data
+          .filter((rack: any) => rack.isActive)
+          .map((rack: any) => ({
+            id: rack.id,
+            label: rack.name,
+            value: rack.id,
+          }));
+        setRackOptions(options);
+      }
+    } catch (e) {
+      console.error("Failed to load racks:", e);
+    }
+  }, [fetchRacks]);
 
+  useEffect(() => {
+    loadRacks();
+  }, [loadRacks]);
+
+  // ── HTTP: initial activity load ─────────────────────────────────────────────
   const fetchActivities = useCallback(async () => {
     try {
       setLoading(true);
@@ -275,20 +330,18 @@ export default function PlantCareScreen() {
       });
 
       if (response?.data) {
-        // Tinanggal ang .filter((item) => item.eventType?.endsWith("_OFF"))
-        // Dahil gusto natin makita pareho ang START at STOP o kahit anong log.
+        // FIX: Moved mappedData declaration outside .map() so console.log works correctly
         const mappedData: ActivityDTO[] = response.data.map((item: any) => {
+          console.log("item.metadata:", JSON.stringify(item.metadata));
           const dateObj = new Date(item.timestamp);
-
-          // I-check kung may "WATER" sa eventType
           const isWater =
             item.eventType?.includes("WATERING") ||
             item.eventType?.includes("WATER");
 
           return {
             id: item.id,
-            // Assign as "water" kung may WATERING sa string, else "light"
             type: (isWater ? "water" : "light") as "water" | "light",
+            eventType: item.eventType as ActivityDTO["eventType"], // ← add this
             plantName: item.metadata?.ruleName || "Plants",
             rackName:
               item.metadata?.rackName || item.rack?.name || "Unknown Rack",
@@ -297,12 +350,15 @@ export default function PlantCareScreen() {
               minute: "2-digit",
             }),
             date: dateObj,
-            amount: item.metadata?.amount, // Siguraduhing existing sa API response nyo
-            duration: item.metadata?.duration
-              ? `${Math.round(item.metadata.duration / 60000)} mins`
-              : undefined,
+            amount: item.metadata?.waterUsedMl ?? item.metadata?.amount,
+            duration: item.metadata?.durationSeconds
+              ? `${Math.round(item.metadata.durationSeconds / 60)} mins`
+              : item.metadata?.duration
+                ? `${Math.round(item.metadata.duration / 60000)} mins`
+                : undefined,
           };
         });
+        console.log("Fetched activities:", mappedData);
         setActivities(mappedData);
       }
     } catch (error) {
@@ -316,12 +372,79 @@ export default function PlantCareScreen() {
     fetchActivities();
   }, [fetchActivities]);
 
+  // ── WebSocket: rack subscription management ─────────────────────────────────
+  useEffect(() => {
+    if (!isConnected) return;
+
+    // Unsubscribe from whatever we had before
+    subscribedRackIdsRef.current.forEach((id) =>
+      socketService.unsubscribeFromRack(id),
+    );
+
+    const idsToSubscribe = selectedRack
+      ? [selectedRack.value]
+      : rackOptions.map((r) => r.value);
+
+    idsToSubscribe.forEach((id) => socketService.subscribeToRack(id));
+    subscribedRackIdsRef.current = idsToSubscribe;
+
+    return () => {
+      subscribedRackIdsRef.current.forEach((id) =>
+        socketService.unsubscribeFromRack(id),
+      );
+      subscribedRackIdsRef.current = [];
+    };
+  }, [isConnected, selectedRack, rackOptions, socketService]);
+
+  // ── WebSocket: listen for new automation events ─────────────────────────────
+  useEffect(() => {
+    const handleAutomationEvent = (data: any) => {
+      // FIX: Handle both payload shapes — { event, activity } or the raw activity object directly
+      const activity: AutomationActivity = data?.event.activity ?? data;
+      console.log("activity.metadata:", JSON.stringify(activity.metadata));
+
+      // FIX: Guard against malformed/undefined payloads before accessing .timestamp
+      if (!activity || !activity.timestamp) {
+        console.warn("Received malformed automation event:", data);
+        return;
+      }
+
+      const eventDate = new Date(activity.timestamp);
+
+      // Drop the event if it falls outside the current date filter
+      if (!isWithinDateRange(eventDate, dateRange)) return;
+
+      // Drop if a rack filter is active and the event belongs to a different rack
+      if (selectedRack && activity.rackId !== selectedRack.value) return;
+
+      const newActivity = mapAutomationActivityToDTO(activity);
+
+      setActivities((prev) => {
+        // Guard against duplicate events (e.g. after a reconnect)
+        if (prev.some((a) => a.id === newActivity.id)) return prev;
+        return [newActivity, ...prev];
+      });
+    };
+
+    socketService.on("automationEvent", handleAutomationEvent);
+    return () => socketService.off("automationEvent", handleAutomationEvent);
+  }, [dateRange, selectedRack, socketService]);
+
+  // ── Clear selected rack on unmount ─────────────────────────────────────────
+  useEffect(() => {
+    return () => {
+      setSelectedRack(null);
+    };
+  }, []);
+
+  // ── Pull-to-refresh ─────────────────────────────────────────────────────────
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await fetchActivities();
     setRefreshing(false);
   }, [fetchActivities]);
 
+  // ── Derived data ────────────────────────────────────────────────────────────
   const filteredActivities = activities.filter(
     (item) => item.type === activeTab,
   );
@@ -337,6 +460,7 @@ export default function PlantCareScreen() {
       value: a.duration ? parseInt(a.duration) : 0,
     }));
 
+  // ── Render ──────────────────────────────────────────────────────────────────
   return (
     <View className="flex-1 bg-[#F5F5F5]">
       <SectionList
@@ -363,12 +487,16 @@ export default function PlantCareScreen() {
             lightChartData={lightChartData}
             selectedRack={selectedRack}
             setSelectedRack={setSelectedRack}
+            rackOptions={rackOptions}
           />
         }
         ListEmptyComponent={() => (
-          <View className="items-center mt-10">
-            <Text style={typography["label"]} className="text-gray-400">
-              {loading ? "Loading..." : `No ${activeTab} activities found.`}
+          <View className="items-center mt-10 px-6">
+            <Text
+              style={typography["subheader"]}
+              className="text-grayText text-center"
+            >
+              {loading ? "Loading harvests..." : "No harvests found."}
             </Text>
           </View>
         )}

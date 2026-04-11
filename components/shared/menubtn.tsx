@@ -1,7 +1,8 @@
 import { typography } from "@/assets/fonts/Text";
+import { DebouncedTouchableOpacity } from "@/components/shared/debouncedTouchable";
 import { router } from "expo-router";
 import React, { useState } from "react";
-import { Image, Text, TouchableOpacity, View } from "react-native";
+import { Image, Text, View } from "react-native";
 
 interface MenuButtonCardProps {
   type?: string;
@@ -64,7 +65,7 @@ export const MenuCard: React.FC<MenuButtonCardProps> = ({
         </Text>
       </View>
 
-      <TouchableOpacity
+      <DebouncedTouchableOpacity
         onPress={handlePress}
         disabled={isLoading}
         className={`p-4 ${colorStyle} ${isLoading ? "opacity-50" : ""} rounded-xl justify-center items-center`}
@@ -75,7 +76,7 @@ export const MenuCard: React.FC<MenuButtonCardProps> = ({
           style={tintStyle}
           resizeMode="contain"
         />
-      </TouchableOpacity>
+      </DebouncedTouchableOpacity>
     </View>
   );
 };

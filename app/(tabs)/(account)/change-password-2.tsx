@@ -1,18 +1,22 @@
 import { typography } from "@/assets/fonts/Text";
 import { PasswordInput } from "@/components/auth/passwordInput";
+import { InfoModal } from "@/components/modals/infoModal";
 import { PrimaryButton } from "@/components/shared/primaryButton";
+import { useAuth } from "@/contexts/AuthContext";
 import useFetch from "@/hooks/useFetch";
 import { authService } from "@/services/authService";
 import { createLogger } from "@/utils/logger";
+import { NavigationService } from "@/utils/navigationUtils";
 import {
-    cleanInput,
-    isStrongPassword,
-    validatePassword,
+  cleanInput,
+  isStrongPassword,
+  validatePassword,
 } from "@/utils/validation";
-import { router } from "expo-router";
+import { useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import React, { useEffect, useState } from "react";
-import { Alert, ScrollView, Text, View } from "react-native";
+import { ScrollView, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const logger = createLogger("ChangePassword2");
 
@@ -21,6 +25,13 @@ export default function ChangePassword2() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [verifiedEmail, setVerifiedEmail] = useState<string>("");
+  const [infoModalVisible, setInfoModalVisible] = useState(false);
+  const [infoModalTitle, setInfoModalTitle] = useState("");
+  const [infoModalMessage, setInfoModalMessage] = useState("");
+  const [successModalVisible, setSuccessModalVisible] = useState(false);
+  const router = useRouter();
+  const navService = new NavigationService(router);
+  const { logout } = useAuth();
 
   const { refetch: changePassword } = useFetch("/auth/update-password", {
     method: "POST",
@@ -39,6 +50,12 @@ export default function ChangePassword2() {
     validatePassword(confirmPassword) &&
     passwordsMatch;
 
+  const showInfoModal = (title: string, message: string) => {
+    setInfoModalTitle(title);
+    setInfoModalMessage(message);
+    setInfoModalVisible(true);
+  };
+
   useEffect(() => {
     const loadVerifiedEmail = async () => {
       try {
@@ -46,23 +63,18 @@ export default function ChangePassword2() {
           "change_password_verified_email",
         );
         if (!email) {
-          Alert.alert(
+          showInfoModal(
             "Error",
             "Verification required. Please complete the OTP verification first.",
-            [
-              {
-                text: "OK",
-                onPress: () => router.back(),
-              },
-            ],
           );
+          navService.goBack();
           return;
         }
         setVerifiedEmail(email);
         logger.log("Verified email loaded");
       } catch (error) {
         logger.error("Error loading verified email", error);
-        Alert.alert("Error", "Failed to load verification status.");
+        showInfoModal("Error", "Failed to load verification status.");
       }
     };
     loadVerifiedEmail();
@@ -78,7 +90,7 @@ export default function ChangePassword2() {
 
   const handleNextPress = async () => {
     if (!verifiedEmail) {
-      Alert.alert(
+      showInfoModal(
         "Error",
         "Email verification is missing. Please restart the process.",
       );
@@ -86,12 +98,12 @@ export default function ChangePassword2() {
     }
 
     if (!passwordsMatch) {
-      Alert.alert("Error", "Passwords do not match.");
+      showInfoModal("Error", "Passwords do not match.");
       return;
     }
 
     if (!isPasswordValid || !isConfirmPasswordValid) {
-      Alert.alert(
+      showInfoModal(
         "Error",
         "Password must have 8+ characters, uppercase, number & symbol.",
       );
@@ -107,7 +119,7 @@ export default function ChangePassword2() {
       );
 
       if (!response.success) {
-        Alert.alert(
+        showInfoModal(
           "Error",
           response.message || "Failed to change password. Please try again.",
         );
@@ -119,19 +131,10 @@ export default function ChangePassword2() {
 
       await SecureStore.deleteItemAsync("change_password_verified_email");
 
-      router.dismissAll();
-      router.push({
-        pathname: "/(tabs)/(account)/successScreen",
-        params: {
-          type: "other",
-          title: "Password updated!",
-          subtitle: "You can now proceed back to making your account safe.",
-          finishTitle: "Finish",
-        },
-      });
+      setSuccessModalVisible(true);
     } catch (error) {
       logger.error("Error changing password:", error);
-      Alert.alert("Error", "Failed to change password. Please try again.");
+      showInfoModal("Error", "Failed to change password. Please try again.");
       setLoading(false);
     }
   };
@@ -142,18 +145,14 @@ export default function ChangePassword2() {
   };
 
   return (
-    <View className="flex-1 bg-white">
-      <ScrollView
-        className="flex-1 px-4"
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingTop: 34 }}
-      >
-        <Text style={typography["h1-bold"]} className="text-black mb-3 pl-2">
+    <SafeAreaView className="flex-1 bg-white" edges={["bottom"]}>
+      <ScrollView className="flex-1 p-6" showsVerticalScrollIndicator={false}>
+        <Text style={typography["h1-bold"]} className="text-black mt-4 mb-2">
           Set new password
         </Text>
         <Text
           style={typography["subheader"]}
-          className="pl-2 mb-6 text-black leading-normal"
+          className="mb-6 text-black leading-normal"
         >
           Enter a secure password to protect your account.
         </Text>
@@ -167,7 +166,7 @@ export default function ChangePassword2() {
               borderColor={getPasswordStrengthColor(password)}
             />
             {!isPasswordValid && password.length > 0 && (
-              <Text className="text-[#E65656] text-[13px] mt-1 pl-2">
+              <Text className="text-[#E65656] text-[13px] mt-1">
                 Password must have 8+ chars, uppercase, number & symbol.
               </Text>
             )}
@@ -187,14 +186,14 @@ export default function ChangePassword2() {
               }
             />
             {!passwordsMatch && confirmPassword.length > 0 && (
-              <Text className="text-[#E65656] text-[13px] mt-1 pl-2">
+              <Text className="text-[#E65656] text-[13px] mt-1">
                 Passwords do not match.
               </Text>
             )}
             {passwordsMatch &&
               confirmPassword.length > 0 &&
               !isConfirmPasswordValid && (
-                <Text className="text-[#E65656] text-[13px] mt-1 pl-2">
+                <Text className="text-[#E65656] text-[13px] mt-1">
                   Password must have 8+ chars, uppercase, number & symbol.
                 </Text>
               )}
@@ -202,13 +201,30 @@ export default function ChangePassword2() {
         </View>
       </ScrollView>
 
-      <View className="px-4 pb-9">
+      <View className="px-6 pb-9">
         <PrimaryButton
           title={loading ? "Updating..." : "Finish"}
           onPress={handleNextPress}
           disabled={!isNextButtonEnabled || loading}
         />
       </View>
-    </View>
+
+      <InfoModal
+        isVisible={infoModalVisible}
+        title={infoModalTitle}
+        message={infoModalMessage}
+        onConfirm={() => setInfoModalVisible(false)}
+      />
+      <InfoModal
+        isVisible={successModalVisible}
+        title="Password Updated!"
+        message="Your password has been successfully updated. You will be logged out for security purposes."
+        confirmText="Logout"
+        onConfirm={async () => {
+          setSuccessModalVisible(false);
+          await logout();
+        }}
+      />
+    </SafeAreaView>
   );
 }

@@ -1,13 +1,8 @@
 import { typography } from "@/assets/fonts/Text";
+import { DebouncedTouchableOpacity } from "@/components/shared/debouncedTouchable";
 import { router } from "expo-router";
 import React, { useState } from "react";
-import {
-  Image,
-  ImageSourcePropType,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { Image, ImageSourcePropType, Text, View } from "react-native";
 
 interface SettingsTabProps {
   iconSource: ImageSourcePropType;
@@ -32,7 +27,7 @@ export const SettingsRow: React.FC<SettingsTabProps> = ({
   };
 
   return (
-    <TouchableOpacity
+    <DebouncedTouchableOpacity
       className={`w-full flex-row items-center justify-between py-2 px-5 bg-white ${
         isLoading ? "opacity-50" : ""
       }`}
@@ -52,6 +47,6 @@ export const SettingsRow: React.FC<SettingsTabProps> = ({
         className="w-3 h-3"
         resizeMode="contain"
       />
-    </TouchableOpacity>
+    </DebouncedTouchableOpacity>
   );
 };

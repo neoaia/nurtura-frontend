@@ -1,7 +1,7 @@
 import React from "react";
 import { Text, View } from "react-native";
 import { typography } from "../../assets/fonts/Text";
-import { ActivityDTO } from "../../types/home.dto";
+import { ActivityDTO } from "../../types/activity.dto";
 
 // Water SVGs
 import WaterActivityIcon from "../../assets/images/icons/home/water_activity/activity_main.svg";
@@ -18,32 +18,31 @@ interface RecentActivityBarProps {
 }
 
 const getIconConfig = (type: ActivityDTO["type"]) => {
-  const configs: Record<
-    ActivityDTO["type"],
-    {
-      ActivityIcon: React.FC<{ width: number; height: number }>;
-      ClockIcon: React.FC<{ width: number; height: number }>;
-      DurationIcon: React.FC<{ width: number; height: number }>;
-      bgColor: string;
-      textColor: string;
-    }
-  > = {
-    water: {
-      ActivityIcon: WaterActivityIcon,
-      ClockIcon: WaterClockIcon,
-      DurationIcon: WaterDurationIcon,
-      bgColor: "#CFE6ED",
-      textColor: "#619AAC",
-    },
-    light: {
-      ActivityIcon: LightActivityIcon,
-      ClockIcon: LightClockIcon,
-      DurationIcon: LightDurationIcon,
-      bgColor: "#F1EEA2",
-      textColor: "#D6C125",
-    },
+  return type === "water"
+    ? {
+        ActivityIcon: WaterActivityIcon,
+        ClockIcon: WaterClockIcon,
+        DurationIcon: WaterDurationIcon,
+        bgColor: "#CFE6ED",
+        textColor: "#619AAC",
+      }
+    : {
+        ActivityIcon: LightActivityIcon,
+        ClockIcon: LightClockIcon,
+        DurationIcon: LightDurationIcon,
+        bgColor: "#F1EEA2",
+        textColor: "#D6C125",
+      };
+};
+
+const formatEventLabel = (eventType: ActivityDTO["eventType"]): string => {
+  const labels: Record<ActivityDTO["eventType"], string> = {
+    WATERING_START: "Started watering",
+    WATERING_STOP: "Stopped watering",
+    LIGHT_ON: "Turned on light for",
+    LIGHT_OFF: "Turned off light for",
   };
-  return configs[type];
+  return labels[eventType] ?? "Activity for";
 };
 
 export const RecentActivityBar: React.FC<RecentActivityBarProps> = ({
@@ -91,14 +90,14 @@ export const RecentActivityBar: React.FC<RecentActivityBarProps> = ({
                     style={typography["subheader"]}
                     className="text-gray-700 mb-4"
                   >
-                    {activity.action}{" "}
+                    {formatEventLabel(activity.eventType)}{" "}
                     <Text
                       style={{
                         ...typography["subheader-bold"],
                         color: textColor,
                       }}
                     >
-                      {activity.plant}
+                      {activity.plantName}
                     </Text>
                   </Text>
 
@@ -109,7 +108,7 @@ export const RecentActivityBar: React.FC<RecentActivityBarProps> = ({
                         style={typography.label}
                         className="text-gray-600 ml-2"
                       >
-                        {activity.timestamp}
+                        {activity.time}
                       </Text>
                     </View>
 
@@ -119,7 +118,13 @@ export const RecentActivityBar: React.FC<RecentActivityBarProps> = ({
                         style={typography.label}
                         className="text-gray-600 ml-2"
                       >
-                        {activity.duration}
+                        {activity.type === "water"
+                          ? activity.amount == null
+                            ? "Started"
+                            : `${activity.amount} ml`
+                          : activity.duration == null
+                            ? "Started"
+                            : `${activity.duration}`}
                       </Text>
                     </View>
                   </View>

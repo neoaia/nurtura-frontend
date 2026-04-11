@@ -40,16 +40,18 @@ describe("userService", () => {
       expect(mockRefetch).toHaveBeenCalledWith();
     });
 
-    it("should throw error when user not found", async () => {
+    it("should return empty userInfo when user not found", async () => {
       mockRefetch.mockResolvedValue({
         data: null,
         error: { message: "User not found" },
         status: 404,
       });
 
-      await expect(userService.getUser(mockRefetch)).rejects.toThrow(
-        "User not found",
-      );
+      const result = await userService.getUser(mockRefetch);
+
+      expect(result.message).toBe("User not found");
+      expect(result.userInfo).toEqual({});
+      expect(mockRefetch).toHaveBeenCalledWith();
     });
 
     it("should throw error when no data received", async () => {
@@ -60,7 +62,7 @@ describe("userService", () => {
       });
 
       await expect(userService.getUser(mockRefetch)).rejects.toThrow(
-        "No data received",
+        "No data received from server",
       );
     });
 

@@ -1,12 +1,15 @@
 import { typography } from "@/assets/fonts/Text";
 import { ColoredButton } from "@/components/shared/coloredButton";
-import { HollowButton } from "@/components/shared/hollowButton"; // Import your hollow button
+import { HollowButton } from "@/components/shared/hollowButton";
+import { NavigationService, ROUTES } from "@/utils/navigationUtils";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React from "react";
 import { Image, Text, View } from "react-native";
 
 export default function SuccessPage() {
   const router = useRouter();
+  const navService = new NavigationService(router);
+
   const params = useLocalSearchParams<{
     title: string;
     subtitle: string;
@@ -16,13 +19,24 @@ export default function SuccessPage() {
     type?: "other" | "plant" | "rack";
   }>();
 
+  /**
+   * Finish the flow and return to home
+   * Uses reset to clear entire stack of add flow screens
+   */
   const handleFinish = () => {
-    router.replace("/(tabs)/(home)");
+    navService.completeFlow();
   };
 
+  /**
+   * Add another plant/rack
+   * Clears current stack and goes back to step 1
+   */
   const handleAddAnother = () => {
-    router.dismissAll();
-    router.replace("/(tabs)/(addNewRack)/step-1");
+    if (params.type === "rack") {
+      navService.reset(ROUTES.TABS.ADD.RACK.STEP_1);
+    } else {
+      navService.reset(ROUTES.TABS.ADD.PLANT.STEP_1);
+    }
   };
 
   return (

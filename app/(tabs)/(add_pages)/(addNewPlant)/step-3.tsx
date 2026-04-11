@@ -8,6 +8,7 @@ import useFetch from "@/hooks/useFetch";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useState } from "react";
 import { Alert, Image, ScrollView, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import RackIcon from "../../../../assets/images/icons/rack(Add).svg";
 import SoilIcon from "../../../../assets/images/icons/soil.svg";
 
@@ -96,9 +97,9 @@ const AddNewPlant3 = () => {
   };
 
   return (
-    <View className="flex-1 bg-white">
-      <ScrollView className="flex-1 px-4" showsVerticalScrollIndicator={false}>
-        <View className="flex-1 justify-center items-center pl-8">
+    <SafeAreaView className="flex-1 bg-white" edges={["bottom"]}>
+      <ScrollView className="flex-1 p-6" showsVerticalScrollIndicator={false}>
+        <View className="items-center">
           <Image
             source={require("@/assets/images/plant-images/lettuce.png")}
             className="w-72 h-72 mt-4"
@@ -107,7 +108,7 @@ const AddNewPlant3 = () => {
         </View>
 
         <View className="w-full flex-row justify-between items-start mb-6">
-          <View className="flex-1 pl-2">
+          <View className="flex-1">
             <Text style={typography["h1-bold"]} className="text-black">
               {plantName}
             </Text>
@@ -117,7 +118,7 @@ const AddNewPlant3 = () => {
           </View>
         </View>
 
-        <View className="flex-col gap-8 mb-8 pl-2">
+        <View className="flex-col gap-8 mb-8">
           <SmallDescription
             label="Recommended Soil"
             value={recommendedSoil || "Loam + Compost + Perlite"}
@@ -147,7 +148,6 @@ const AddNewPlant3 = () => {
         disabled={!seedQuantity || loading}
       />
 
-      {/* Confirm planting reminder */}
       <ConfirmationModal
         isVisible={confirmation}
         title="Important!"
@@ -156,7 +156,6 @@ const AddNewPlant3 = () => {
         onConfirm={handleConfirmPress}
       />
 
-      {/* Back warning */}
       <ConfirmationModal
         isVisible={showModal}
         onConfirm={handleConfirm}
@@ -166,7 +165,7 @@ const AddNewPlant3 = () => {
         cancelText="Cancel"
         onCancel={handleCancel}
       />
-    </View>
+    </SafeAreaView>
   );
 };
 

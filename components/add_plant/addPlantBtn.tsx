@@ -1,6 +1,7 @@
 import { typography } from "@/assets/fonts/Text";
+import { DebouncedTouchableOpacity } from "@/components/shared/debouncedTouchable";
 import React, { useState } from "react";
-import { Text, TouchableOpacity, View } from "react-native";
+import { Text, View } from "react-native";
 import Svg, { Path } from "react-native-svg";
 
 interface AddPlantButtonProps {
@@ -37,7 +38,7 @@ const AddPlantButton: React.FC<AddPlantButtonProps> = ({
   };
 
   return (
-    <TouchableOpacity
+    <DebouncedTouchableOpacity
       onPress={handlePress}
       disabled={isLoading}
       activeOpacity={0.7}
@@ -53,7 +54,7 @@ const AddPlantButton: React.FC<AddPlantButtonProps> = ({
           {isLoading ? "Loading..." : label}
         </Text>
       </View>
-    </TouchableOpacity>
+    </DebouncedTouchableOpacity>
   );
 };
 

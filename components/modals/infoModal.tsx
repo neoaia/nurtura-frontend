@@ -28,7 +28,7 @@ export const InfoModal: React.FC<InfoModalProps> = ({
       <View className="flex-1 justify-center items-center bg-black/50 px-4">
         <View className="bg-white rounded-2xl p-4 w-full max-w-sm">
           <Text
-            style={typography["h2-bold"]}
+            style={typography["button-bold"]}
             className="text-black text-center mb-3 mt-2"
           >
             {title}
@@ -36,7 +36,7 @@ export const InfoModal: React.FC<InfoModalProps> = ({
 
           <Text
             style={typography["subheader"]}
-            className="text-gray-600 text-center mb-3 leading-5"
+            className="text-black text-center mb-3 leading-5 px-2"
           >
             {message}
           </Text>

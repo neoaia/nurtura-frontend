@@ -321,7 +321,10 @@ export default function HarvestScreen() {
         }
         ListEmptyComponent={() => (
           <View className="items-center mt-10 px-6">
-            <Text style={typography["label"]} className="text-gray-400">
+            <Text
+              style={typography["subheader"]}
+              className="text-grayText text-center"
+            >
               {loading ? "Loading harvests..." : "No harvests found."}
             </Text>
           </View>

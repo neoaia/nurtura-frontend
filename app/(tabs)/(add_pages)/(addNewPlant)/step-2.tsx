@@ -9,8 +9,8 @@ import { PLANT_IMAGES } from "@/utils/constants";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useEffect, useState } from "react";
 import { ActivityIndicator, ScrollView, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
-// Updated to match actual API response
 interface Plant {
   id: string;
   name: string;
@@ -20,7 +20,6 @@ interface Plant {
   isActive: boolean;
 }
 
-// Updated filters to match actual categories from backend
 const filterOptions = [
   { id: "all", label: "All Types", value: "all" },
   { id: "LEAFY_GREENS", label: "Leafy Greens", value: "LEAFY_GREENS" },
@@ -29,7 +28,6 @@ const filterOptions = [
   { id: "ROOT_AND_STALK", label: "Root & Stalk", value: "ROOT_AND_STALK" },
 ];
 
-// Makes category readable e.g. LEAFY_GREENS -> Leafy Greens
 const formatCategory = (category: string) => {
   return category
     .split("_")
@@ -62,7 +60,7 @@ const AddNewPlant2 = () => {
     setLoadingPlants(true);
     try {
       const result = await fetchPlants();
-      console.log("Raw plants result:", JSON.stringify(result, null, 2)); // 👈 log everything
+      console.log("Raw plants result:", JSON.stringify(result, null, 2));
 
       if (result?.error) {
         console.error("API error:", result.error);
@@ -82,6 +80,10 @@ const AddNewPlant2 = () => {
   useEffect(() => {
     loadPlants();
   }, []);
+
+  function toProperCase(str: string): string {
+    return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+  }
 
   const handleNextPress = () => {
     if (!selectedPlant) return;
@@ -106,7 +108,7 @@ const AddNewPlant2 = () => {
       plantName: selectedPlant.name,
       plantCategory: formatCategory(selectedPlant.category),
       plantType: selectedPlant.category,
-      recommendedSoil: selectedPlant.recommendedSoil,
+      recommendedSoil: toProperCase(selectedPlant.recommendedSoil),
     });
   };
 
@@ -116,19 +118,16 @@ const AddNewPlant2 = () => {
       : plants.filter((plant) => plant.category === selectedFilter);
 
   return (
-    <View className="flex-1 bg-white">
+    <SafeAreaView className="flex-1 bg-white" edges={["bottom"]}>
       <ScrollView
-        className="flex-1 px-4"
+        className="flex-1 p-6"
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 20, paddingTop: 20 }}
+        contentContainerStyle={{ paddingBottom: 20 }}
       >
-        <Text style={typography["h1-bold"]} className="text-black mb-3 pl-2">
+        <Text style={typography["h1-bold"]} className="text-black mt-4 mb-2">
           Choose your Plant
         </Text>
-        <Text
-          style={typography["subheader"]}
-          className="mb-5 text-gray-700 leading-normal pl-2"
-        >
+        <Text style={typography["subheader"]} className="mb-6">
           Choose a plant to add to your{" "}
           <Text style={typography["subheader-bold"]} className="text-black">
             Nurtura Rack
@@ -139,7 +138,7 @@ const AddNewPlant2 = () => {
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ gap: 8, paddingHorizontal: 8 }}
+          contentContainerStyle={{ gap: 8 }}
           className="mb-6"
         >
           {filterOptions.map((filter) => (
@@ -177,6 +176,7 @@ const AddNewPlant2 = () => {
         onPress={handleNextPress}
         disabled={!selectedPlant || loadingPlants}
       />
+
       <ConfirmationModal
         isVisible={showModal}
         onConfirm={handleConfirm}
@@ -186,7 +186,7 @@ const AddNewPlant2 = () => {
         cancelText="Cancel"
         onCancel={handleCancel}
       />
-    </View>
+    </SafeAreaView>
   );
 };
 

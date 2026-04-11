@@ -1,16 +1,11 @@
 import { typography } from "@/assets/fonts/Text";
 import SeedIcon from "@/assets/images/icons/rackItem/seed.svg";
 import { InfoModal } from "@/components/modals/infoModal";
+import { DebouncedTouchableOpacity } from "@/components/shared/debouncedTouchable";
 import { useRackSensor } from "@/hooks/useRackSensor";
 import { GetRackInfoDTO } from "@/types/rack.dto";
 import React, { useState } from "react";
-import {
-  ActivityIndicator,
-  Image,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { ActivityIndicator, Image, Text, View } from "react-native";
 import HumidityIcon from "../../assets/images/icons/rackItem/humidity.svg";
 import MoistureIcon from "../../assets/images/icons/rackItem/moisture.svg";
 import TemperatureIcon from "../../assets/images/icons/rackItem/temperature.svg";
@@ -118,19 +113,19 @@ const RackItem: React.FC<RackItemProps> = ({ rack }) => {
   const renderStatusIndicator = () => {
     if (connectionStatus.type === "connecting") {
       return (
-        <TouchableOpacity
+        <DebouncedTouchableOpacity
           onPress={handleStatusPress}
           activeOpacity={0.7}
           className="w-5 h-5 items-center justify-center"
         >
           <ActivityIndicator size="small" color="#86975A" />
-        </TouchableOpacity>
+        </DebouncedTouchableOpacity>
       );
     }
 
     if (connectionStatus.type === "error") {
       return (
-        <TouchableOpacity
+        <DebouncedTouchableOpacity
           onPress={handleStatusPress}
           activeOpacity={0.7}
           className="w-5 h-5 bg-red-500 rounded-full items-center justify-center"
@@ -138,12 +133,12 @@ const RackItem: React.FC<RackItemProps> = ({ rack }) => {
           <Text style={{ fontSize: 12, fontWeight: "bold", color: "white" }}>
             !
           </Text>
-        </TouchableOpacity>
+        </DebouncedTouchableOpacity>
       );
     }
 
     return (
-      <TouchableOpacity
+      <DebouncedTouchableOpacity
         onPress={handleStatusPress}
         activeOpacity={0.7}
         className="w-3 h-3 bg-green-500 rounded-full"
@@ -152,7 +147,7 @@ const RackItem: React.FC<RackItemProps> = ({ rack }) => {
   };
 
   return (
-    <TouchableOpacity
+    <DebouncedTouchableOpacity
       onPress={handlePress}
       disabled={isLoading}
       activeOpacity={0.7}
@@ -244,7 +239,7 @@ const RackItem: React.FC<RackItemProps> = ({ rack }) => {
         confirmText="OK"
         onConfirm={() => setModalVisible(false)}
       />
-    </TouchableOpacity>
+    </DebouncedTouchableOpacity>
   );
 };
 

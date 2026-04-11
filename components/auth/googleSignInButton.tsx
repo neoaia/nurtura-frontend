@@ -1,5 +1,6 @@
 import { typography } from "@/assets/fonts/Text";
-import { Image, Text, TouchableOpacity } from "react-native";
+import { DebouncedTouchableOpacity } from "@/components/shared/debouncedTouchable";
+import { Image, Text } from "react-native";
 
 interface GoogleSignInButtonProps {
   onPress: () => void;
@@ -11,7 +12,7 @@ export const GoogleSignInButton = ({
   disabled,
 }: GoogleSignInButtonProps) => {
   return (
-    <TouchableOpacity
+    <DebouncedTouchableOpacity
       className={`flex-row items-center justify-center p-6 rounded-[12px] w-[100%] bg-white shadow-sm-subtle ${
         disabled ? "opacity-50" : "opacity-100"
       }`}
@@ -30,9 +31,9 @@ export const GoogleSignInButton = ({
         className="w-5 h-5 mr-3"
         resizeMode="contain"
       />
-      <Text style={typography['button-bold']} className="  text-black">
+      <Text style={typography["button-bold"]} className="  text-black">
         Continue with Google
       </Text>
-    </TouchableOpacity>
+    </DebouncedTouchableOpacity>
   );
 };

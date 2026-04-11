@@ -3,14 +3,16 @@ import { OnboardingTutorialModal } from "@/components/onboarding/tutorialModal";
 import AddRackButton from "@/components/racks/addRackItemBtn";
 import RackItem from "@/components/racks/rackItem";
 import RackItemSkeleton from "@/components/racks/skeleton/rackItemSkeleton";
+import { DebouncedTouchableOpacity } from "@/components/shared/debouncedTouchable";
 import { useAuth } from "@/contexts/AuthContext";
 import useFetch from "@/hooks/useFetch";
 import { useOnboarding } from "@/hooks/useOnboarding";
 import { rackService } from "@/services/rackService";
 import { GetRackInfoDTO } from "@/types/rack.dto";
 import { SensorReading } from "@/types/socket.interface";
+import { NavigationService, ROUTES } from "@/utils/navigationUtils";
 import { socketService } from "@/utils/websocket/socket";
-import { router, useFocusEffect } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Dimensions,
@@ -18,7 +20,6 @@ import {
   Image,
   RefreshControl,
   Text,
-  TouchableOpacity,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -39,6 +40,8 @@ export default function RacksScreen() {
   const subscribedRackIds = useRef<Set<string>>(new Set());
 
   const { user } = useAuth(); // { id: string, ... }
+  const router = useRouter();
+  const navService = new NavigationService(router);
 
   // ── Socket subscriptions ──────────────────────────────────────────────────
 
@@ -299,17 +302,20 @@ export default function RacksScreen() {
     }, [fetchRacks, unsubscribeAll]),
   );
 
-  const handleCardPress = useCallback((rackId: string) => {
-    router.push(`/(tabs)/(racks)/${rackId}` as any);
-  }, []);
+  const handleCardPress = useCallback(
+    (rackId: string) => {
+      navService.push(ROUTES.TABS.RACKS.DETAIL(rackId));
+    },
+    [navService],
+  );
 
   const handleAddRack = useCallback(() => {
-    router.push("/(tabs)/(add_pages)/(addNewRack)");
-  }, []);
+    navService.push(ROUTES.TABS.ADD.RACK.STEP_1);
+  }, [navService]);
 
   const handlePreviouslyOwned = useCallback(() => {
-    router.push("/(tabs)/(racks)/previously-owned");
-  }, []);
+    navService.push(ROUTES.TABS.RACKS.PREVIOUSLY_OWNED);
+  }, [navService]);
 
   const handleRetry = useCallback(() => {
     setLoading(true);
@@ -323,9 +329,12 @@ export default function RacksScreen() {
         <Text style={typography["title-bold"]} className="text-black text-5xl">
           Racks
         </Text>
-        <TouchableOpacity onPress={handlePreviouslyOwned} className="pr-1">
+        <DebouncedTouchableOpacity
+          onPress={handlePreviouslyOwned}
+          className="pr-1"
+        >
           <ArchiveButton width={22} height={22} />
-        </TouchableOpacity>
+        </DebouncedTouchableOpacity>
       </View>
     ),
     [handlePreviouslyOwned],
@@ -371,24 +380,16 @@ export default function RacksScreen() {
         renderItem={renderRackItem}
         keyExtractor={(item) => item.id}
         ListHeaderComponent={renderHeader}
-        ListFooterComponent={renderFooter}
+        ListFooterComponent={error ? null : renderFooter}
         ListEmptyComponent={
           error ? (
-            <View className="flex-1 justify-center items-center py-20 gap-4">
+            <View className="items-center my-10 px-6">
               <Text
-                style={typography["button-bold"]}
+                style={typography["subheader"]}
                 className="text-grayText text-center"
               >
-                Something went wrong
+                Something went wrong.
               </Text>
-              <TouchableOpacity
-                onPress={handleRetry}
-                className="bg-primary px-6 py-3 rounded-xl"
-              >
-                <Text style={typography["button"]} className="text-white">
-                  Retry
-                </Text>
-              </TouchableOpacity>
             </View>
           ) : null
         }

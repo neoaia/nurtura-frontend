@@ -1,8 +1,8 @@
 import {
-  OnboardingPageKey,
-  useOnboardingContext,
+    OnboardingPageKey,
+    useOnboardingContext,
 } from "@/contexts/OnboardingContext";
-import { useCallback, useState } from "react";
+import React, { useCallback, useState } from "react";
 
 interface UseOnboardingReturn {
   /** Whether this page's tutorial should render at all */
@@ -37,12 +37,19 @@ export function useOnboarding(
 
     setTutorialStep(isFinished ? 0 : next);
 
-    // Call markPageComplete OUTSIDE the updater so it
-    // doesn't trigger cross-component setState during render
     if (isFinished) {
       markPageComplete(pageKey);
     }
   }, [tutorialStep, totalSteps, pageKey, markPageComplete]);
+
+  React.useEffect(() => {
+    if (shouldShow && tutorialStep === 0) {
+      setTutorialStep(1);
+    }
+    if (!shouldShow && tutorialStep > 0) {
+      setTutorialStep(0);
+    }
+  }, [shouldShow, tutorialStep]);
 
   return {
     shouldShow: shouldShow && tutorialStep > 0,

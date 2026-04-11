@@ -1,4 +1,5 @@
 import { typography } from "@/assets/fonts/Text";
+import RackIcon from "@/assets/images/icons/rack(Add).svg";
 import { RackEventType } from "@/types/activity.dto";
 import React from "react";
 import { Text, View } from "react-native";
@@ -7,26 +8,20 @@ export interface RackActivityItemProps {
   id: string;
   eventType: RackEventType;
   rackName: string;
-  rackNameNew?: string; // only present for RACK_RENAMED
+  rackNameNew?: string;
   date: string;
   time: string;
 }
 
-const EVENT_CONFIG: Record<
-  RackEventType,
-  { badgeColor: string; textColor: string }
-> = {
+const EVENT_CONFIG: Record<RackEventType, { badgeColor: string }> = {
   RACK_ADDED: {
     badgeColor: "#E5EDCF",
-    textColor: "#4A7C2F",
   },
   RACK_RENAMED: {
     badgeColor: "#E5EDCF",
-    textColor: "#4A7C2F",
   },
   RACK_REMOVED: {
     badgeColor: "#FAD4D4",
-    textColor: "#B91C1C",
   },
 };
 
@@ -91,20 +86,14 @@ export const RackActivityItem: React.FC<RackActivityItemProps> = (props) => {
 
   return (
     <View className="bg-white mb-1 py-4 w-full flex-row items-center rounded-xl min-h-[84px]">
-      {/* Badge / Icon placeholder */}
       <View
         style={{ backgroundColor: config.badgeColor }}
-        className="p-4 mr-4 rounded-xl items-center justify-center"
+        className="w-12 h-12 mr-4 rounded-xl items-center justify-center"
       >
-        {/* TODO: add icon here */}
-        <View className="w-5 h-5" />
+        <RackIcon width={20} height={20} />
       </View>
 
-      {/* Content */}
-      <View className="flex-1">
-        <View className="mb-1"></View>
-        {renderContent(props)}
-      </View>
+      <View className="flex-1">{renderContent(props)}</View>
     </View>
   );
 };

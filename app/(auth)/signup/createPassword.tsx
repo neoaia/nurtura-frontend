@@ -1,12 +1,15 @@
 import { typography } from "@/assets/fonts/Text";
 import { PasswordInput } from "@/components/auth/passwordInput";
+import { InfoModal } from "@/components/modals/infoModal";
 import { PrimaryButton } from "@/components/shared/primaryButton";
 import { createLogger } from "@/utils/logger";
+import { NavigationService, ROUTES } from "@/utils/navigationUtils";
 import { isStrongPassword, validatePassword } from "@/utils/validation";
 import { router, useLocalSearchParams } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { useEffect, useState } from "react";
-import { Alert, Text, View } from "react-native";
+import { Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import "../../globals.css";
 
 const logger = createLogger("CreatePassword");
@@ -16,6 +19,17 @@ const CreatePassword = () => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [infoModalVisible, setInfoModalVisible] = useState(false);
+  const [infoModalTitle, setInfoModalTitle] = useState("");
+  const [infoModalMessage, setInfoModalMessage] = useState("");
+
+  const showInfoModal = (title: string, message: string) => {
+    setInfoModalTitle(title);
+    setInfoModalMessage(message);
+    setInfoModalVisible(true);
+  };
+
+  const navService = new NavigationService(router);
 
   const isPasswordValid = isStrongPassword(password);
   const isConfirmPasswordValid = isStrongPassword(confirmPassword);
@@ -49,13 +63,10 @@ const CreatePassword = () => {
     if (passwordsMatch && isPasswordValid && isConfirmPasswordValid) {
       try {
         logger.log("Password validation passed, navigating to createUserInfo");
-        router.push({
-          pathname: "/(auth)/signup/createUserInfo",
-          params: { email },
-        });
+        navService.push(ROUTES.AUTH.SIGNUP.CREATE_USER_INFO, { email });
       } catch (error: any) {
         logger.error("Error during navigation", error);
-        Alert.alert("Error", "Unable to reset password. Please try again.");
+        showInfoModal("Error", "Unable to reset password. Please try again.");
       } finally {
         setLoading(false);
       }
@@ -65,7 +76,7 @@ const CreatePassword = () => {
         isPasswordValid,
         isConfirmPasswordValid,
       });
-      Alert.alert("Invalid Password", "Please check your inputs again.");
+      showInfoModal("Invalid Password", "Please check your inputs again.");
       setLoading(false);
     }
   };
@@ -99,23 +110,20 @@ const CreatePassword = () => {
   }, [password, confirmPassword]);
 
   return (
-    <View className="flex-1 bg-white px-[16px] pb-[34px] w-screen justify-between h-screen">
-      <View className="mt-[34px] flex-1 items-start">
-        <Text
-          style={typography["h1-bold"]}
-          className="text-black pr-[110px] mb-[13px] pl-2"
-        >
+    <SafeAreaView className="flex-1 bg-white" edges={["bottom"]}>
+      <View className="flex-1 p-6">
+        <Text style={typography["h1-bold"]} className="mt-4 mb-2">
           Set your password
         </Text>
 
         <Text
           style={typography["subheader"]}
-          className="mb-[20px] text-black leading-normal pl-2"
+          className="mb-6 text-black leading-normal"
         >
           Enter a secure password to protect your account.
         </Text>
 
-        <View className="w-full mb-[5px]">
+        <View className="w-full mb-2">
           <PasswordInput
             value={password}
             onChangeText={handlePasswordChange}
@@ -128,14 +136,14 @@ const CreatePassword = () => {
           {!isPasswordValid && password.length > 0 && (
             <Text
               style={typography["subheader"]}
-              className="text-[#E65656] mb-[10px] pl-2"
+              className="text-[#E65656] mb-2"
             >
               Password must have 8+ chars, uppercase, number & symbol.
             </Text>
           )}
         </View>
 
-        <View className="w-full mb-[20px]">
+        <View className="w-full mb-6">
           <PasswordInput
             value={confirmPassword}
             onChangeText={handleConfirmPasswordChange}
@@ -151,7 +159,7 @@ const CreatePassword = () => {
           {!passwordsMatch && confirmPassword.length > 0 && (
             <Text
               style={typography["subheader"]}
-              className="text-[#E65656] mb-[10px] pl-2"
+              className="text-[#E65656] mb-2"
             >
               Passwords do not match.
             </Text>
@@ -162,7 +170,7 @@ const CreatePassword = () => {
             passwordsMatch && (
               <Text
                 style={typography["subheader"]}
-                className="text-[#E65656] mb-[10px] pl-2"
+                className="text-[#E65656] mb-2"
               >
                 Password must have 8+ chars, uppercase, number & symbol.
               </Text>
@@ -170,7 +178,7 @@ const CreatePassword = () => {
         </View>
       </View>
 
-      <View className="w-full">
+      <View className="px-6 pb-9">
         <PrimaryButton
           onPress={handleNextPress}
           loading={loading}
@@ -178,7 +186,14 @@ const CreatePassword = () => {
           title="Next"
         />
       </View>
-    </View>
+
+      <InfoModal
+        isVisible={infoModalVisible}
+        title={infoModalTitle}
+        message={infoModalMessage}
+        onConfirm={() => setInfoModalVisible(false)}
+      />
+    </SafeAreaView>
   );
 };
 

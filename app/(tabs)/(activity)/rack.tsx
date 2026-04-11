@@ -318,10 +318,11 @@ export default function RackActivity() {
         }
         ListEmptyComponent={() => (
           <View className="items-center mt-10 px-6">
-            <Text style={typography["label"]} className="text-grayText">
-              {loading
-                ? "Loading activity..."
-                : "No rack activity found for this range."}
+            <Text
+              style={typography["subheader"]}
+              className="text-grayText text-center"
+            >
+              {loading ? "Loading harvests..." : "No harvests found."}
             </Text>
           </View>
         )}

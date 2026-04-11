@@ -1,20 +1,24 @@
-/* eslint-disable react/no-unescaped-entities */
+import { typography } from "@/assets/fonts/Text";
+import { OTPInput } from "@/components/auth/otpInput";
+import { ResendCode } from "@/components/auth/resendCode";
+import { InfoModal } from "@/components/modals/infoModal";
+import { PrimaryButton } from "@/components/shared/primaryButton";
 import { useAuth } from "@/contexts/AuthContext";
 import useFetch from "@/hooks/useFetch";
 import { authService } from "@/services/authService";
 import { createLogger } from "@/utils/logger";
+import { NavigationService, ROUTES } from "@/utils/navigationUtils";
 import { router, useLocalSearchParams } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
-    Alert,
-    NativeSyntheticEvent,
-    Text,
-    TextInput,
-    TextInputKeyPressEventData,
-    TouchableOpacity,
-    View,
+  NativeSyntheticEvent,
+  Text,
+  TextInput,
+  TextInputKeyPressEventData,
+  View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const logger = createLogger("ForgotPassword2");
 
@@ -25,6 +29,17 @@ const ForgotPassword2 = () => {
   const [loading, setLoading] = useState(false);
   const [isOtpInvalid, setIsOtpInvalid] = useState(false);
   const [timer, setTimer] = useState(60);
+  const [infoModalVisible, setInfoModalVisible] = useState(false);
+  const [infoModalTitle, setInfoModalTitle] = useState("");
+  const [infoModalMessage, setInfoModalMessage] = useState("");
+
+  const showInfoModal = (title: string, message: string) => {
+    setInfoModalTitle(title);
+    setInfoModalMessage(message);
+    setInfoModalVisible(true);
+  };
+
+  const navService = new NavigationService(router);
 
   const inputs = useRef<(TextInput | null)[]>([]);
 
@@ -53,7 +68,7 @@ const ForgotPassword2 = () => {
         const response = await authService.sendOtp(sendOtp, email as string);
 
         if (!response.success) {
-          Alert.alert(
+          showInfoModal(
             "Error",
             response.message || "Failed to send OTP. Please try again.",
           );
@@ -62,11 +77,11 @@ const ForgotPassword2 = () => {
         }
 
         if (isResend) {
-          Alert.alert("Success", "OTP has been resent to your email.");
+          showInfoModal("Success", "OTP has been resent to your email.");
           setTimer(60);
         }
       } catch (err: any) {
-        Alert.alert("Error", err.message || "An unexpected error occurred.");
+        showInfoModal("Error", err.message || "An unexpected error occurred.");
       } finally {
         setLoading(false);
       }
@@ -134,7 +149,7 @@ const ForgotPassword2 = () => {
 
       if (!response.success) {
         setIsOtpInvalid(true);
-        Alert.alert("Error", "Invalid OTP. Please try again.");
+        showInfoModal("Error", "Invalid OTP. Please try again.");
         setLoading(false);
         return;
       }
@@ -150,18 +165,15 @@ const ForgotPassword2 = () => {
         await SecureStore.setItemAsync("forgotPasswordInProgress", "true");
         await signInWithTemporaryToken(token);
       } else {
-        Alert.alert("Error", "Something went wrong. Please try again.");
+        showInfoModal("Error", "Something went wrong. Please try again.");
         setLoading(false);
         return;
       }
 
-      router.push({
-        pathname: "/(auth)/forgetpassword/forgotPassword3",
-        params: { email },
-      });
+      navService.push(ROUTES.AUTH.FORGOT_PASSWORD.STEP_3, { email });
     } catch (error) {
       logger.error("Error verifying OTP:", error);
-      Alert.alert("Error", "Failed to verify OTP. Please try again.");
+      showInfoModal("Error", "Failed to verify OTP. Please try again.");
       setLoading(false);
     }
   };
@@ -193,82 +205,61 @@ const ForgotPassword2 = () => {
   }, []);
 
   return (
-    <View className="flex-1 bg-white px-[16px] pb-[34px] w-screen justify-between h-screen">
-      <View className="mt-[34px] flex-1 items-start">
-        <Text className="text-black font-bold text-3xl pl-2 mb-[13px]">
+    <SafeAreaView className="flex-1 bg-white" edges={["bottom"]}>
+      <View className="flex-1 p-6">
+        <Text style={typography["h1-bold"]} className="text-black mt-4 mb-2">
           Enter one-time code
         </Text>
 
-        <Text className="pl-2 mb-[20px] text-base text-gray-700 leading-normal">
-          Enter the 5 digit code that was sent to your email address: {""}
-          <Text className="text-primary font-bold">{email}</Text>
+        <Text
+          style={typography["subheader"]}
+          className="mb-6 text-black leading-normal"
+        >
+          Enter the 5 digit code that was sent to your email address:{" "}
+          <Text style={typography["subheader-bold"]} className="text-primary">
+            {email as string}
+          </Text>
         </Text>
 
-        <View className="flex-row justify-between w-[100%] self-center mb-[10px]">
-          {otp.map((value, index) => (
-            <TextInput
-              key={index}
-              ref={(ref) => {
-                if (ref) inputs.current[index] = ref;
-              }}
-              value={value}
-              onChangeText={(text) => handleChange(text, index)}
-              onKeyPress={(e) => handleKeyPress(e, index)}
-              onFocus={() => handleFocus(index)}
-              keyboardType="number-pad"
-              maxLength={1}
-              editable={!loading}
-              className={`h-[60px] w-[60px] border-[2px] rounded-[12px] text-black text-center text-xl font-bold ${
-                isOtpInvalid ? "border-[#E65656]" : "border-grayText"
-              }`}
-              returnKeyType="next"
-            />
-          ))}
-        </View>
+        <OTPInput
+          otp={otp}
+          onChangeOtp={handleChange}
+          onKeyPress={handleKeyPress}
+          onFocus={handleFocus}
+          inputRefs={inputs}
+          isInvalid={isOtpInvalid}
+          disabled={loading}
+        />
 
         {isOtpInvalid && (
-          <Text className="text-[#E65656] text-base mb-[26px] pl-2">
+          <Text style={typography["subheader"]} className="text-[#E65656] mb-6">
             Invalid OTP. Please try again.
           </Text>
         )}
 
-        <View className="self-start pl-2 mb-[26px] flex-row items-center">
-          <Text className="text-base text-gray-700 leading-normal">
-            Didn't receive the code?{" "}
-          </Text>
-          <TouchableOpacity
-            onPress={handleResendPress}
-            disabled={timer > 0 || loading}
-          >
-            <Text
-              className={`text-base font-semibold underline ${
-                timer > 0 || loading ? "text-gray-400" : "text-primary"
-              }`}
-            >
-              {loading && timer === 0 ? "Sending..." : "Resend code"}
-            </Text>
-          </TouchableOpacity>
-
-          {timer > 0 && (
-            <Text className="ml-2 text-base text-gray-500">({timer}s)</Text>
-          )}
-        </View>
+        <ResendCode
+          onResend={handleResendPress}
+          timer={timer}
+          loading={loading}
+        />
       </View>
 
-      <View className="w-full">
-        <TouchableOpacity
+      <View className="px-6 pb-9">
+        <PrimaryButton
+          title={loading ? "Loading..." : "Next"}
           onPress={handleNextPress}
-          className={`w-full p-6 rounded-[12px] mt-2 flex items-center ${
-            allFilled && !loading ? "bg-primary" : "bg-[#919191]"
-          }`}
           disabled={!allFilled || loading}
-        >
-          <Text className="text-white text-xl font-bold">
-            {loading ? "Loading..." : "Next"}
-          </Text>
-        </TouchableOpacity>
+          loading={loading}
+        />
       </View>
-    </View>
+
+      <InfoModal
+        isVisible={infoModalVisible}
+        title={infoModalTitle}
+        message={infoModalMessage}
+        onConfirm={() => setInfoModalVisible(false)}
+      />
+    </SafeAreaView>
   );
 };
 

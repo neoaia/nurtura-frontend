@@ -1,5 +1,6 @@
 import { typography } from "@/assets/fonts/Text";
-import { ActivityIndicator, Text, TouchableOpacity } from "react-native";
+import { DebouncedTouchableOpacity } from "@/components/shared/debouncedTouchable";
+import { ActivityIndicator, Text } from "react-native";
 
 interface RemoveConnectionButtonProps {
   onPress?: () => void;
@@ -17,7 +18,7 @@ export const RemoveConnectionButton = ({
   const isDisabled = loading || disabled;
 
   return (
-    <TouchableOpacity
+    <DebouncedTouchableOpacity
       className={`w-full p-6 rounded-xl mt-2 flex items-center ${
         isDisabled ? "bg-[#919191]" : "bg-[#DF4545]"
       }`}
@@ -31,6 +32,6 @@ export const RemoveConnectionButton = ({
           {title}
         </Text>
       )}
-    </TouchableOpacity>
+    </DebouncedTouchableOpacity>
   );
 };
