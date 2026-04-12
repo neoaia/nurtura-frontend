@@ -14,7 +14,7 @@ import {
     normalizeError,
 } from "./apiError";
 import { API_TIMEOUT_MS } from "./constants";
-import { hasWifiConnection } from "./networkState";
+import { hasNetworkConnection } from "./networkState";
 import {
     registerTrackedController,
     unregisterTrackedController,
@@ -65,7 +65,7 @@ async function createRequestConfig(
 export async function apiRequest<T = any>(
   config: RequestConfig,
 ): Promise<{ data: T | null; error: NormalizedApiError | null }> {
-  if (!hasWifiConnection()) {
+  if (!hasNetworkConnection()) {
     return {
       data: null,
       error: normalizeError(

@@ -2,7 +2,7 @@ import { getFirebaseIdToken } from "@/lib/firebaseAuth";
 import { NormalizedApiError } from "@/types/interface";
 import { isRequestCancelled, normalizeError } from "@/utils/apiError";
 import { API_TIMEOUT_MS } from "@/utils/constants";
-import { hasWifiConnection } from "@/utils/networkState";
+import { hasNetworkConnection } from "@/utils/networkState";
 import {
   registerTrackedController,
   unregisterTrackedController,
@@ -64,7 +64,7 @@ function useFetch<T = any>(
       abortControllerRef.current?.abort();
       abortControllerRef.current = null;
 
-      if (!hasWifiConnection()) {
+      if (!hasNetworkConnection()) {
         const networkError = normalizeError(
           new Error("Network Error - connection unavailable"),
         );

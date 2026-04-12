@@ -35,7 +35,7 @@ export const useNetwork = () => useContext(NetworkContext);
 
 const createOfflineToast = (): NetworkToastState => ({
   tone: "offline",
-  message: "No wifi connection",
+  message: "No internet connection",
 });
 
 const createOnlineToast = (): NetworkToastState => ({
@@ -51,34 +51,37 @@ export const NetworkProvider = ({
   const [snapshot, setSnapshot] =
     useState<NetworkSnapshot>(getNetworkSnapshot());
   const [toast, setToast] = useState<NetworkToastState | null>(null);
-  const lastWifiConnectionRef = useRef<boolean | null>(null);
+  const lastNetworkConnectionRef = useRef<boolean | null>(null);
 
-  const updateToastForWifiState = useCallback((hasWifiConnection: boolean) => {
-    const previousHasWifiConnection = lastWifiConnectionRef.current;
-    lastWifiConnectionRef.current = hasWifiConnection;
+  const updateToastForNetworkState = useCallback(
+    (hasNetworkConnection: boolean) => {
+      const previousHasNetworkConnection = lastNetworkConnectionRef.current;
+      lastNetworkConnectionRef.current = hasNetworkConnection;
 
-    if (!hasWifiConnection) {
-      abortTrackedRequests();
+      if (!hasNetworkConnection) {
+        abortTrackedRequests();
 
-      if (previousHasWifiConnection !== false) {
-        setToast(createOfflineToast());
+        if (previousHasNetworkConnection !== false) {
+          setToast(createOfflineToast());
+        }
+
+        return;
       }
 
-      return;
-    }
-
-    if (previousHasWifiConnection === false) {
-      setToast(createOnlineToast());
-    }
-  }, []);
+      if (previousHasNetworkConnection === false) {
+        setToast(createOnlineToast());
+      }
+    },
+    [],
+  );
 
   const applyNetworkState = useCallback(
     (state: NetInfoState) => {
       const nextSnapshot = updateNetworkSnapshot(state);
       setSnapshot(nextSnapshot);
-      updateToastForWifiState(nextSnapshot.hasWifiConnection);
+      updateToastForNetworkState(nextSnapshot.hasNetworkConnection);
     },
-    [updateToastForWifiState],
+    [updateToastForNetworkState],
   );
 
   useEffect(() => {
