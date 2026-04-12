@@ -63,7 +63,7 @@ describe("service + useFetch integration", () => {
     expect(response.amount).toBe(0);
     expect(mockedAxios).toHaveBeenCalledWith(
       expect.objectContaining({
-        url: "https:/api.example.com/plants/activities/care",
+        url: "https://api.example.com/plants/activities/care",
         method: "GET",
         params: { page: 1, limit: 10 },
       }),
@@ -92,7 +92,7 @@ describe("service + useFetch integration", () => {
 
     expect(mockedAxios).toHaveBeenCalledWith(
       expect.objectContaining({
-        url: "https:/api.example.com/racks",
+        url: "https://api.example.com/racks",
         method: "GET",
       }),
     );
@@ -132,7 +132,7 @@ describe("service + useFetch integration", () => {
 
     expect(mockedAxios).toHaveBeenCalledWith(
       expect.objectContaining({
-        url: "https:/api.example.com/racks/activities",
+        url: "https://api.example.com/racks/activities",
         method: "GET",
         params: { page: 2, limit: 5 },
       }),

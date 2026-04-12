@@ -6,6 +6,11 @@ jest.mock("../../lib/firebaseAuth", () => ({
   getFirebaseIdToken: jest.fn(),
 }));
 
+jest.mock("../../utils/networkState", () => ({
+  hasNetworkConnection: jest.fn(),
+  hasWifiConnection: jest.fn(),
+}));
+
 jest.mock("axios", () => {
   const mockAxios = jest.fn();
   (mockAxios as any).isCancel = jest.fn(() => false);
@@ -16,6 +21,13 @@ const { getFirebaseIdToken } = jest.requireMock("../../lib/firebaseAuth") as {
   getFirebaseIdToken: jest.Mock;
 };
 
+const { hasNetworkConnection, hasWifiConnection } = jest.requireMock(
+  "../../utils/networkState",
+) as {
+  hasNetworkConnection: jest.Mock;
+  hasWifiConnection: jest.Mock;
+};
+
 const mockedAxios = axios as unknown as jest.Mock & { isCancel: jest.Mock };
 
 describe("useFetch integration", () => {
@@ -23,6 +35,8 @@ describe("useFetch integration", () => {
     jest.clearAllMocks();
     process.env.EXPO_PUBLIC_URL = "api.example.com";
     delete process.env.EXPO_PUBLIC_LOCAL_IP_ADDRESS;
+    hasNetworkConnection.mockReturnValue(true);
+    hasWifiConnection.mockReturnValue(true);
   });
 
   it("sends GET request with auth token and params", async () => {
@@ -49,7 +63,7 @@ describe("useFetch integration", () => {
 
     expect(mockedAxios).toHaveBeenCalledWith(
       expect.objectContaining({
-        url: "https:/api.example.com/plants/activities/care",
+        url: "https://api.example.com/plants/activities/care",
         method: "GET",
         params: { page: 1, limit: 10 },
         headers: expect.objectContaining({
@@ -108,12 +122,37 @@ describe("useFetch integration", () => {
     });
 
     await waitFor(() => {
-      expect(result.current.error).toEqual({
+      expect(result.current.error).toMatchObject({
         message: "Unauthorized",
         status: 401,
       });
       expect(result.current.data).toBeNull();
       expect(result.current.loading).toBe(false);
+    });
+  });
+
+  it("allows requests on cellular when internet is available", async () => {
+    hasNetworkConnection.mockReturnValue(true);
+    hasWifiConnection.mockReturnValue(false);
+    mockedAxios.mockResolvedValue({
+      data: { ok: true },
+      status: 200,
+    });
+
+    const { result } = renderHook(() =>
+      useFetch("/plants", { method: "GET", autoFetch: false }),
+    );
+
+    let response: any;
+    await act(async () => {
+      response = await result.current.refetch();
+    });
+
+    expect(mockedAxios).toHaveBeenCalledTimes(1);
+    expect(response).toEqual({
+      data: { ok: true },
+      error: null,
+      status: 200,
     });
   });
 });
