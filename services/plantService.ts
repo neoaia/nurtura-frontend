@@ -2,6 +2,8 @@ import { handleRequest } from "@/utils/request";
 import {
   AssignPlantToRackRequestDTO,
   AssignPlantToRackResponseDTO,
+  CheckPlantAssignmentConditionsRequestDTO,
+  CheckPlantAssignmentConditionsResponseDTO,
   CreatePlantRequestDTO,
   CreatePlantResponseDTO,
   DeletePlantResponseDTO,
@@ -118,6 +120,16 @@ export const plantService = {
   ): Promise<GetPlantingActivitiesResponseDTO> {
     return handleRequest<GetPlantingActivitiesResponseDTO>(
       "Fetching planting activities",
+      () => refetch({ params }),
+    );
+  },
+
+  async checkPlantAssignmentConditions(
+    refetch: any,
+    params: CheckPlantAssignmentConditionsRequestDTO,
+  ): Promise<CheckPlantAssignmentConditionsResponseDTO> {
+    return handleRequest<CheckPlantAssignmentConditionsResponseDTO>(
+      "Checking plant assignment conditions",
       () => refetch({ params }),
     );
   },

@@ -18,6 +18,11 @@ import {
 
 const AddNewPlant3 = () => {
   const [confirmation, setConfirmation] = useState(false);
+  const [temperatureWarning, setTemperatureWarning] = useState(false);
+  const [temperatureData, setTemperatureData] = useState<{
+    latestTemperatureReading: number;
+    maxTemperatureThreshold: number;
+  } | null>(null);
   const [seedQuantity, setSeedQuantity] = useState(0);
   const [loading, setLoading] = useState(false);
   const [isDraftHydrating, setIsDraftHydrating] = useState(true);
@@ -28,7 +33,6 @@ const AddNewPlant3 = () => {
     plantId,
     plantName,
     plantCategory,
-    plantType,
     recommendedSoil,
   } = useLocalSearchParams<{
     rackId: string;
@@ -37,9 +41,17 @@ const AddNewPlant3 = () => {
     plantId: string;
     plantName: string;
     plantCategory: string;
-    plantType: string;
     recommendedSoil: string;
   }>();
+
+  const { refetch: checkConditions } = useFetch(
+    `/racks/${rackId}/assign/check`,
+    {
+      method: "POST",
+      autoFetch: false,
+      withAuth: true,
+    },
+  );
 
   const { refetch: assignPlant } = useFetch(`/racks/${rackId}/assign`, {
     method: "POST",
@@ -79,13 +91,6 @@ const AddNewPlant3 = () => {
     };
   }, [rackId]);
 
-  const handleNextPress = () => {
-    if (!seedQuantity) return;
-    setConfirmation(true);
-  };
-
-  const handleCancelPress = () => setConfirmation(false);
-
   const updateSeedQuantity = useCallback(
     (nextQuantity: number) => {
       setSeedQuantity(nextQuantity);
@@ -99,6 +104,61 @@ const AddNewPlant3 = () => {
     },
     [rackId, plantId],
   );
+
+  // Step 1: Check conditions before showing any confirmation
+  const handleNextPress = async () => {
+    if (!seedQuantity) return;
+
+    setLoading(true);
+
+    try {
+      const { data, error } = await checkConditions({
+        body: {
+          plantId: plantId as string,
+          quantity: seedQuantity,
+          plantedAt: new Date().toISOString(),
+        },
+      });
+
+      if (error) {
+        Alert.alert(
+          "Error",
+          error?.message || "Failed to validate conditions. Please try again.",
+        );
+        return;
+      }
+
+      if (data?.hasWarning) {
+        setTemperatureData({
+          latestTemperatureReading: data.latestTemperatureReading,
+          maxTemperatureThreshold: data.maxTemperatureThreshold,
+        });
+        setTemperatureWarning(true);
+        return;
+      }
+
+      // No warning — go straight to seed reminder
+      setConfirmation(true);
+    } catch (e) {
+      console.error("Failed to check conditions:", e);
+      Alert.alert("Error", "An unexpected error occurred. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Step 2a: User confirmed temperature warning → show seed reminder
+  const handleTemperatureWarningConfirm = () => {
+    setTemperatureWarning(false);
+    setConfirmation(true);
+  };
+
+  const handleTemperatureWarningCancel = () => {
+    setTemperatureWarning(false);
+  };
+
+  // Step 2b: User confirmed seed reminder → assign plant
+  const handleCancelPress = () => setConfirmation(false);
 
   const handleConfirmPress = async () => {
     setConfirmation(false);
@@ -196,9 +256,20 @@ const AddNewPlant3 = () => {
       </ScrollView>
 
       <BottomButton
-        title={loading ? "Adding..." : "Finish"}
+        title={loading ? "Checking..." : "Finish"}
         onPress={handleNextPress}
         disabled={!seedQuantity || loading || isDraftHydrating}
+      />
+
+      {/* Temperature warning — shown if rack environment exceeds plant threshold */}
+      <ConfirmationModal
+        isVisible={temperatureWarning}
+        title="Temperature Warning"
+        message={`The current rack temperature (${temperatureData?.latestTemperatureReading}°C) exceeds the recommended maximum (${temperatureData?.maxTemperatureThreshold}°C) for this plant. Do you still want to proceed?`}
+        confirmText="Proceed Anyway"
+        cancelText="Cancel"
+        onConfirm={handleTemperatureWarningConfirm}
+        onCancel={handleTemperatureWarningCancel}
       />
 
       <ConfirmationModal

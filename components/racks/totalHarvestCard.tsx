@@ -1,4 +1,5 @@
 import { typography } from "@/assets/fonts/Text";
+import PlantIcon from "@/assets/images/icons/plants(Dashboard).svg";
 import { TotalHarvestDTO } from "@/types/rack.dto";
 import React from "react";
 import { Image, Text, View } from "react-native";
@@ -22,7 +23,7 @@ const TotalHarvestCard: React.FC<TotalHarvestCardProps> = ({ harvest }) => {
                 resizeMode="contain"
               />
             ) : (
-              <Text className="text-3xl"></Text>
+              <PlantIcon width={24} height={24} />
             )}
           </View>
 

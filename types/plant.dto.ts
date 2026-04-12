@@ -213,3 +213,14 @@ export interface UpdatePlantResponseDTO {
   message: string;
   plant: PlantDetails;
 }
+
+export interface CheckPlantAssignmentConditionsRequestDTO {
+  plantId: string;
+  quantity: number;
+  plantedAt: string;
+}
+export interface CheckPlantAssignmentConditionsResponseDTO {
+  hasWarning: boolean;
+  latestTemperatureReading: number;
+  maxTemperatureThreshold: number;
+}
