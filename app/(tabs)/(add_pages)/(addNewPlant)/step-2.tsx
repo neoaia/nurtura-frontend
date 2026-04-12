@@ -1,15 +1,17 @@
 import { typography } from "@/assets/fonts/Text";
 import PlantCard from "@/components/add_plant/plantCard";
 import PlantFilterBtn from "@/components/add_plant/plantFilterBtn";
-import { ConfirmationModal } from "@/components/modals/confirmationModal";
 import { BottomButton } from "@/components/shared/bottomButton";
-import { useBackWarning } from "@/hooks/shared/useBackWarning";
 import useFetch from "@/hooks/useFetch";
 import { PLANT_IMAGES } from "@/utils/constants";
 import { router, useLocalSearchParams } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { ActivityIndicator, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import {
+  loadAddPlantDraft,
+  saveAddPlantDraft,
+} from "../../../../utils/addPlantDraft";
 
 interface Plant {
   id: string;
@@ -40,9 +42,7 @@ const AddNewPlant2 = () => {
   const [selectedPlant, setSelectedPlant] = useState<Plant | null>(null);
   const [plants, setPlants] = useState<Plant[]>([]);
   const [loadingPlants, setLoadingPlants] = useState(false);
-
-  const { showModal, handleConfirm, handleCancel } =
-    useBackWarning(!!selectedPlant);
+  const [draftPlantId, setDraftPlantId] = useState<string | null>(null);
 
   const { rackId, rackName, rackValue } = useLocalSearchParams<{
     rackId: string;
@@ -56,7 +56,7 @@ const AddNewPlant2 = () => {
     withAuth: true,
   });
 
-  const loadPlants = async () => {
+  const loadPlants = useCallback(async () => {
     setLoadingPlants(true);
     try {
       const result = await fetchPlants();
@@ -75,18 +75,73 @@ const AddNewPlant2 = () => {
     } finally {
       setLoadingPlants(false);
     }
-  };
+  }, [fetchPlants]);
 
   useEffect(() => {
-    loadPlants();
-  }, []);
+    void loadPlants();
+  }, [loadPlants]);
+
+  useEffect(() => {
+    let isCancelled = false;
+
+    const loadDraft = async () => {
+      if (!rackId) return;
+
+      try {
+        const draft = await loadAddPlantDraft(rackId);
+        if (isCancelled) return;
+
+        setDraftPlantId(draft?.selectedPlantId ?? null);
+      } catch (error) {
+        console.warn("Failed to load add plant draft:", error);
+      }
+    };
+
+    void loadDraft();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [rackId]);
+
+  useEffect(() => {
+    if (!draftPlantId) return;
+
+    const draftPlant = plants.find((plant) => plant.id === draftPlantId);
+    if (draftPlant && selectedPlant?.id !== draftPlant.id) {
+      setSelectedPlant(draftPlant);
+    }
+  }, [draftPlantId, plants, selectedPlant?.id]);
 
   function toProperCase(str: string): string {
     return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
   }
 
+  const handleSelectPlant = useCallback(
+    (plant: Plant) => {
+      setSelectedPlant(plant);
+      setDraftPlantId(plant.id);
+
+      if (rackId) {
+        void saveAddPlantDraft(rackId, {
+          selectedPlantId: plant.id,
+          seedQuantity: 0,
+        });
+      }
+    },
+    [rackId],
+  );
+
   const handleNextPress = () => {
     if (!selectedPlant) return;
+
+    if (rackId) {
+      void saveAddPlantDraft(rackId, {
+        selectedPlantId: selectedPlant.id,
+        seedQuantity: 0,
+      });
+    }
+
     router.push({
       pathname: "/(tabs)/(add_pages)/(addNewPlant)/step-3",
       params: {
@@ -163,7 +218,7 @@ const AddNewPlant2 = () => {
                 image={
                   PLANT_IMAGES[plant.name.toLowerCase()] ?? PLANT_IMAGES.default
                 }
-                onPress={() => setSelectedPlant(plant)}
+                onPress={() => handleSelectPlant(plant)}
                 isSelected={selectedPlant?.id === plant.id}
               />
             ))}
@@ -175,16 +230,6 @@ const AddNewPlant2 = () => {
         title="Next"
         onPress={handleNextPress}
         disabled={!selectedPlant || loadingPlants}
-      />
-
-      <ConfirmationModal
-        isVisible={showModal}
-        onConfirm={handleConfirm}
-        title="Go Back"
-        message="All details you have entered will be restarted and gone."
-        confirmText="Continue"
-        cancelText="Cancel"
-        onCancel={handleCancel}
       />
     </SafeAreaView>
   );

@@ -5,6 +5,7 @@ import { NavigationService, ROUTES } from "@/utils/navigationUtils";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React from "react";
 import { Image, Text, View } from "react-native";
+import { clearAddPlantDraft } from "../../../../utils/addPlantDraft";
 
 export default function SuccessPage() {
   const router = useRouter();
@@ -17,21 +18,31 @@ export default function SuccessPage() {
     finishTitle?: string;
     addAnotherTitle?: string;
     type?: "other" | "plant" | "rack";
+    rackId?: string;
   }>();
+
+  const clearDraft = async () => {
+    if (params.type === "plant" && params.rackId) {
+      await clearAddPlantDraft(params.rackId);
+    }
+  };
 
   /**
    * Finish the flow and return to home
    * Uses reset to clear entire stack of add flow screens
    */
-  const handleFinish = () => {
-    navService.completeFlow();
+  const handleFinish = async () => {
+    await clearDraft();
+    router.replace(ROUTES.TABS.HOME.ROOT);
   };
 
   /**
    * Add another plant/rack
    * Clears current stack and goes back to step 1
    */
-  const handleAddAnother = () => {
+  const handleAddAnother = async () => {
+    await clearDraft();
+
     if (params.type === "rack") {
       navService.reset(ROUTES.TABS.ADD.RACK.STEP_1);
     } else {

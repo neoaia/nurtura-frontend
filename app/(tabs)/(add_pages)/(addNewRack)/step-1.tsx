@@ -1,4 +1,5 @@
 import { typography } from "@/assets/fonts/Text";
+import { ConfirmationModal } from "@/components/modals/confirmationModal";
 import { BottomButton } from "@/components/shared/bottomButton";
 import { DebouncedTouchableOpacity } from "@/components/shared/debouncedTouchable";
 import { useBackWarning } from "@/hooks/shared/useBackWarning";
@@ -49,7 +50,10 @@ export default function AddNewRack1() {
     router.replace("/(tabs)/(home)");
   }, []);
 
-  useBackWarning(false, handleBack);
+  const { showModal, handleConfirm, handleCancel } = useBackWarning(
+    true,
+    handleBack,
+  );
 
   const requestPermissions = async (): Promise<boolean> => {
     if (Platform.OS === "ios") return true;
@@ -227,6 +231,16 @@ export default function AddNewRack1() {
 
   return (
     <SafeAreaView className="flex-1 bg-white" edges={["bottom"]}>
+      <ConfirmationModal
+        isVisible={showModal}
+        title="Go Back?"
+        message="Going back will cancel rack setup and return you to the home page."
+        confirmText="Go Back"
+        cancelText="Stay"
+        onConfirm={handleConfirm}
+        onCancel={handleCancel}
+      />
+
       <View className="flex-1 p-6">
         <Text style={typography["h1-bold"]} className="text-black mt-4 mb-2">
           Find your Rack

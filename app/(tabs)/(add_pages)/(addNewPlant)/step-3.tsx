@@ -3,22 +3,24 @@ import { ConfirmationModal } from "@/components/modals/confirmationModal";
 import { BottomButton } from "@/components/shared/bottomButton";
 import { QuantityPicker } from "@/components/shared/quantityPicker";
 import SmallDescription from "@/components/shared/smallDescription";
-import { useBackWarning } from "@/hooks/shared/useBackWarning";
 import useFetch from "@/hooks/useFetch";
 import { router, useLocalSearchParams } from "expo-router";
-import React, { useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { Alert, Image, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import RackIcon from "../../../../assets/images/icons/rack(Add).svg";
 import SoilIcon from "../../../../assets/images/icons/soil.svg";
+import {
+  clearAddPlantDraft,
+  loadAddPlantDraft,
+  saveAddPlantDraft,
+} from "../../../../utils/addPlantDraft";
 
 const AddNewPlant3 = () => {
   const [confirmation, setConfirmation] = useState(false);
   const [seedQuantity, setSeedQuantity] = useState(0);
   const [loading, setLoading] = useState(false);
-
-  const { showModal, handleConfirm, handleCancel } =
-    useBackWarning(!!seedQuantity);
+  const [isDraftHydrating, setIsDraftHydrating] = useState(true);
 
   const {
     rackId,
@@ -45,12 +47,58 @@ const AddNewPlant3 = () => {
     withAuth: true,
   });
 
+  useEffect(() => {
+    let isCancelled = false;
+
+    const loadDraft = async () => {
+      if (!rackId) {
+        setIsDraftHydrating(false);
+        return;
+      }
+
+      try {
+        const draft = await loadAddPlantDraft(rackId);
+        if (isCancelled) return;
+
+        if (typeof draft?.seedQuantity === "number") {
+          setSeedQuantity(draft.seedQuantity);
+        }
+      } catch (error) {
+        console.warn("Failed to load add plant draft:", error);
+      } finally {
+        if (!isCancelled) {
+          setIsDraftHydrating(false);
+        }
+      }
+    };
+
+    void loadDraft();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [rackId]);
+
   const handleNextPress = () => {
     if (!seedQuantity) return;
     setConfirmation(true);
   };
 
   const handleCancelPress = () => setConfirmation(false);
+
+  const updateSeedQuantity = useCallback(
+    (nextQuantity: number) => {
+      setSeedQuantity(nextQuantity);
+
+      if (rackId) {
+        void saveAddPlantDraft(rackId, {
+          selectedPlantId: plantId as string,
+          seedQuantity: nextQuantity,
+        });
+      }
+    },
+    [rackId, plantId],
+  );
 
   const handleConfirmPress = async () => {
     setConfirmation(false);
@@ -77,6 +125,10 @@ const AddNewPlant3 = () => {
 
       console.log("Plant assigned successfully:", data?.message);
 
+      if (rackId) {
+        await clearAddPlantDraft(rackId);
+      }
+
       router.dismissAll();
       router.push({
         pathname: "/(tabs)/(add_pages)/(addNewPlant)/successScreen",
@@ -86,6 +138,7 @@ const AddNewPlant3 = () => {
           subtitle: "Your plant has been added to the rack.",
           finishTitle: "Finish",
           addAnotherTitle: "Add another Plant",
+          rackId,
         },
       });
     } catch (e) {
@@ -133,10 +186,10 @@ const AddNewPlant3 = () => {
             title="Seeds"
             quantity={seedQuantity}
             onAddPress={() =>
-              seedQuantity < 4 && setSeedQuantity(seedQuantity + 1)
+              seedQuantity < 4 && updateSeedQuantity(seedQuantity + 1)
             }
             onSubtractPress={() =>
-              seedQuantity > 0 && setSeedQuantity(seedQuantity - 1)
+              seedQuantity > 0 && updateSeedQuantity(seedQuantity - 1)
             }
           />
         </View>
@@ -145,7 +198,7 @@ const AddNewPlant3 = () => {
       <BottomButton
         title={loading ? "Adding..." : "Finish"}
         onPress={handleNextPress}
-        disabled={!seedQuantity || loading}
+        disabled={!seedQuantity || loading || isDraftHydrating}
       />
 
       <ConfirmationModal
@@ -154,16 +207,6 @@ const AddNewPlant3 = () => {
         message="Make sure to plant the seeds before finalizing."
         onCancel={handleCancelPress}
         onConfirm={handleConfirmPress}
-      />
-
-      <ConfirmationModal
-        isVisible={showModal}
-        onConfirm={handleConfirm}
-        title="Go Back"
-        message="All details you have entered will be restarted and gone."
-        confirmText="Continue"
-        cancelText="Cancel"
-        onCancel={handleCancel}
       />
     </SafeAreaView>
   );

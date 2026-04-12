@@ -12,6 +12,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import { ActivityIndicator, ScrollView, Text } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import RackIcon from "../../../../assets/images/icons/rack(gray).svg";
+import { clearAddPlantDraft } from "../../../../utils/addPlantDraft";
 
 const AddNewPlant1 = () => {
   const [selectedRack, setSelectedRack] = useState<DropdownOption | null>(null);
@@ -20,11 +21,15 @@ const AddNewPlant1 = () => {
   const [showOccupiedModal, setShowOccupiedModal] = useState(false);
 
   const handleBack = useCallback(() => {
+    if (selectedRack?.id) {
+      void clearAddPlantDraft(selectedRack.id);
+    }
+
     router.replace("/(tabs)/(home)");
-  }, []);
+  }, [selectedRack?.id]);
 
   const { showModal, handleConfirm, handleCancel } = useBackWarning(
-    !!selectedRack,
+    true,
     handleBack,
   );
 
@@ -66,13 +71,21 @@ const AddNewPlant1 = () => {
     }, []),
   );
 
-  const handleSelectRack = useCallback((item: DropdownOption) => {
-    if (item.hasPlant) {
-      setShowOccupiedModal(true);
-      return;
-    }
-    setSelectedRack(item);
-  }, []);
+  const handleSelectRack = useCallback(
+    (item: DropdownOption) => {
+      if (item.hasPlant) {
+        setShowOccupiedModal(true);
+        return;
+      }
+
+      if (selectedRack && selectedRack.id !== item.id) {
+        void clearAddPlantDraft(selectedRack.id);
+      }
+
+      setSelectedRack(item);
+    },
+    [selectedRack],
+  );
 
   const handleNextPress = () => {
     if (!selectedRack) return;

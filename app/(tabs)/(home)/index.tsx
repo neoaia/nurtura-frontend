@@ -509,7 +509,7 @@ export default function HomeScreen() {
           </Text>
           <DebouncedTouchableOpacity onPress={handleNotificationPress}>
             {hasUnread ? (
-              <ActiveNotificationIcon width={24} height={24} />
+              <ActiveNotificationIcon width={26} height={26} />
             ) : (
               <InactiveNotificationIcon width={24} height={24} />
             )}

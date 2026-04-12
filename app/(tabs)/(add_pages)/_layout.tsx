@@ -8,17 +8,6 @@ export default function AddPagesLayout() {
     navigation.getParent()?.setOptions({
       tabBarStyle: { display: "none" },
     });
-
-    return () => {
-      navigation.getParent()?.setOptions({
-        tabBarStyle: {
-          height: 100,
-          paddingBottom: 10,
-          paddingTop: 15,
-          display: "flex",
-        },
-      });
-    };
   }, [navigation]);
 
   return <Stack screenOptions={{ headerShown: false }} />;
