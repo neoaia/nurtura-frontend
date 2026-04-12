@@ -1,3 +1,4 @@
+import { NetworkToast } from "@/components/shared/networkToast";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { OnboardingProvider } from "@/contexts/OnboardingContext";
 import { useNotificationHandler } from "@/hooks/useNotificationHandler";
@@ -7,8 +8,9 @@ import { useRegisterForPushNotifications } from "@/utils/notification";
 import { useFonts } from "expo-font";
 import { Stack, useRouter, useSegments } from "expo-router";
 import * as SecureStore from "expo-secure-store";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, View } from "react-native";
+import { NetworkProvider } from "../contexts/NetworkContext";
 import "./globals.css";
 
 const logger = createLogger("RootLayout");
@@ -74,7 +76,7 @@ function RootLayoutNav() {
   const { user, loading } = useAuth();
   const segments = useSegments();
   const router = useRouter();
-  const navService = new NavigationService(router);
+  const navService = useMemo(() => new NavigationService(router), [router]);
 
   const [isBypassCheckComplete, setIsBypassCheckComplete] = useState(false);
 
@@ -155,6 +157,7 @@ function RootLayoutNav() {
       {user?.uid && segments[0] !== "(auth)" ? (
         <NotificationBridge userId={user.uid} />
       ) : null}
+      <NetworkToast />
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="(auth)" />
         <Stack.Screen name="(tabs)" />
@@ -188,8 +191,10 @@ export default function RootLayout() {
   }
 
   return (
-    <AuthProvider>
-      <RootLayoutNav />
-    </AuthProvider>
+    <NetworkProvider>
+      <AuthProvider>
+        <RootLayoutNav />
+      </AuthProvider>
+    </NetworkProvider>
   );
 }
