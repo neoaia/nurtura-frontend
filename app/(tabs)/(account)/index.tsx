@@ -64,10 +64,8 @@ export default function AccountScreen() {
   };
 
   // ── Tutorial Logic ─────────────────────────────────────────────────────────
-  const { shouldShow, tutorialStep, handleNextStep } = useOnboarding(
-    "account",
-    2,
-  );
+  const { shouldShow, tutorialStep, handleNextStep, handleSkip } =
+    useOnboarding("account", 2);
 
   const getTutorialContent = (step: number) => {
     switch (step) {
@@ -207,6 +205,7 @@ export default function AccountScreen() {
         <OnboardingTutorialModal
           visible={shouldShow}
           onClose={handleNextStep}
+          onSkip={handleSkip}
           title={currentTutorial.title}
           subtitle={currentTutorial.desc}
           topOffset={currentTutorial.offset}

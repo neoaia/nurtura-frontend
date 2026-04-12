@@ -4,6 +4,7 @@ import { RackExistsModal } from "@/components/modals/rackExistsModal";
 import { BottomButton } from "@/components/shared/bottomButton";
 import { DebouncedTouchableOpacity } from "@/components/shared/debouncedTouchable";
 import { TextInputField } from "@/components/shared/textInputField";
+import { useBackWarning } from "@/hooks/shared/useBackWarning";
 import useFetch from "@/hooks/useFetch";
 import { bleManager } from "@/utils/bluetooth/bleManager";
 import { Ionicons } from "@expo/vector-icons";
@@ -18,7 +19,6 @@ const SSID_CHAR_UUID = "beb5483e-36e1-4688-b7f5-ea07361b26a8";
 const PASSWORD_CHAR_UUID = "1c95d5e3-d8f7-413a-bf3d-7a2e5d7be87e";
 const STATUS_CHAR_UUID = "9a8ca5e3-d8f7-413a-bf3d-7a2e5d7be123";
 const RACK_NAME_CHAR_UUID = "a1b2c3d4-e5f6-7890-abcd-ef1234567890";
-const RESET_CHAR_UUID = "ffffffff-ffff-ffff-ffff-ffffffffffff";
 const MONITOR_TRANSACTION_ID = "wifi-status-monitor";
 
 export default function AddNewRack3() {
@@ -42,7 +42,6 @@ export default function AddNewRack3() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [showBackConfirm, setShowBackConfirm] = useState(false);
   const [rackExistsModalVisible, setRackExistsModalVisible] =
     useState(isExistingRack);
 
@@ -72,7 +71,9 @@ export default function AddNewRack3() {
     if (subscriptionRef.current) {
       try {
         bleManager.cancelTransaction(MONITOR_TRANSACTION_ID);
-      } catch (_) {}
+      } catch {
+        // ignore cancellation errors
+      }
       subscriptionRef.current = null;
     }
   };
@@ -93,38 +94,10 @@ export default function AddNewRack3() {
     router.replace("/(tabs)/(add_pages)/(addNewRack)/step-1");
   }, [deviceId]);
 
-  const handleBackConfirmed = async () => {
-    setShowBackConfirm(false);
-    setLoading(true);
-
-    try {
-      const isConnected = await bleManager.isDeviceConnected(deviceId);
-      if (isConnected) {
-        try {
-          await bleManager.writeCharacteristicWithoutResponseForDevice(
-            deviceId,
-            SERVICE_UUID,
-            RESET_CHAR_UUID,
-            Buffer.from("FACTORY_RESET").toString("base64"),
-          );
-          await new Promise((resolve) => setTimeout(resolve, 1000));
-        } catch (e) {
-          console.log("[Step3] Reset command failed (continuing anyway):", e);
-        }
-        try {
-          const stillConnected = await bleManager.isDeviceConnected(deviceId);
-          if (stillConnected) await bleManager.cancelDeviceConnection(deviceId);
-        } catch (e) {
-          console.log("[Step3] Final disconnect error:", e);
-        }
-      }
-    } catch (e) {
-      console.log("[Step3] Error during reset:", e);
-    }
-
-    setLoading(false);
-    router.replace("/(tabs)/(add_pages)/(addNewRack)/step-1");
-  };
+  const { showModal, handleConfirm, handleCancel } = useBackWarning(
+    true,
+    disconnectAndGoToStep1,
+  );
 
   const handleExistingRackWifiSuccess = async () => {
     const nameToSend = existingRackName || "Nurtura";
@@ -318,13 +291,13 @@ export default function AddNewRack3() {
   return (
     <SafeAreaView className="flex-1 bg-white" edges={["bottom"]}>
       <ConfirmationModal
-        isVisible={showBackConfirm}
-        title="Cancel WiFi Setup?"
-        message={`Going back will reset your rack to BLE provisioning mode:\n\n• WiFi connection will be cleared\n• MQTT will disconnect\n• Bluetooth will restart\n• The rack will be ready to pair again\n\nAre you sure you want to reset?`}
-        confirmText="Yes, Reset Rack"
-        cancelText="Continue Setup"
-        onConfirm={handleBackConfirmed}
-        onCancel={() => setShowBackConfirm(false)}
+        isVisible={showModal}
+        title="Go Back?"
+        message="Going back will cancel WiFi setup and return you to step 1."
+        confirmText="Go Back"
+        cancelText="Stay"
+        onConfirm={handleConfirm}
+        onCancel={handleCancel}
       />
 
       <RackExistsModal
@@ -341,7 +314,7 @@ export default function AddNewRack3() {
         className="flex-1 px-6"
         contentContainerStyle={{ paddingTop: 40 }}
       >
-        <Text style={typography["h1-bold"]} className="text-black mt-4 mb-2">
+        <Text style={typography["h1-bold"]} className="text-black  mb-2">
           Connect to WiFi
         </Text>
         <Text style={typography["subheader"]} className="mb-6">

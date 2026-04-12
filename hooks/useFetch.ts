@@ -2,6 +2,11 @@ import { getFirebaseIdToken } from "@/lib/firebaseAuth";
 import { NormalizedApiError } from "@/types/interface";
 import { isRequestCancelled, normalizeError } from "@/utils/apiError";
 import { API_TIMEOUT_MS } from "@/utils/constants";
+import { hasWifiConnection } from "@/utils/networkState";
+import {
+  registerTrackedController,
+  unregisterTrackedController,
+} from "@/utils/requestRegistry";
 import axios, { AxiosRequestConfig } from "axios";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { UseFetchOptions, UseFetchResult } from "../types/interface";
@@ -57,8 +62,23 @@ function useFetch<T = any>(
     async (overrideOptions?: UseFetchOptions) => {
       // Cancel any in-flight request before starting a new one
       abortControllerRef.current?.abort();
+      abortControllerRef.current = null;
+
+      if (!hasWifiConnection()) {
+        const networkError = normalizeError(
+          new Error("Network Error - connection unavailable"),
+        );
+
+        safeSetError(networkError);
+        safeSetData(null);
+        safeSetLoading(false);
+
+        return { data: null, error: networkError, status: 0 };
+      }
+
       const controller = new AbortController();
       abortControllerRef.current = controller;
+      registerTrackedController(controller);
 
       safeSetLoading(true);
       safeSetError(null);
@@ -119,6 +139,12 @@ function useFetch<T = any>(
           error: normalizedError,
           status: err.response?.status,
         };
+      } finally {
+        unregisterTrackedController(controller);
+
+        if (abortControllerRef.current === controller) {
+          abortControllerRef.current = null;
+        }
       }
     },
     [fullUrl, safeSetData, safeSetError, safeSetLoading],

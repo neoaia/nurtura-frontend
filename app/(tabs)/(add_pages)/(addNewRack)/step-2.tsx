@@ -2,6 +2,7 @@ import { typography } from "@/assets/fonts/Text";
 import { ConfirmationModal } from "@/components/modals/confirmationModal";
 import { BottomButton } from "@/components/shared/bottomButton";
 import { DebouncedTouchableOpacity } from "@/components/shared/debouncedTouchable";
+import { useBackWarning } from "@/hooks/shared/useBackWarning";
 import useFetch from "@/hooks/useFetch";
 import { rackService } from "@/services/rackService";
 import { bleManager } from "@/utils/bluetooth/bleManager";
@@ -28,7 +29,6 @@ export default function AddNewRack2() {
   const [permission, requestPermission] = useCameraPermissions();
   const [scanning, setScanning] = useState(false);
   const [verifying, setVerifying] = useState(false);
-  const [showBackConfirm, setShowBackConfirm] = useState(false);
   const hasScannedRef = useRef(false);
 
   const { refetch: checkRackExists } = useFetch("/racks/exists", {
@@ -72,10 +72,10 @@ export default function AddNewRack2() {
     router.replace("/(tabs)/(add_pages)/(addNewRack)/step-1");
   }, [deviceId]);
 
-  const handleBackConfirmed = async () => {
-    setShowBackConfirm(false);
-    await disconnectAndGoToStep1();
-  };
+  const { showModal, handleConfirm, handleCancel } = useBackWarning(
+    true,
+    disconnectAndGoToStep1,
+  );
 
   const verifyWithESP32 = useCallback(
     async (qrData: string) => {
@@ -214,13 +214,13 @@ export default function AddNewRack2() {
   return (
     <SafeAreaView className="flex-1 bg-white" edges={["bottom"]}>
       <ConfirmationModal
-        isVisible={showBackConfirm}
+        isVisible={showModal}
         title="Go Back?"
-        message={`Going back will reset your rack to BLE provisioning mode:\n\n• WiFi connection will be cleared\n• MQTT will disconnect\n• Bluetooth will restart\n• The rack will be ready to pair again\n\nYou'll need to run the setup process again.`}
-        confirmText="Yes, Reset & Go Back"
-        cancelText="Continue"
-        onConfirm={handleBackConfirmed}
-        onCancel={() => setShowBackConfirm(false)}
+        message="Going back will cancel rack verification and return you to step 1."
+        confirmText="Go Back"
+        cancelText="Stay"
+        onConfirm={handleConfirm}
+        onCancel={handleCancel}
       />
 
       {verifying && (
@@ -236,10 +236,10 @@ export default function AddNewRack2() {
       )}
 
       <View className="flex-1 p-6">
-        <View className="mb-9 items-start">
+        <View className="mb-9 items-start pl-1">
           <Image
             source={require("@/assets/images/add-new-rack/plant-rack.png")}
-            className="w-40 h-40"
+            className="w-36 h-36"
           />
         </View>
         <Text style={typography["h1-bold"]} className="text-black mt-4 mb-2">

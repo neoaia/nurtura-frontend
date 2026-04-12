@@ -241,7 +241,7 @@ export default function LoginScreen() {
           <GoogleSignInButton onPress={handleGoogleSignIn} disabled={loading} />
         </View>
 
-        <View className="w-full pb-2">
+        <View className="w-full pb-8">
           <DebouncedTouchableOpacity
             onPress={() => navService.push(ROUTES.AUTH.SIGNUP.ROOT)}
             className="mt-4 mb-5"

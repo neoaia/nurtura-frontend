@@ -32,7 +32,7 @@ export default function AddNewRackLayout() {
           screenOptions={{
             headerStyle: { backgroundColor: "#fafafa" },
             headerBlurEffect: "light",
-            headerBackTitle: "Back",
+            headerBackTitle: "",
             headerShadowVisible: false,
             headerTitleAlign: "center",
           }}
@@ -78,10 +78,7 @@ export default function AddNewRackLayout() {
                   source={require("@/assets/images/add-new-rack/progress-bar-4.png")}
                 />
               ),
-              headerShown: false,
-              headerLeft: () => null,
-              headerBackVisible: false,
-              gestureEnabled: false,
+              headerShown: true,
             }}
           />
           <Stack.Screen

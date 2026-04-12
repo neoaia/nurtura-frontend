@@ -171,10 +171,11 @@ export class NavigationService {
 
   /**
    * Complete a multi-step flow and return to home
-   * Cleans up entire stack of flow screens
+   * Replaces the current success screen directly to avoid flashing
+   * intermediate add-flow screens during dismissal.
    */
   completeFlow(params?: NavigationParams) {
-    this.reset(ROUTES.TABS.HOME.ROOT, params);
+    this.replace(ROUTES.TABS.HOME.ROOT, params);
   }
 
   /**

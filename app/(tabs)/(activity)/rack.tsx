@@ -164,10 +164,8 @@ export default function RackActivity() {
   const [selectedRack, setSelectedRack] = useState<DropdownOption | null>(null);
 
   // ── Tutorial Logic ─────────────────────────────────────────────────────────
-  const { shouldShow, tutorialStep, handleNextStep } = useOnboarding(
-    "rack-activity",
-    2,
-  );
+  const { shouldShow, tutorialStep, handleNextStep, handleSkip } =
+    useOnboarding("rack-activity", 2);
 
   const [activities, setActivities] = useState<
     (RackActivityItemProps & { timestamp: string })[]
@@ -332,6 +330,7 @@ export default function RackActivity() {
         <OnboardingTutorialModal
           visible={shouldShow}
           onClose={handleNextStep}
+          onSkip={handleSkip}
           title={currentTutorial.title}
           subtitle={currentTutorial.desc}
           topOffset={currentTutorial.offset}

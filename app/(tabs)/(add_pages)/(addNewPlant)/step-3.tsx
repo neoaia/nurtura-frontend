@@ -3,22 +3,29 @@ import { ConfirmationModal } from "@/components/modals/confirmationModal";
 import { BottomButton } from "@/components/shared/bottomButton";
 import { QuantityPicker } from "@/components/shared/quantityPicker";
 import SmallDescription from "@/components/shared/smallDescription";
-import { useBackWarning } from "@/hooks/shared/useBackWarning";
 import useFetch from "@/hooks/useFetch";
 import { router, useLocalSearchParams } from "expo-router";
-import React, { useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { Alert, Image, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import RackIcon from "../../../../assets/images/icons/rack(Add).svg";
 import SoilIcon from "../../../../assets/images/icons/soil.svg";
+import {
+  clearAddPlantDraft,
+  loadAddPlantDraft,
+  saveAddPlantDraft,
+} from "../../../../utils/addPlantDraft";
 
 const AddNewPlant3 = () => {
   const [confirmation, setConfirmation] = useState(false);
+  const [temperatureWarning, setTemperatureWarning] = useState(false);
+  const [temperatureData, setTemperatureData] = useState<{
+    latestTemperatureReading: number;
+    maxTemperatureThreshold: number;
+  } | null>(null);
   const [seedQuantity, setSeedQuantity] = useState(0);
   const [loading, setLoading] = useState(false);
-
-  const { showModal, handleConfirm, handleCancel } =
-    useBackWarning(!!seedQuantity);
+  const [isDraftHydrating, setIsDraftHydrating] = useState(true);
 
   const {
     rackId,
@@ -26,7 +33,6 @@ const AddNewPlant3 = () => {
     plantId,
     plantName,
     plantCategory,
-    plantType,
     recommendedSoil,
   } = useLocalSearchParams<{
     rackId: string;
@@ -35,9 +41,17 @@ const AddNewPlant3 = () => {
     plantId: string;
     plantName: string;
     plantCategory: string;
-    plantType: string;
     recommendedSoil: string;
   }>();
+
+  const { refetch: checkConditions } = useFetch(
+    `/racks/${rackId}/assign/check`,
+    {
+      method: "POST",
+      autoFetch: false,
+      withAuth: true,
+    },
+  );
 
   const { refetch: assignPlant } = useFetch(`/racks/${rackId}/assign`, {
     method: "POST",
@@ -45,11 +59,105 @@ const AddNewPlant3 = () => {
     withAuth: true,
   });
 
-  const handleNextPress = () => {
+  useEffect(() => {
+    let isCancelled = false;
+
+    const loadDraft = async () => {
+      if (!rackId) {
+        setIsDraftHydrating(false);
+        return;
+      }
+
+      try {
+        const draft = await loadAddPlantDraft(rackId);
+        if (isCancelled) return;
+
+        if (typeof draft?.seedQuantity === "number") {
+          setSeedQuantity(draft.seedQuantity);
+        }
+      } catch (error) {
+        console.warn("Failed to load add plant draft:", error);
+      } finally {
+        if (!isCancelled) {
+          setIsDraftHydrating(false);
+        }
+      }
+    };
+
+    void loadDraft();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [rackId]);
+
+  const updateSeedQuantity = useCallback(
+    (nextQuantity: number) => {
+      setSeedQuantity(nextQuantity);
+
+      if (rackId) {
+        void saveAddPlantDraft(rackId, {
+          selectedPlantId: plantId as string,
+          seedQuantity: nextQuantity,
+        });
+      }
+    },
+    [rackId, plantId],
+  );
+
+  // Step 1: Check conditions before showing any confirmation
+  const handleNextPress = async () => {
     if (!seedQuantity) return;
+
+    setLoading(true);
+
+    try {
+      const { data, error } = await checkConditions({
+        body: {
+          plantId: plantId as string,
+          quantity: seedQuantity,
+          plantedAt: new Date().toISOString(),
+        },
+      });
+
+      if (error) {
+        Alert.alert(
+          "Error",
+          error?.message || "Failed to validate conditions. Please try again.",
+        );
+        return;
+      }
+
+      if (data?.hasWarning) {
+        setTemperatureData({
+          latestTemperatureReading: data.latestTemperatureReading,
+          maxTemperatureThreshold: data.maxTemperatureThreshold,
+        });
+        setTemperatureWarning(true);
+        return;
+      }
+
+      // No warning — go straight to seed reminder
+      setConfirmation(true);
+    } catch (e) {
+      console.error("Failed to check conditions:", e);
+      Alert.alert("Error", "An unexpected error occurred. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Step 2a: User confirmed temperature warning → show seed reminder
+  const handleTemperatureWarningConfirm = () => {
+    setTemperatureWarning(false);
     setConfirmation(true);
   };
 
+  const handleTemperatureWarningCancel = () => {
+    setTemperatureWarning(false);
+  };
+
+  // Step 2b: User confirmed seed reminder → assign plant
   const handleCancelPress = () => setConfirmation(false);
 
   const handleConfirmPress = async () => {
@@ -77,6 +185,10 @@ const AddNewPlant3 = () => {
 
       console.log("Plant assigned successfully:", data?.message);
 
+      if (rackId) {
+        await clearAddPlantDraft(rackId);
+      }
+
       router.dismissAll();
       router.push({
         pathname: "/(tabs)/(add_pages)/(addNewPlant)/successScreen",
@@ -86,6 +198,7 @@ const AddNewPlant3 = () => {
           subtitle: "Your plant has been added to the rack.",
           finishTitle: "Finish",
           addAnotherTitle: "Add another Plant",
+          rackId,
         },
       });
     } catch (e) {
@@ -133,19 +246,30 @@ const AddNewPlant3 = () => {
             title="Seeds"
             quantity={seedQuantity}
             onAddPress={() =>
-              seedQuantity < 4 && setSeedQuantity(seedQuantity + 1)
+              seedQuantity < 4 && updateSeedQuantity(seedQuantity + 1)
             }
             onSubtractPress={() =>
-              seedQuantity > 0 && setSeedQuantity(seedQuantity - 1)
+              seedQuantity > 0 && updateSeedQuantity(seedQuantity - 1)
             }
           />
         </View>
       </ScrollView>
 
       <BottomButton
-        title={loading ? "Adding..." : "Finish"}
+        title={loading ? "Checking..." : "Finish"}
         onPress={handleNextPress}
-        disabled={!seedQuantity || loading}
+        disabled={!seedQuantity || loading || isDraftHydrating}
+      />
+
+      {/* Temperature warning — shown if rack environment exceeds plant threshold */}
+      <ConfirmationModal
+        isVisible={temperatureWarning}
+        title="Temperature Warning"
+        message={`The current rack temperature (${temperatureData?.latestTemperatureReading}°C) exceeds the recommended maximum (${temperatureData?.maxTemperatureThreshold}°C) for this plant. Do you still want to proceed?`}
+        confirmText="Proceed Anyway"
+        cancelText="Cancel"
+        onConfirm={handleTemperatureWarningConfirm}
+        onCancel={handleTemperatureWarningCancel}
       />
 
       <ConfirmationModal
@@ -154,16 +278,6 @@ const AddNewPlant3 = () => {
         message="Make sure to plant the seeds before finalizing."
         onCancel={handleCancelPress}
         onConfirm={handleConfirmPress}
-      />
-
-      <ConfirmationModal
-        isVisible={showModal}
-        onConfirm={handleConfirm}
-        title="Go Back"
-        message="All details you have entered will be restarted and gone."
-        confirmText="Continue"
-        cancelText="Cancel"
-        onCancel={handleCancel}
       />
     </SafeAreaView>
   );

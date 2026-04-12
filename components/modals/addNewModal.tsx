@@ -1,16 +1,16 @@
 import { DebouncedTouchableOpacity } from "@/components/shared/debouncedTouchable";
 import { NavigationService, ROUTES } from "@/utils/navigationUtils";
 import BottomSheet, {
-    BottomSheetBackdrop,
-    BottomSheetView,
+  BottomSheetBackdrop,
+  BottomSheetView,
 } from "@gorhom/bottom-sheet";
 import { useRouter } from "expo-router";
 import React, {
-    useCallback,
-    useEffect,
-    useMemo,
-    useRef,
-    useState,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
 } from "react";
 import { Text, View } from "react-native";
 import { typography } from "../../assets/fonts/Text";
@@ -139,7 +139,7 @@ export const AddNewModal: React.FC<AddNewModalProps> = ({
     >
       <BottomSheetView className="flex-1 px-6 pt-4 pb-10 items-center">
         <Text
-          style={typography["button-bold"]}
+          style={typography["h2-bold"]}
           className="text-[#86975A] mb-8 text-center"
         >
           Add to your Nurtura Farm

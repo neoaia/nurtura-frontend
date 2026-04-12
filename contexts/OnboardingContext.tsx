@@ -3,12 +3,12 @@ import { userService } from "@/services/userService";
 import { UserDetails } from "@/types/interface";
 import * as SecureStore from "expo-secure-store";
 import React, {
-    createContext,
-    useCallback,
-    useContext,
-    useEffect,
-    useRef,
-    useState,
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
 } from "react";
 
 // ─── Constants ────────────────────────────────────────────────────────────────

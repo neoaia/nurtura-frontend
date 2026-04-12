@@ -15,10 +15,8 @@ export default function ActivityScreen() {
   const CARD_HEIGHT_WITH_MARGIN = 132;
 
   // ── Tutorial Logic ─────────────────────────────────────────────────────────
-  const { shouldShow, tutorialStep, handleNextStep } = useOnboarding(
-    "activity",
-    4,
-  );
+  const { shouldShow, tutorialStep, handleNextStep, handleSkip } =
+    useOnboarding("activity", 4);
 
   const menuItems = [
     {
@@ -156,6 +154,7 @@ export default function ActivityScreen() {
         <OnboardingTutorialModal
           visible={shouldShow}
           onClose={handleNextStep}
+          onSkip={handleSkip}
           title={currentTutorial.title}
           subtitle={currentTutorial.tutorialDesc}
           topOffset={currentTutorial.marginTop}

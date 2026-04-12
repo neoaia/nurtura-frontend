@@ -24,7 +24,7 @@ export default function SuccessPage() {
     if (isMultiStep) {
       if (params.deviceId) {
         try {
-          await new Promise(resolve => setTimeout(resolve, 1000));
+          await new Promise((resolve) => setTimeout(resolve, 1000));
           await bleManager.cancelDeviceConnection(params.deviceId);
           console.log("Disconnected from rack");
         } catch (e) {
@@ -41,7 +41,7 @@ export default function SuccessPage() {
 
   const handleAddAnother = () => {
     router.dismissAll();
-    router.replace("/(tabs)/(addNewRack)/step-1");
+    router.replace("/(tabs)/(add_pages)/(addNewRack)/step-1");
   };
 
   return (

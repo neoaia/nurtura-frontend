@@ -14,6 +14,11 @@ import {
     normalizeError,
 } from "./apiError";
 import { API_TIMEOUT_MS } from "./constants";
+import { hasWifiConnection } from "./networkState";
+import {
+    registerTrackedController,
+    unregisterTrackedController,
+} from "./requestRegistry";
 
 interface RequestConfig extends AxiosRequestConfig {
   withAuth?: boolean;
@@ -60,7 +65,17 @@ async function createRequestConfig(
 export async function apiRequest<T = any>(
   config: RequestConfig,
 ): Promise<{ data: T | null; error: NormalizedApiError | null }> {
+  if (!hasWifiConnection()) {
+    return {
+      data: null,
+      error: normalizeError(
+        new Error("Network Error - connection unavailable"),
+      ),
+    };
+  }
+
   const controller = new AbortController();
+  registerTrackedController(controller);
 
   try {
     const finalConfig = await createRequestConfig({
@@ -87,6 +102,8 @@ export async function apiRequest<T = any>(
 
     logError(`${config.method} ${config.url}`, error);
     return { data: null, error: normalizeError(error) };
+  } finally {
+    unregisterTrackedController(controller);
   }
 }
 

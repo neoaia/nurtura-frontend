@@ -32,7 +32,7 @@ export default function AddNewPlantLayout() {
           screenOptions={{
             headerStyle: { backgroundColor: "#fafafa" },
             headerBlurEffect: "light",
-            headerBackTitle: "Back",
+            headerBackTitle: "",
             headerShadowVisible: false,
             headerTitleAlign: "center",
           }}

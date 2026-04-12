@@ -6,6 +6,7 @@ import { Image, Modal, Text, View } from "react-native";
 interface OnboardingModalProps {
   visible: boolean;
   onClose: () => void;
+  onSkip?: () => void;
   title?: string;
   subtitle?: string;
   footerText?: string;
@@ -23,6 +24,7 @@ interface OnboardingModalProps {
 export const OnboardingTutorialModal = ({
   visible,
   onClose,
+  onSkip,
   title,
   subtitle,
   footerText = "Tap to continue",
@@ -37,6 +39,19 @@ export const OnboardingTutorialModal = ({
         className="absolute inset-0 bg-black/60 flex-1"
         onPress={onClose}
       >
+        {onSkip ? (
+          <View className="absolute top-12 right-6 z-20">
+            <DebouncedTouchableOpacity
+              onPress={onSkip}
+              className="bg-white rounded-md px-4 py-2 border-[2px] border-gray-200"
+            >
+              <Text style={typography["button-bold"]} className="text-black">
+                Skip
+              </Text>
+            </DebouncedTouchableOpacity>
+          </View>
+        ) : null}
+
         <View className="flex-1 justify-start px-5">
           <View style={{ marginTop: topOffset }} className="shadow-lg">
             <View className="bg-white rounded-[24px] overflow-hidden">
